@@ -1,6 +1,9 @@
 [project]
 name = "WAZP"
-authors = [{name = "Nikoloz Sirmpilatze", email= "niko.sirbiladze@gmail.com"}]
+authors = [{name = "Sofia Miñano", email= "s.minano@ucl.ac.uk"},
+           {name = "Nikoloz Sirmpilatze", email= "niko.sirbiladze@gmail.com"},
+           {name = "Sam Cunliffe", email= "s.cunliffe@ucl.ac.uk"},
+           {name = "Adam Tyson", email= "code@adamltyson.com"}]
 description = "Wasp Animal-tracking Zoo project with Pose estimation"
 readme = "README.md"
 requires-python = ">=3.8.0"
