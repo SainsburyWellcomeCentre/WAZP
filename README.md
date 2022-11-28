@@ -2,7 +2,6 @@
 
 Project name is subject to refinement.
 
-Package layout and configuration (including pre-commit hooks and GitHub actions) have been copied from the [python-cookiecutter](https://github.com/SainsburyWellcomeCentre/python-cookiecutter) template.
 
 ## How to contribute
 ### Setup
