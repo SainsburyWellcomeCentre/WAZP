@@ -25,7 +25,7 @@ pip install -e '.[dev]'
 * When your pull request is approved, squash-merge it into the `main` branch and delete the feature branch.
 
 ### How to run tests and type checks locally
-For debugging purposes, you may also want to run the tests and the type checks locally, before pushing. This can be done with the following command:
+For debugging purposes, you may also want to run the tests and the type checks locally, before pushing. This can be done with the following commands:
 
 ```bash
 cd WAZP
