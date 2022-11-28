@@ -36,3 +36,10 @@ mypy -p wazp
 The package is deployed to PyPI automatically when a new release is created on GitHub. The version number is automatically determined from the latest tag on the `main` branch.
 
 Details on how this is handled with `setuptools_scm` **TBD**.
+
+### License
+
+⚖️ [BSD 3-Clause](./LICENSE)
+
+### Template
+This package layout and configuration (including pre-commit hooks and GitHub actions) have been copied from the [python-cookiecutter](https://github.com/SainsburyWellcomeCentre/python-cookiecutter) template.
