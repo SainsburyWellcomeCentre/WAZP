@@ -7,7 +7,7 @@ import os
 import pandas as pd
 from dash import Dash, dash_table
 
-import metadata_utils
+import wazp.metadata.utils as utils
 
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -15,7 +15,7 @@ import metadata_utils
 csv_file_path = (
     "./sample_metadata/master-list-sample.csv"
 )
-metadata_utils.csv_to_json_per_video(
+utils.csv_to_json_per_video(
     csv_file_path, "File", "./sample_metadata"
 )
 

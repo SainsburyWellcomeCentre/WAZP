@@ -15,6 +15,7 @@ repos:
             args: [--fix=lf]
           - id: requirements-txt-fixer
           - id: trailing-whitespace
+          - id: check-yaml
     - repo: https://github.com/pycqa/flake8
       rev: 5.0.4
       hooks:
