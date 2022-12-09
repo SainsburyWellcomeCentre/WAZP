@@ -1,4 +1,4 @@
-# Dash tutorial: interactive app with simple callbacks
+# Dash tutorial: interactive app with simple callbacks -- Filtered data
 # https://dash.plotly.com/basic-callbacks 
 # On decorators:
 # - https://stackoverflow.com/questions/739654/how-do-i-make-function-decorators-and-chain-them-together/1594484#1594484 
