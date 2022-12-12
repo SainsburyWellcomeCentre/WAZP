@@ -25,7 +25,6 @@ dash.register_page(__name__)
 
 def df_from_metadata_yaml_files(parent_dir):
     # TODO: refactor, I think it could be more compact (see below)
-    # parent_dir = "/Users/sofia/Documents_local/Zoo_SWC project/WAZP/sample_project/videos"
 
     list_metadata_files = [el for el in os.listdir(parent_dir) if el.endswith("metadata.yaml")]
 
@@ -87,10 +86,6 @@ layout = html.Div(
         html.H1(children="Metadata"),
         upload, # upload component
         html.Div(id='output-data-upload'), # component to hold output from data upload
-        # html.Div(
-        #     #children=""" This is the Metadata page content."""
-        #     dbc.Container(table, className="p-5")
-        # ),
     ]
 )
 
@@ -106,8 +101,6 @@ layout = html.Div(
 def update_file_drop_output(up_content, up_filename):
     if up_content is not None:
         content_type, content_str = up_content.split(',')
-        # up_content_decoded = base64.b64decode(content_str)
-        # up_content_iostr = io.StringIO(up_content_decoded.decode('utf-8'))
         try:
             if 'yaml' in up_filename:
                 cfg = yaml.safe_load(base64.b64decode(content_str))
@@ -117,4 +110,4 @@ def update_file_drop_output(up_content, up_filename):
             print(e)
             return html.Div(['There was an error processing this file.'])
 
-        return generate_tbl_component(video_dir) #children of 'output-data-upload'
+        return generate_tbl_component(video_dir) #returns children of 'output-data-upload'
