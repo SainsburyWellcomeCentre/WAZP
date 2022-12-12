@@ -47,14 +47,43 @@ def df_from_metadata_yaml_files(parent_dir):
 # TODO: check table style options (see Table class)
 
 def generate_tbl_component(parent_dir):
+    # ##########################
+    # Using html dash components
+    # dataframe = df_from_metadata_yaml_files(parent_dir)
+    # table = html.Table(
+    #     children =
+    #     [  # define table head?
+    #         html.Thead(html.Tr([html.Th(col, style={'width':'15%'}) for col in dataframe.columns])), 
+    #         # define table body
+    #         html.Tbody(
+    #             [
+    #                 html.Tr(
+    #                     [
+    #                         html.Td(dataframe.iloc[i][col], style={'width':'15%'})
+    #                         for col in dataframe.columns
+    #                     ]
+    #                 )
+    #                 for i in range(len(dataframe)) #range(min(len(dataframe), max_rows))
+    #             ]
+    #         ),
+    #     ],
+    #     style={'width':'100%',}
+    # )
+    #########
+
+    ######### 
+    # Using bootstrap components
     table = dbc.Table.from_dataframe(
         df_from_metadata_yaml_files(parent_dir),
         bordered=True, 
-        hover=True,
+        hover=False,# True
         responsive=True, # if True, table can be scrolled horizontally?
         striped=True, # applies zebra striping to the rows
-        size='sm'
+        size='sm',
+        style={'width':'100%',}
         )
+    ############
+
     return dbc.Container(table, className="p-5")
 
 ######################
