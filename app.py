@@ -87,56 +87,7 @@ app.layout = html.Div(
     sidebar, 
     content])
 
-# ## Callback for sidebar
-# @app.callback(
-#     Output("page-content", "children"), 
-#     [Input("url", "pathname")])
-# def render_page_content(relative_path):
-
-#     if relative_path == "/":
-#         return html.P("Home page")
-#     elif relative_path == "/01_metadata":
-#         return html.P("Metadata")
-#     elif relative_path == "/02_ROI":
-#         return html.P("ROI + coordinate system definition per video")
-#     elif relative_path == "/03_pose_estimation":
-#         return html.P("Results from running inference with selected pose estimation model")
-#     elif relative_path == "/04_dashboard":
-#         return html.P("Dashboard content")
-
-#     # If the user tries to reach a different page, return a 404 message
-#     return html.Div(
-#         [
-#             html.H1("404: Not found", className="text-danger"),
-#             html.Hr(),
-#             html.P(f"The pathname {relative_path} was not recognised..."),
-#         ],
-#         className="p-3 bg-light rounded-3",
-#     )
-
-####   
-# # pdb.set_trace()
-# app.layout = html.Div([
-#     # header
-# 	html.H1('WAZP - Wasp Animal-tracking Zoo project with Pose estimation'),
-
-#     # TOC?
-#     html.Div(
-#         [
-#             html.Div(
-#                 dcc.Link(
-#                     children=f"{page['name']} - {page['path']}", 
-#                     href=page["relative_path"] # the url
-#                 )
-#             )
-#             for page in dash.page_registry.values()
-#         ]
-#     ),
-
-#     # container of page content
-# 	dash.page_container # <class 'dash.html.Div.Div'> This is where page content is displayed when a user navigates to that page's path.
-# ])
-
-
+######################
+## Driver
 if __name__ == '__main__':
 	app.run_server(debug=True)
