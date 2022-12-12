@@ -1,13 +1,13 @@
-# From : 
+# From :
 # - https://dash.plotly.com/dash-core-components/tabs#method-1.-content-as-callback
-# - https://dash.plotly.com/urls 
+# - https://dash.plotly.com/urls
 # Sidebar:
 # https://dash-bootstrap-components.opensource.faculty.ai/examples/simple-sidebar/page-2
-# 
+#
 # Notes:
 # - dash.page_registry is an ordered dict:
 #   - keys: pages.<name of file under pages dir>
-#   - values: a few attributes of the page...including 'layout' 
+#   - values: a few attributes of the page...including 'layout'
 #
 
 import dash
@@ -19,9 +19,8 @@ import pdb
 #######################
 # initialise app
 app = Dash(
-    __name__, 
-    use_pages=True,
-    external_stylesheets=[dbc.themes.BOOTSTRAP]) #dbc.themes.DARKLY
+    __name__, use_pages=True, external_stylesheets=[dbc.themes.BOOTSTRAP]
+)  # dbc.themes.DARKLY
 
 #############################
 ## Sidebar
@@ -41,15 +40,15 @@ sidebar = html.Div(
         html.H2("WAZP", className="display-4"),
         html.Hr(),
         html.P(
-            "Wasp Animal-tracking Zoo project with Pose estimation", className="lead"
+            "Wasp Animal-tracking Zoo project with Pose estimation",
+            className="lead",
         ),
         dbc.Nav(
-            children = 
-            [
+            children=[
                 dcc.Link(
-                        children=f"{page['name']}", 
-                        href=page["relative_path"] # the url
-                    )
+                    children=f"{page['name']}",
+                    href=page["relative_path"],  # the url
+                )
                 for page in dash.page_registry.values()
             ],
             # [
@@ -67,7 +66,7 @@ sidebar = html.Div(
 )
 
 ###############################
-## Main content 
+## Main content
 # style (to the right of the sidebar and some padding.)
 CONTENT_STYLE = {
     "margin-left": "18rem",
@@ -76,18 +75,14 @@ CONTENT_STYLE = {
 }
 # component
 content = html.Div(
-    id="page-content", 
-    style=CONTENT_STYLE, 
-    children=dash.page_container)
+    id="page-content", style=CONTENT_STYLE, children=dash.page_container
+)
 
 ###########################
 ## Define app layout
-app.layout = html.Div(
-    [dcc.Location(id="url"),
-    sidebar, 
-    content])
+app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
 
 ######################
 ## Driver
-if __name__ == '__main__':
-	app.run_server(debug=True)
+if __name__ == "__main__":
+    app.run_server(debug=True)
