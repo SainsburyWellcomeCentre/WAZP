@@ -31,7 +31,7 @@ table = dbc.Table.from_dataframe(
 # Define layout
 layout = html.Div(
     children=[
-        html.H1(children="Metadata page"),
+        html.H1(children="Metadata"),
         html.Div(
             #children=""" This is the Metadata page content."""
             dbc.Container(table, className="p-5")
