@@ -30,3 +30,5 @@ repos:
           - id: mypy
             additional_dependencies:
                 - types-setuptools
+                - types-PyYaML
+                - pandas-stubs

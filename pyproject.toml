@@ -43,6 +43,8 @@ dev = [
 	"pre-commit",
 	"flake8",
  	"setuptools_scm",
+  "types-PyYAML",
+  "pandas-stubs",
 ]
 
 
