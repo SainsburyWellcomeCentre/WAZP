@@ -1,6 +1,6 @@
 # From :
-# - https://dash.plotly.com/dash-core-components/tabs#method-1.-content-as-callback
-# - https://dash.plotly.com/urls
+# https://dash.plotly.com/dash-core-components/tabs#method-1.-content-as-callback
+# https://dash.plotly.com/urls
 # Sidebar:
 # https://dash-bootstrap-components.opensource.faculty.ai/examples/simple-sidebar/page-2
 #
@@ -8,13 +8,10 @@
 # - dash.page_registry is an ordered dict:
 #   - keys: pages.<name of file under pages dir>
 #   - values: a few attributes of the page...including 'layout'
-#
 
 import dash
-from dash import Dash, html, dcc, Input, Output
 import dash_bootstrap_components as dbc
-
-import pdb
+from dash import Dash, dcc, html
 
 #######################
 # initialise app
@@ -23,7 +20,7 @@ app = Dash(
 )  # dbc.themes.DARKLY
 
 #############################
-## Sidebar
+# Sidebar
 # style
 SIDEBAR_STYLE = {
     "position": "fixed",
@@ -52,11 +49,12 @@ sidebar = html.Div(
                 for page in dash.page_registry.values()
             ],
             # [
-            #     dbc.NavLink("Home", href="/", active="exact"),
-            #     dbc.NavLink("Metadata", href="/01_metadata", active="exact"),
-            #     dbc.NavLink("ROI", href="/02_ROI", active="exact"),
-            #     dbc.NavLink("Pose estimation", href="/03_pose_estimation", active="exact"),
-            #     dbc.NavLink("Dashboard", href="/04_dashboard", active="exact"),
+            #  dbc.NavLink("Home", href="/", active="exact"),
+            #  dbc.NavLink("Metadata", href="/01_metadata", active="exact"),
+            #  dbc.NavLink("ROI", href="/02_ROI", active="exact"),
+            #  dbc.NavLink("Pose estimation", href="/03_pose_estimation",
+            #               active="exact"),
+            #  dbc.NavLink("Dashboard", href="/04_dashboard", active="exact"),
             # ],
             vertical=True,
             pills=True,
@@ -66,7 +64,7 @@ sidebar = html.Div(
 )
 
 ###############################
-## Main content
+# Main content
 # style (to the right of the sidebar and some padding.)
 CONTENT_STYLE = {
     "margin-left": "18rem",
@@ -79,10 +77,10 @@ content = html.Div(
 )
 
 ###########################
-## Define app layout
+# Define app layout
 app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
 
 ######################
-## Driver
+# Driver
 if __name__ == "__main__":
     app.run_server(debug=True)

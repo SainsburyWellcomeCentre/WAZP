@@ -4,16 +4,14 @@
 # File upload component:
 # https://dash.plotly.com/dash-core-components/upload
 
+import base64
+import os
+
 import dash
-from dash import html, dcc, Input, Output, State, callback
 import dash_bootstrap_components as dbc
 import pandas as pd
-import os
 import yaml
-import io
-import base64
-
-import pdb
+from dash import Input, Output, State, callback, dcc, html
 
 ###############
 # Register this page
@@ -58,18 +56,20 @@ def generate_tbl_component(parent_dir):
     # dataframe = df_from_metadata_yaml_files(parent_dir)
     # table = html.Table(
     #     children =
-    #     [  # define table head?
-    #         html.Thead(html.Tr([html.Th(col, style={'width':'15%'}) for col in dataframe.columns])),
-    #         # define table body
-    #         html.Tbody(
-    #             [
-    #                 html.Tr(
-    #                     [
-    #                         html.Td(dataframe.iloc[i][col], style={'width':'15%'})
-    #                         for col in dataframe.columns
-    #                     ]
+    #     [ # define table head?
+    #        html.Thead(html.Tr([html.Th(col, style={'width':'15%'})
+    #                               for col in dataframe.columns])),
+    #        # define table body
+    #        html.Tbody(
+    #            [
+    #               html.Tr(
+    #                 [
+    #                   html.Td(dataframe.iloc[i][col], style={'width':'15%'})
+    #                   for col in dataframe.columns
+    #                  ]
     #                 )
-    #                 for i in range(len(dataframe)) #range(min(len(dataframe), max_rows))
+    #                 #range(min(len(dataframe), max_rows))
+    #                 for i in range(len(dataframe))
     #             ]
     #         ),
     #     ],
