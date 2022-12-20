@@ -62,7 +62,7 @@ layout = html.Div(
 )
 def update_file_drop_output(up_content, up_filename):
     if up_content is not None:
-        content_type, content_str = up_content.split(",")
+        _, content_str = up_content.split(",")
         try:
             if "yaml" in up_filename:
                 cfg = yaml.safe_load(base64.b64decode(content_str))
