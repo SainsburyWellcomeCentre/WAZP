@@ -48,7 +48,7 @@ layout = html.Div(
         upload,  # upload component
         html.Div(
             id="output-data-upload"
-        ),  # component to hold output from data upload
+        ),  # component to hold the output from the data upload
     ]
 )
 
