@@ -16,7 +16,9 @@ from dash import Dash, dcc, html
 #######################
 # initialise app
 app = Dash(
-    __name__, use_pages=True, external_stylesheets=[dbc.themes.BOOTSTRAP]
+    __name__, 
+    use_pages=True, 
+    external_stylesheets=[dbc.themes.BOOTSTRAP]
 )  # dbc.themes.DARKLY
 
 #############################
@@ -48,7 +50,7 @@ sidebar = html.Div(
                 )
                 for page in dash.page_registry.values()
             ],
-            # [
+            # [ # using bootstrap-components-------------------------------
             #  dbc.NavLink("Home", href="/", active="exact"),
             #  dbc.NavLink("Metadata", href="/01_metadata", active="exact"),
             #  dbc.NavLink("ROI", href="/02_ROI", active="exact"),
@@ -78,7 +80,13 @@ content = html.Div(
 
 ###########################
 # Define app layout
-app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
+app.layout = html.Div(
+    [
+        dcc.Location(id="url"), 
+        sidebar, 
+        content
+    ]
+    )
 
 ######################
 # Driver
