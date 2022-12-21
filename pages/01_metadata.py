@@ -3,7 +3,7 @@
 
 
 import base64
-import pathlib as pl 
+import pathlib as pl
 
 import dash
 import dash_bootstrap_components as dbc
@@ -47,7 +47,8 @@ layout = html.Div(
         html.H1(children="Metadata"),
         upload,  # upload component
         html.Div(
-            id="output-data-upload"
+            id="output-data-upload",
+            style={'height':'1200px'}
         ),  # component to hold the output from the data upload
     ]
 )
@@ -72,6 +73,6 @@ def update_file_drop_output(up_content, up_filename):
             print(e)
             return html.Div(["There was an error processing this file."])
 
-        return wazp.utils.generate_tbl_component_from_df(
+        return wazp.utils.metadata_tbl_component_from_df(
             wazp.utils.df_from_metadata_yaml_files(video_dir)
         )  # returns children of 'output-data-upload'
