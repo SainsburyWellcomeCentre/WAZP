@@ -41,21 +41,7 @@ def metadata_tbl_component_from_df(df):
     '''
     Build a table component for the Dash/Plotly app populated with input dataframe
     '''
-    ###########################
-    # Using bootstrap components
-    # table = dbc.Table.from_dataframe(
-    #     df, #df_from_metadata_yaml_files(parent_dir),
-    #     bordered=True,
-    #     hover=False,  # True
-    #     responsive=True,  # if True, table can be scrolled horizontally?
-    #     striped=True,  # applies zebra striping to the rows
-    #     size="sm",
-    #     style={
-    #         "width": "100%",
-    #     }, # TODO: check table style options (see Table class)
-    # )
-
-    #########################
+    
     # Using dash table
     table = dash_table.DataTable(
         data=df.to_dict('records'),
@@ -68,12 +54,12 @@ def metadata_tbl_component_from_df(df):
         page_size=25,  
         page_action='native',
         fixed_rows={'headers':True}, # fix table header when scrolling vertically
-        fixed_columns={'headers':True, 'data':1}, # fix File column when scrolling horizontally
+        fixed_columns={'headers':True, 'data':1}, # fix 'File' column when scrolling horizontally
         sort_action='native',
         sort_mode='single', # if 'multi': sorting can be performed across multiple columns (e.g. sort by country, sort within each country)
         tooltip_header= { 
             i: {'value':i} for i in df.columns
-            }, #{'type':'markdown', 'value':{i for i in df.columns}},
+            }, 
         tooltip_data= [
             {row_key: {'value': str(row_val), 'type':'markdown'} for row_key,row_val in row_dict.items()} 
             for row_dict in df.to_dict('records')
@@ -86,7 +72,7 @@ def metadata_tbl_component_from_df(df):
             'fontFamily': "Helvetica", # "'Open Sans', verdana, arial, sans-serif",
         },
         style_table={
-            'height': '720px', #'100%---with 100% seems roughly 500px, #
+            'height': '720px', 
             'maxHeight': '720px', # css overwrites the table height when fixed_rows is enabled; setting height and maxHeight to the same value seems a quick hack to fix it (see https://community.plotly.com/t/setting-datatable-max-height-when-using-fixed-headers/26417/10)
             'width': '100%',
             'maxWidth': '100%',
@@ -129,52 +115,4 @@ def metadata_tbl_component_from_df(df):
 
     )
 
-    # table = dash_table.DataTable(
-    #     data=df.to_dict('records'), # return df as a list of dicts, one dict for each row (index) with keys=columns, and values=cell values
-    #     columns=[{
-    #         'id': c, 
-    #         'name': c, 
-    #         'hideable': True,
-    #         'editable': False if c == 'File' else True,
-    #         'presentation':'markdown'} for c in df.columns],
-    #     # page_size=100, # number of entries per page
-    #     # page_action='native',
-    #     fixed_columns={'headers':True, 'data':1}, # fix File column when scrolling horizontally
-    #     fixed_rows={'headers':True, 'data':0}, # fix table header when scrolling vertically
-    #     sort_action='native',
-    #     sort_mode='single', # if 'multi': sorting can be performed across multiple columns (e.g. sort by country, sort within each country)
-    #     tooltip_header= { 
-    #         i: {'value':i} for i in df.columns
-    #         }, #{'type':'markdown', 'value':{i for i in df.columns}},
-    #     tooltip_data= [
-    #         {row_key: {'value': str(row_val), 'type':'markdown'} for row_key,row_val in row_dict.items()} 
-    #         for row_dict in df.to_dict('records')
-    #     ],
-    #     style_table={ # CSS styles
-    #         'width':'100%', # approx 40px per row?
-    #         'overflowY':'auto',
-    #     },
-    #     style_cell={
-    #         'textAlign': 'left',
-    #         'overflow':'hidden',
-    #         'textOverflow': 'ellipsis',
-    #         'maxWidth': 200
-    #     },
-    #     style_data={ # data cells are all cells except header and filter cells
-    #         'color': 'black',
-    #         'backgroundColor': 'white'
-    #     }, 
-    #     style_data_conditional=[
-    #         {
-    #             'if': {'row_index': 'odd'},
-    #             'backgroundColor': 'rgb(220, 220, 220)',
-    #         }
-    #     ],
-    #     style_header={
-    #         'backgroundColor': 'rgb(210, 210, 210)',
-    #         'color': 'black',
-    #         'fontWeight': 'bold'
-    #     }
-    # ) 
-    
     return table # dbc.Container(table, className="p-5") #
