@@ -69,6 +69,26 @@ def update_file_drop_output(up_content, up_filename):
             print(e)
             return html.Div(["There was an error processing this file."])
 
-        return wazp.utils.metadata_tbl_component_from_df(
-            wazp.utils.df_from_metadata_yaml_files(video_dir)
+        return html.Div(
+            [
+                wazp.utils.metadata_tbl_component_from_df(
+                    wazp.utils.df_from_metadata_yaml_files(video_dir)),
+                html.Button('Add Row', id='editing-rows-button', n_clicks=0)
+            ]
         )  # returns children of 'output-data-upload'
+
+
+@callback(
+    Output("metadata-table", "data"),
+    Input("editing-rows-button", "n_clicks"),
+    State("metadata-table", "data"),
+    # data = output from df.to_dict("records")
+    # (list of dicts, one dict per row)
+    State("metadata-table", "columns"),  # table columns
+    prevent_initial_call=True  # to avoid errors due to input/output
+    # components not existing in initial layout
+)
+def add_row(n_clicks_add_row, table_rows, table_columns):
+    if n_clicks_add_row > 0:
+        table_rows.append({c['id']: '' for c in table_columns})
+    return table_rows

@@ -21,7 +21,7 @@ def df_from_metadata_yaml_files(parent_dir):
     list_metadata_files = [
         str(yl)
         for yl in pl.Path(parent_dir).iterdir()
-        if str(yl).endswith(".yaml")  # '---metadata.yaml
+        if str(yl).endswith("metadata.yaml")  # '---
     ]
 
     list_df_metadata = []
@@ -49,6 +49,7 @@ def metadata_tbl_component_from_df(df):
     # pdb.set_trace()
     # Using dash table
     table = dash_table.DataTable(
+        id='metadata-table',
         data=df.to_dict("records"),
         columns=[
             {
@@ -96,7 +97,7 @@ def metadata_tbl_component_from_df(df):
             "overflowY": "scroll",
             "overflowX": "scroll",
         },
-        style_cell={  # all cells
+        style_cell={  # all cells (the whole table)
             "textAlign": "left",
             "padding": 7,
             "minWidth": 70,
@@ -105,7 +106,7 @@ def metadata_tbl_component_from_df(df):
             "fontFamily": "Helvetica",
             # "'Open Sans', verdana, arial, sans-serif",
         },
-        style_data={  # data cells are all cells except header and filter cells
+        style_data={  # data cells (all cells except header and filter cells)
             "color": "black",
             "backgroundColor": "white",
             "overflow": "hidden",

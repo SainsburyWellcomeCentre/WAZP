@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # From :
 # https://dash.plotly.com/dash-core-components/tabs#method-1.-content-as-callback
 # https://dash.plotly.com/urls
@@ -16,8 +17,10 @@ from dash import Dash, dcc, html
 #######################
 # initialise app
 app = Dash(
-    __name__, use_pages=True, external_stylesheets=[dbc.themes.BOOTSTRAP]
-)  # dbc.themes.DARKLY
+    __name__,
+    use_pages=True,
+    external_stylesheets=[dbc.themes.BOOTSTRAP],  # dbc.themes.DARKLY
+)
 
 #############################
 # Sidebar
