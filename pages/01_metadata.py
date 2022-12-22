@@ -3,11 +3,8 @@
 
 
 import base64
-import pathlib as pl
 
 import dash
-import dash_bootstrap_components as dbc
-import pandas as pd
 import yaml
 from dash import Input, Output, State, callback, dcc, html
 
@@ -48,7 +45,7 @@ layout = html.Div(
         upload,  # upload component
         html.Div(
             id="output-data-upload",
-            style={'height':'1200px'}
+            style={'height': '1200px'}
         ),  # component to hold the output from the data upload
     ]
 )
