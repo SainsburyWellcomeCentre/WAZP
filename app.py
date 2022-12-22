@@ -20,6 +20,8 @@ app = Dash(
     __name__,
     use_pages=True,
     external_stylesheets=[dbc.themes.BOOTSTRAP],  # dbc.themes.DARKLY
+    suppress_callback_exceptions=True
+    # TODO: is there an alternative to prevent error w/ chained callbacks?
 )
 
 #############################

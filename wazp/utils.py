@@ -19,16 +19,16 @@ def df_from_metadata_yaml_files(parent_dir):
     #   ignore_index=True, axis=1)
 
     list_metadata_files = [
-        str(yl)
-        for yl in pl.Path(parent_dir).iterdir()
-        if str(yl).endswith("metadata.yaml")  # '---
+        str(f)
+        for f in pl.Path(parent_dir).iterdir()
+        if str(f).endswith("metadata.yaml")  # '---
     ]
 
     list_df_metadata = []
     for yl in list_metadata_files:
-        with open(yl) as f:
+        with open(yl) as ylf:
             list_df_metadata.append(
-                pd.DataFrame.from_dict(yaml.safe_load(f), orient="index")
+                pd.DataFrame.from_dict(yaml.safe_load(ylf), orient="index")
             )
 
     return pd.concat(
@@ -51,12 +51,13 @@ def metadata_tbl_component_from_df(df):
     table = dash_table.DataTable(
         id='metadata-table',
         data=df.to_dict("records"),
+        # editable=True,
         columns=[
             {
                 "id": c,
                 "name": c,
                 "hideable": True,
-                "editable": False if c == "File" else True,
+                "editable": True,  #False if c == "File" else True,
                 "presentation": "input",
             }
             for c in df.columns
