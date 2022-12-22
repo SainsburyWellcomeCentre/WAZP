@@ -44,8 +44,7 @@ layout = html.Div(
         html.H1(children="Metadata"),
         upload,  # upload component
         html.Div(
-            id="output-data-upload",
-            style={'height': '1200px'}
+            id="output-data-upload", style={"height": "1200px"}
         ),  # component to hold the output from the data upload
     ]
 )

@@ -16,9 +16,7 @@ from dash import Dash, dcc, html
 #######################
 # initialise app
 app = Dash(
-    __name__,
-    use_pages=True,
-    external_stylesheets=[dbc.themes.BOOTSTRAP]
+    __name__, use_pages=True, external_stylesheets=[dbc.themes.BOOTSTRAP]
 )  # dbc.themes.DARKLY
 
 #############################
@@ -80,13 +78,7 @@ content = html.Div(
 
 ###########################
 # Define app layout
-app.layout = html.Div(
-    [
-        dcc.Location(id="url"),
-        sidebar,
-        content
-    ]
-    )
+app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
 
 ######################
 # Driver
