@@ -34,10 +34,18 @@ SIDEBAR_STYLE = {
 # component
 sidebar = html.Div(
     [
-        html.H2("WAZP", className="display-4"),
+        html.H2("WAZP 🐝", className="display-4"),
         html.Hr(),
         html.P(
-            "Wasp Animal-tracking Zoo project with Pose estimation",
+            [
+                "Wasp",
+                html.Br(),
+                "Animal-tracking",
+                html.Br(),
+                "Zoo project with",
+                html.Br(),
+                "Pose estimation",
+            ],
             className="lead",
         ),
         dbc.Nav(
@@ -48,14 +56,6 @@ sidebar = html.Div(
                 )
                 for page in dash.page_registry.values()
             ],
-            # [ # using bootstrap-components-------------------------------
-            #  dbc.NavLink("Home", href="/", active="exact"),
-            #  dbc.NavLink("Metadata", href="/01_metadata", active="exact"),
-            #  dbc.NavLink("ROI", href="/02_ROI", active="exact"),
-            #  dbc.NavLink("Pose estimation", href="/03_pose_estimation",
-            #               active="exact"),
-            #  dbc.NavLink("Dashboard", href="/04_dashboard", active="exact"),
-            # ],
             vertical=True,
             pills=True,
         ),
