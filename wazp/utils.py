@@ -1,8 +1,8 @@
 import pathlib as pl
 
-from dash import dash_table
 import pandas as pd
 import yaml
+from dash import dash_table
 
 
 def df_from_metadata_yaml_files(parent_dir):
