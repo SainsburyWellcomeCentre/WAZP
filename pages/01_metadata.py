@@ -3,6 +3,7 @@
 
 import base64
 import pathlib as pl
+# import pdb
 import re
 
 import dash
@@ -67,12 +68,21 @@ layout = html.Div(
     State("upload-data", "filename"),  # State('upload-data', 'last-modified'),
 )
 def update_file_drop_output(up_content, up_filename):
+    '''
+    Read uploaded project config file and return component to visualise
+    table with metadata per video
+    '''
     if up_content is not None:
         _, content_str = up_content.split(",")
         try:
             if "yaml" in up_filename:
+                # get config
                 cfg = yaml.safe_load(base64.b64decode(content_str))
+                # get video dir
                 video_dir = cfg["videos_dir_path"]
+                # get metadata fields dict
+                with open(cfg['metadata_fields_file_path']) as mdf:
+                    metadata_fields_dict = yaml.safe_load(mdf)
 
         except Exception as e:
             print(e)
@@ -81,7 +91,10 @@ def update_file_drop_output(up_content, up_filename):
         return html.Div(
             [
                 wazp.utils.metadata_tbl_component_from_df(
-                    wazp.utils.df_from_metadata_yaml_files(video_dir)
+                    wazp.utils.df_from_metadata_yaml_files(
+                        video_dir,
+                        metadata_fields_dict
+                        )
                 ),
                 html.Div(
                     [
@@ -91,7 +104,7 @@ def update_file_drop_output(up_content, up_filename):
                             n_clicks=0,
                         ),
                         html.Button(
-                            children="Add row manually",
+                            children="Add empty row",
                             id="add-row-manually-button",
                             n_clicks=0,
                         ),
@@ -129,13 +142,14 @@ def add_rows(
     """
 
     # Manually
-    if n_clicks_add_row_manually > 0:
+    if n_clicks_add_row_manually > 0 and table_columns:
         table_rows.append({c["id"]: "" for c in table_columns})
-        n_clicks_add_row_manually = 0  # reset manual clicks
+        n_clicks_add_row_manually = 0
+        # reset manual clicks (otherwise triggered anytime a button is clicked)
 
     # For missing files
-    if n_clicks_add_rows_missing > 0:
-        # Get list of files shown in table
+    if n_clicks_add_rows_missing > 0 and table_columns:
+        # Get list of Files shown in table
         list_files_in_tbl = [
             d["File"] for d in table_rows
         ]  # TODO check if a better way?
@@ -176,5 +190,10 @@ def add_rows(
                 }
             )
             n_clicks_add_rows_missing = 0  # reset clicks
+
+        # If the original table had only one empty row: pop it
+        # (it occurs if initially no yaml files)
+        if list_files_in_tbl == ['']:
+            table_rows = table_rows[1:]
 
     return table_rows, n_clicks_add_row_manually, n_clicks_add_rows_missing

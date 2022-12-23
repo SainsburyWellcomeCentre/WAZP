@@ -1,2 +1,3 @@
 videos_dir_path: ./sample_project/videos # path relative to location of app.py script #/Volumes/zoo/raw/LondonZoo/Videos/jewel-wasp_Ampulex-compressa,
+metadata_fields_file_path: ./sample_project/metadata_fields.yaml
 pose_estimation_model_path: /Volumes/zoo/processed/LondonZoo/jewel-wasp_Ampulex-compressa/DLC_femaleandmale/jwasp_femaleandmale-Sanna-2022-09-12/dlc-models/iteration-0/jwasp_femaleandmaleSep12-trainset95shuffle1/train/snapshot-1000000.data-00000-of-00001
