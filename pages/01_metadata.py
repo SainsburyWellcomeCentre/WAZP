@@ -4,7 +4,6 @@
 import dash
 from dash import dcc, html
 
-
 ###############
 # Register this page
 # Notes:

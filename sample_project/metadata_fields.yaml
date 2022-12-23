@@ -10,11 +10,11 @@ Species_name:
 Common_name:
     Type: string
     LongName: common name
-    Description: Common name in a syntax where _ replace spaces. 
+    Description: Common name in a syntax where _ replace spaces.
 Subject:
     Type: string
     LongName: name of the recorded subject (single animal)
-    Description: Filmed individuals are designated a letter, where the first individual filmed is A, the second is B, etc. This individual's sex follows it's designated subject letter. For example, A_female was the first individual of that species filmed and it was a female. 
+    Description: Filmed individuals are designated a letter, where the first individual filmed is A, the second is B, etc. This individual's sex follows it's designated subject letter. For example, A_female was the first individual of that species filmed and it was a female.
 Treatment:
     Type: string
     LongName: an identifier for the experimental treatment
@@ -22,7 +22,7 @@ Treatment:
 Treatment_description:
     Type: string
     LongName: a detailed description of the experimental treatment
-    Description: A text-formatted column to provide further detail on the designated "Treatment." 
+    Description: A text-formatted column to provide further detail on the designated "Treatment."
 Date_start:
     Type: string
     LongName: date in which the video recording started
@@ -31,7 +31,7 @@ Time_start:
     Type: string
     LongName: time in which the video recording started
     Unit: HH:MM:SS
-    Description: A time-formatted column (hours:minute:seconds) representing the time in which acquisition of this video was intiated. Videos initiated between 27/5/22 and 30/10/22 are in respect to BST, while those collected prior to 27/5/22 or after 30/10/22 are in respect to GMT. 
+    Description: A time-formatted column (hours:minute:seconds) representing the time in which acquisition of this video was intiated. Videos initiated between 27/5/22 and 30/10/22 are in respect to BST, while those collected prior to 27/5/22 or after 30/10/22 are in respect to GMT.
 Date_end:
     Type: string
     LongName: date in which the video recording terminated
@@ -40,7 +40,7 @@ Time_end:
     Type: string
     LongName: time in which the video recording terminated
     Unit: HH:MM:SS
-    Description: A time-formatted column (hours:minute:seconds) representing the time in which acquisition of this video was terminated. Videos terminated between 27/5/22 and 30/10/22 are in respect to BST, while those collected prior to 27/5/22 or after 30/10/22 are in respect to GMT. 
+    Description: A time-formatted column (hours:minute:seconds) representing the time in which acquisition of this video was terminated. Videos terminated between 27/5/22 and 30/10/22 are in respect to BST, while those collected prior to 27/5/22 or after 30/10/22 are in respect to GMT.
 Time_recorded:
     Type: string
     LongName: length of time the video was recorded

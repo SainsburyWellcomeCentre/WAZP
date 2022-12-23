@@ -10,13 +10,14 @@ from dash import Input, Output, State, html
 import wazp.utils
 
 ##########
-VIDEO_TYPES = [".avi", ".mp4"]  # others?
+VIDEO_TYPES = [".avi", ".mp4"]
+# TODO others? in project config file instead?
 
 
+##########
 def get_metadata_callbacks(app):
 
     #####################################
-    # Callbacks
     # Config file upload
     @app.callback(
         Output("output-data-upload", "children"),
@@ -69,6 +70,7 @@ def get_metadata_callbacks(app):
                 ]
             )  # returns children of 'output-data-upload'
 
+    ############################################################
     # Add rows to table (manually or for missing files)
     @app.callback(
         Output("metadata-table", "data"),
@@ -155,3 +157,4 @@ def get_metadata_callbacks(app):
                 table_rows = table_rows[1:]
 
         return table_rows, n_clicks_add_row_manually, n_clicks_add_rows_missing
+
