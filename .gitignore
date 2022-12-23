@@ -44,6 +44,10 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+.pytest_cache/
+
+# mypy
+.mypy_cache/
 
 # Translations
 *.mo
@@ -58,6 +62,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/build/
 
 # MkDocs documentation
 /site/
