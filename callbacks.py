@@ -157,4 +157,3 @@ def get_metadata_callbacks(app):
                 table_rows = table_rows[1:]
 
         return table_rows, n_clicks_add_row_manually, n_clicks_add_rows_missing
-
