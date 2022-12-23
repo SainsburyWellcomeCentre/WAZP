@@ -1,5 +1,6 @@
 import base64
 import pathlib as pl
+
 # import pdb
 import re
 
@@ -24,10 +25,10 @@ def get_metadata_callbacks(app):
         # State('upload-data', 'last-modified'),
     )
     def update_file_drop_output(up_content, up_filename):
-        '''
+        """
         Read uploaded project config file and return component to visualise
         table with metadata per video
-        '''
+        """
         if up_content is not None:
             _, content_str = up_content.split(",")
             try:
@@ -37,7 +38,7 @@ def get_metadata_callbacks(app):
                     # get video dir
                     video_dir = cfg["videos_dir_path"]
                     # get metadata fields dict
-                    with open(cfg['metadata_fields_file_path']) as mdf:
+                    with open(cfg["metadata_fields_file_path"]) as mdf:
                         metadata_fields_dict = yaml.safe_load(mdf)
 
             except Exception as e:
@@ -48,9 +49,8 @@ def get_metadata_callbacks(app):
                 [
                     wazp.utils.metadata_tbl_component_from_df(
                         wazp.utils.df_from_metadata_yaml_files(
-                            video_dir,
-                            metadata_fields_dict
-                            )
+                            video_dir, metadata_fields_dict
+                        )
                     ),
                     html.Div(
                         [
@@ -151,7 +151,7 @@ def get_metadata_callbacks(app):
 
             # If the original table had only one empty row: pop it
             # (it occurs if initially no yaml files)
-            if list_files_in_tbl == ['']:
+            if list_files_in_tbl == [""]:
                 table_rows = table_rows[1:]
 
         return table_rows, n_clicks_add_row_manually, n_clicks_add_rows_missing

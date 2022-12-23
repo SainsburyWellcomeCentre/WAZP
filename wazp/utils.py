@@ -29,23 +29,22 @@ def df_from_metadata_yaml_files(parent_dir, metadata_fields_dict):
     # If there are no metadata files: build table from metadata_fields_dict
     if not list_metadata_files:
         return pd.DataFrame.from_dict(
-            [{c: '' for c in metadata_fields_dict.keys()}],  # because we are passing only one row, wrap in a list
-            orient="columns"
-            )
-    # If there are metadata files: build table from those yaml files        
+            [{c: "" for c in metadata_fields_dict.keys()}],
+            # because we are passing only one row, wrap in a list
+            orient="columns",
+        )
+    # If there are metadata files: build table from those yaml files
     else:
         list_df_metadata = []
         for yl in list_metadata_files:
             with open(yl) as ylf:
                 list_df_metadata.append(
                     pd.DataFrame.from_dict(
-                        [yaml.safe_load(ylf)],
-                        orient="columns")
+                        [yaml.safe_load(ylf)], orient="columns"
+                    )
                 )
 
-        return pd.concat(
-            list_df_metadata, ignore_index=True
-        )
+        return pd.concat(list_df_metadata, ignore_index=True)
 
 
 def metadata_tbl_component_from_df(df):
@@ -74,18 +73,18 @@ def metadata_tbl_component_from_df(df):
         ],
         css=[
             {
-                'selector': '.dash-spreadsheet td div',
-                'rule': '''
+                "selector": ".dash-spreadsheet td div",
+                "rule": """
                     max-height: 20px; min-height: 20px; height: 20px;
                     line-height: 15px;
                     display: block;
                     overflow-y: hidden;
-                    '''
+                    """,
             }
         ],  # to fix issue of different cell heights if row is empty;
         # see https://dash.plotly.com/datatable/width#wrapping-onto-
         # multiple-lines-while-constraining-the-height-of-cells
-        row_selectable='multi',
+        row_selectable="multi",
         page_size=25,
         page_action="native",
         fixed_rows={"headers": True},  # fix header w/ vert scrolling
@@ -135,7 +134,7 @@ def metadata_tbl_component_from_df(df):
             "color": "black",
             "backgroundColor": "white",
             "overflow": "hidden",
-            # 'lineHeight': '10px',  # only applied to fixed column?--------------
+            # 'lineHeight': '10px',
             "textOverflow": "ellipsis",
         },
         style_header_conditional=[
@@ -151,17 +150,16 @@ def metadata_tbl_component_from_df(df):
             },
             {
                 "if": {"column_id": "File", "row_index": "even"},
-                "backgroundColor": "rgb(235, 235, 255)",  # lighter blue             
+                "backgroundColor": "rgb(235, 235, 255)",  # lighter blue
             },
             {
                 "if": {
                     "column_id": [c for c in df.columns if c != "File"],
                     "row_index": "odd",
                 },
-                "backgroundColor": "rgb(240, 240, 240)",  # gray             
+                "backgroundColor": "rgb(240, 240, 240)",  # gray
             },
         ],
     )
 
     return table  # dbc.Container(table, className="p-5")
-    
