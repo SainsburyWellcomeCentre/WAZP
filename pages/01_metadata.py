@@ -1,17 +1,15 @@
 # Define the page's content within a variable called layout or
 # a function called layout that returns the content.
 
-import pathlib as pl
 import base64
-import pdb
+import pathlib as pl
+import re
 
 import dash
 import yaml
 from dash import Input, Output, State, callback, dcc, html
 
 import wazp.utils
-import re
-
 
 ##########
 VIDEO_TYPES = [".avi", ".mp4"]  # others?
@@ -19,8 +17,11 @@ VIDEO_TYPES = [".avi", ".mp4"]  # others?
 
 ###############
 # Register this page
+# Notes:
+# - dash.page_registry is an ordered dict:
+#   - keys: pages.<name of file under pages dir>
+#   - values: a few attributes of the page...including 'layout'
 dash.register_page(__name__)
-
 
 ######################
 # Define upload component
@@ -59,6 +60,7 @@ layout = html.Div(
 
 #####################################
 # Callbacks
+# Config file upload
 @callback(
     Output("output-data-upload", "children"),
     Input("upload-data", "contents"),
@@ -99,6 +101,7 @@ def update_file_drop_output(up_content, up_filename):
         )  # returns children of 'output-data-upload'
 
 
+# Add rows to table (manually or for missing files)
 @callback(
     Output("metadata-table", "data"),
     Output("add-row-manually-button", "n_clicks"),
@@ -107,7 +110,8 @@ def update_file_drop_output(up_content, up_filename):
     Input("add-rows-for-missing-button", "n_clicks"),
     State(
         "metadata-table", "data"
-    ),  # data = output from df.to_dict("records")(list of dicts, one dict per row)
+    ),  # data = output from df.to_dict("records")
+    # (list of dicts, one dict per row)
     State("metadata-table", "columns"),  # table columns
     State("upload-data", "contents"),
     # prevent_initial_call=True,  # to avoid errors due to input/output
@@ -132,7 +136,9 @@ def add_rows(
     # For missing files
     if n_clicks_add_rows_missing > 0:
         # Get list of files shown in table
-        list_files_in_tbl = [d["File"] for d in table_rows] # TODO check if a better way?
+        list_files_in_tbl = [
+            d["File"] for d in table_rows
+        ]  # TODO check if a better way?
 
         # Read config for videos directory
         _, content_str = up_content.split(",")
@@ -144,10 +150,10 @@ def add_rows(
         list_metadata_files = []
         for f in pl.Path(video_dir).iterdir():
             if str(f).endswith("metadata.yaml"):
-                list_metadata_files.append(re.sub("\.metadata$", "", f.stem))
+                list_metadata_files.append(re.sub(".metadata$", "", f.stem))
             elif any(v in str(f) for v in VIDEO_TYPES):
                 list_video_files.append(f)  # list of PosixPaths
-        
+
         list_videos_wo_metadata = [
             f.name
             for f in list_video_files
@@ -160,7 +166,7 @@ def add_rows(
         #         ]) - set(list_metadata_files)
         #     # Not symmetric OJO!set(li1).symmetric_difference(set(li2))
         # )
-        
+
         # Add a row for every video
         for vid in list_videos_wo_metadata:
             table_rows.append(
@@ -172,48 +178,3 @@ def add_rows(
             n_clicks_add_rows_missing = 0  # reset clicks
 
     return table_rows, n_clicks_add_row_manually, n_clicks_add_rows_missing
-
-
-###########
-# @callback(
-#     Output("metadata-table", "data"),
-#     Input("add-row-manually-button", "n_clicks"),
-#     State("metadata-table", "data"),  # data = output from df.to_dict("records")(list of dicts, one dict per row)
-#     State("metadata-table", "columns"),  # table columns
-#     prevent_initial_call=True,  # to avoid errors due to input/output
-#     # components not existing in initial layout
-# )
-# def add_row_manually(n_clicks_add_row, table_rows, table_columns):
-#     '''
-#     Add one row to the table each time button is clicked
-#     '''
-#     if n_clicks_add_row > 0:
-#         table_rows.append({c['id']: '' for c in table_columns})
-#     return table_rows
-
-
-# @callback(
-#     Output("metadata-table", "data"),
-#     Input("add-rows-for-missing-button", "n_clicks"),
-#     State("metadata-table", "data"),  # data = output from df.to_dict("records")(list of dicts, one dict per row)
-#     State("metadata-table", "columns"),  # table columns
-#     prevent_initial_call=True  # to avoid errors due to input/output
-#     # components not existing in initial layout
-# )
-# def add_rows_for_missing_videos(n_clicks_add_row, table_rows, table_columns):
-#     '''
-#     Check which videos in the video directory have missing metadata files,
-#     and add one row for every missing video
-#     '''
-#     if n_clicks_add_row > 0:
-#         # Get list of videos in directory
-
-#         # Get list of metadata files
-
-#         # Add a row for every missing metadata file
-#         # row['output-data'] = 'NA'
-#         pdb.set_trace()
-#         table_rows.append({c['id']: '' for c in table_columns})
-#     return table_rows
-
-# # table columns: list of dicts, each one describing a column

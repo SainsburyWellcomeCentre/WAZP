@@ -46,18 +46,16 @@ def metadata_tbl_component_from_df(df):
     for col in list_date_columns:
         df[col] = pd.to_datetime(df[col]).dt.strftime("%Y-%m-%d")
 
-    # pdb.set_trace()
     # Using dash table
     table = dash_table.DataTable(
-        id='metadata-table',
+        id="metadata-table",
         data=df.to_dict("records"),
-        # editable=True,
         columns=[
             {
                 "id": c,
                 "name": c,
                 "hideable": True,
-                "editable": True,  #False if c == "File" else True,
+                "editable": True,
                 "presentation": "input",
             }
             for c in df.columns

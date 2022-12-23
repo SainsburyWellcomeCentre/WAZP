@@ -1,14 +1,4 @@
 # -*- coding: utf-8 -*-
-# From :
-# https://dash.plotly.com/dash-core-components/tabs#method-1.-content-as-callback
-# https://dash.plotly.com/urls
-# Sidebar:
-# https://dash-bootstrap-components.opensource.faculty.ai/examples/simple-sidebar/page-2
-#
-# Notes:
-# - dash.page_registry is an ordered dict:
-#   - keys: pages.<name of file under pages dir>
-#   - values: a few attributes of the page...including 'layout'
 
 import dash
 import dash_bootstrap_components as dbc
