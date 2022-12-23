@@ -4,6 +4,8 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
 
+import callbacks
+
 #######################
 # initialise app
 app = Dash(
@@ -74,6 +76,10 @@ content = html.Div(
 ###########################
 # Define app layout
 app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
+
+##################
+# Load callbacks
+callbacks.get_metadata_callbacks(app)
 
 ######################
 # Driver
