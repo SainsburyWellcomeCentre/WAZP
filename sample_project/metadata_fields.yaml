@@ -45,7 +45,7 @@ Time_recorded:
     Type: string
     LongName: length of time the video was recorded
     Unit: HH:MM:SS
-    Description: A time-formatted column (hours:minute:seconds) representing the length of time the video was recorded. 
+    Description: A time-formatted column (hours:minute:seconds) representing the length of time the video was recorded.
 Video_length:
     Type: string
     LongName: length of time the video plays
