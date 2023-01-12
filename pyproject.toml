@@ -1,9 +1,11 @@
 [project]
 name = "WAZP"
-authors = [{name = "Sofia Miñano", email= "s.minano@ucl.ac.uk"},
-           {name = "Nikoloz Sirmpilatze", email= "niko.sirbiladze@gmail.com"},
-           {name = "Sam Cunliffe", email= "s.cunliffe@ucl.ac.uk"},
-           {name = "Adam Tyson", email= "code@adamltyson.com"}]
+authors = [
+  {name = "Sofia Miñano", email = "s.minano@ucl.ac.uk"},
+  {name = "Nikoloz Sirmpilatze", email = "niko.sirbiladze@gmail.com"},
+  {name = "Sam Cunliffe", email = "s.cunliffe@ucl.ac.uk"},
+  {name = "Adam Tyson", email = "code@adamltyson.com"}
+]
 description = "Wasp Animal-tracking Zoo project with Pose estimation"
 readme = "README.md"
 requires-python = ">=3.9.0"
@@ -11,7 +13,13 @@ dynamic = ["version"]
 
 license = {text = "BSD-3-Clause"}
 
-dependencies = ["pandas", "dash", "dash-bootstrap-components"]
+dependencies = [
+  "numpy",
+  "pillow",
+  "pandas",
+  "dash",
+  "dash-bootstrap-components"
+]
 
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
