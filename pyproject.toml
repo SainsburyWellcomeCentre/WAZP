@@ -18,7 +18,8 @@ dependencies = [
   "pillow",
   "pandas",
   "dash",
-  "dash-bootstrap-components"
+  "dash-bootstrap-components",
+  "dash-player",
 ]
 
 classifiers = [
