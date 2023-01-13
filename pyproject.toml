@@ -20,6 +20,7 @@ dependencies = [
   "dash",
   "dash-bootstrap-components",
   "dash-player",
+  "dash-daq",
 ]
 
 classifiers = [
