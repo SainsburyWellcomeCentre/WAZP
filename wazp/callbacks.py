@@ -1,5 +1,6 @@
 import base64
 import pathlib as pl
+
 import re
 
 import pandas as pd
@@ -27,7 +28,7 @@ def get_metadata_callbacks(app):
     def update_file_drop_output(up_content, up_filename):
         """
         Read uploaded project config file and return component to visualise
-        table with metadata per video
+        table with metadata per video. The component includes auxiliary buttons.
         """
         if up_content is not None:
             _, content_str = up_content.split(",")
@@ -58,11 +59,19 @@ def get_metadata_callbacks(app):
                                 children="Check for missing metadata files",
                                 id="add-rows-for-missing-button",
                                 n_clicks=0,
+                                style={"margin-right": "10px"}
                             ),
                             html.Button(
                                 children="Add empty row",
                                 id="add-row-manually-button",
                                 n_clicks=0,
+                                style={"margin-right": "10px"}
+                            ),
+                            html.Button(
+                                children="Export selected rows as yaml",
+                                id="export-selected-rows-button",
+                                n_clicks=0,
+                                style={"margin-right": "10px"}
                             ),
                         ]
                     ),
@@ -149,7 +158,7 @@ def get_metadata_callbacks(app):
 
         return table_rows, n_clicks_add_row_manually, n_clicks_add_rows_missing
 
-    # @app.callback()
+    ###########################
     # If a cell has been edited: change state (checkbox) of the row
     # https://community.plotly.com/t/detecting-changed-cell-in-editable-datatable/26219/5
     # https://dash.plotly.com/datatable/editable#adding-or-removing-rows
@@ -162,7 +171,7 @@ def get_metadata_callbacks(app):
     def set_edited_row_checkbox_to_true(
         data_previous,
         data,
-        selected_rows,
+        list_selected_rows,
     ):
         # pdb.set_trace()
         if data_previous is not None:
@@ -171,13 +180,62 @@ def get_metadata_callbacks(app):
             # (find the dict in the 'data' list with same key but diff value)
             df = pd.DataFrame(data=data)
             df_previous = pd.DataFrame(data_previous)
-
             df_diff = df.merge(df_previous, how="outer", indicator=True).loc[
                 lambda x: x["_merge"] == "left_only"
             ]
 
             # update selected rows
             # could pandas indices and dash indices  mismatch?
-            selected_rows += df_diff.index.tolist()
+            list_selected_rows += [
+                i for i in df_diff.index.tolist()
+                if i not in list_selected_rows
+                ]
+            # list_selected_rows += df_diff.index.tolist()
+            # list_selected_rows = list(set(list_selected_rows))
 
-        return selected_rows
+        return list_selected_rows
+
+    #########################
+    # Export selected rows as yaml
+    @app.callback(
+        # Output("metadata-table", "selected_rows"),
+        Output("export-selected-rows-button", "n_clicks"),
+        Input("export-selected-rows-button", "n_clicks"),
+        State("metadata-table", "data"),
+        State("metadata-table", "selected_rows"),
+        State("upload-data", "contents"),
+        State("upload-data", "filename"),
+    )
+    def export_selected_rows_as_yaml(
+        n_clicks_export,
+        data,
+        list_selected_rows,
+        up_content,
+        up_filename
+    ):
+        if n_clicks_export > 0:
+
+            # Get config from uploaded file
+            if up_content is not None:
+                _, content_str = up_content.split(",")
+            try:
+                if "yaml" in up_filename:
+                    cfg = yaml.safe_load(base64.b64decode(content_str))
+                    video_dir = cfg["videos_dir_path"]
+                    metadata_key_str = cfg["metadata_key_field_str"]
+            except Exception as e:
+                print(e)
+                return html.Div(["There was an error processing this file."])
+
+            # Export selected rows
+            for row in [data[i] for i in list_selected_rows]:
+                # extract key per row (typically, the value under 'File')
+                key = row[metadata_key_str].split('.')[0]  # remove video extension
+
+                # write each row to yaml
+                yaml_filename = key + ".metadata.yaml"
+                with open(pl.Path(video_dir) / yaml_filename, "w") as yamlf:
+                    yaml.dump(row, yamlf, sort_keys=False)
+
+            n_clicks_export = 0
+            return n_clicks_export
