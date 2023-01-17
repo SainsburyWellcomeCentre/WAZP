@@ -1,9 +1,8 @@
 import base64
 import pathlib as pl
-
-# import pdb
 import re
 
+import pandas as pd
 import yaml
 from dash import Input, Output, State, html
 
@@ -11,7 +10,7 @@ import wazp.utils
 
 ##########
 VIDEO_TYPES = [".avi", ".mp4"]
-# TODO others? in project config file instead?
+# TODO: other video extensions? have this in project config file instead?
 
 
 ##########
@@ -78,10 +77,7 @@ def get_metadata_callbacks(app):
         Output("add-rows-for-missing-button", "n_clicks"),
         Input("add-row-manually-button", "n_clicks"),
         Input("add-rows-for-missing-button", "n_clicks"),
-        State(
-            "metadata-table", "data"
-        ),  # data = output from df.to_dict("records")
-        # (list of dicts, one dict per row)
+        State("metadata-table", "data"),  # (list of dicts, one dict per row)
         State("metadata-table", "columns"),  # table columns
         State("upload-data", "contents"),
         # prevent_initial_call=True,  # to avoid errors due to input/output
@@ -107,7 +103,7 @@ def get_metadata_callbacks(app):
 
         # For missing files
         if n_clicks_add_rows_missing > 0 and table_columns:
-            # Get list of Files shown in table
+            # Get list of Files currently in table
             list_files_in_tbl = [
                 d["File"] for d in table_rows
             ]  # TODO check if a better way?
@@ -134,14 +130,8 @@ def get_metadata_callbacks(app):
                 if (f.stem not in list_metadata_files)
                 and (f.name not in list_files_in_tbl)
             ]
-            # list(
-            #     set([
-            #         vf.stem for vf in list_video_files
-            #         ]) - set(list_metadata_files)
-            #     # Not symmetric OJO!set(li1).symmetric_difference(set(li2))
-            # )
 
-            # Add a row for every video
+            # Add a row for every 'missing' video
             for vid in list_videos_wo_metadata:
                 table_rows.append(
                     {
@@ -153,7 +143,41 @@ def get_metadata_callbacks(app):
 
             # If the original table had only one empty row: pop it
             # (it occurs if initially no yaml files)
+            # TODO: this is a bit hacky maybe? is there a better way
             if list_files_in_tbl == [""]:
                 table_rows = table_rows[1:]
 
         return table_rows, n_clicks_add_row_manually, n_clicks_add_rows_missing
+
+    # @app.callback()
+    # If a cell has been edited: change state (checkbox) of the row
+    # https://community.plotly.com/t/detecting-changed-cell-in-editable-datatable/26219/5
+    # https://dash.plotly.com/datatable/editable#adding-or-removing-rows
+    @app.callback(
+        Output("metadata-table", "selected_rows"),
+        Input("metadata-table", "data_previous"),
+        State("metadata-table", "data"),
+        State("metadata-table", "selected_rows"),
+    )
+    def set_edited_row_checkbox_to_true(
+        data_previous,
+        data,
+        selected_rows,
+    ):
+        # pdb.set_trace()
+        if data_previous is not None:
+
+            # TODO: potentially faster by comparing dicts rather than dfs?
+            # (find the dict in the 'data' list with same key but diff value)
+            df = pd.DataFrame(data=data)
+            df_previous = pd.DataFrame(data_previous)
+
+            df_diff = df.merge(df_previous, how="outer", indicator=True).loc[
+                lambda x: x["_merge"] == "left_only"
+            ]
+
+            # update selected rows
+            # could pandas indices and dash indices  mismatch?
+            selected_rows += df_diff.index.tolist()
+
+        return selected_rows

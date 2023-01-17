@@ -61,6 +61,8 @@ def metadata_tbl_component_from_df(df):
     table = dash_table.DataTable(
         id="metadata-table",
         data=df.to_dict("records"),
+        data_previous=None,  # to avoid issues with callback
+        selected_rows=[],
         columns=[
             {
                 "id": c,
