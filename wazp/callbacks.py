@@ -1,6 +1,5 @@
 import base64
 import pathlib as pl
-
 import re
 
 import pandas as pd
@@ -28,7 +27,9 @@ def get_metadata_callbacks(app):
     def update_file_drop_output(up_content, up_filename):
         """
         Read uploaded project config file and return component to visualise
-        table with metadata per video. The component includes auxiliary buttons.
+        table with metadata per video.
+
+        The component includes auxiliary buttons.
         """
         if up_content is not None:
             _, content_str = up_content.split(",")
@@ -59,19 +60,19 @@ def get_metadata_callbacks(app):
                                 children="Check for missing metadata files",
                                 id="add-rows-for-missing-button",
                                 n_clicks=0,
-                                style={"margin-right": "10px"}
+                                style={"margin-right": "10px"},
                             ),
                             html.Button(
                                 children="Add empty row",
                                 id="add-row-manually-button",
                                 n_clicks=0,
-                                style={"margin-right": "10px"}
+                                style={"margin-right": "10px"},
                             ),
                             html.Button(
                                 children="Export selected rows as yaml",
                                 id="export-selected-rows-button",
                                 n_clicks=0,
-                                style={"margin-right": "10px"}
+                                style={"margin-right": "10px"},
                             ),
                         ]
                     ),
@@ -187,9 +188,10 @@ def get_metadata_callbacks(app):
             # update selected rows
             # could pandas indices and dash indices  mismatch?
             list_selected_rows += [
-                i for i in df_diff.index.tolist()
+                i
+                for i in df_diff.index.tolist()
                 if i not in list_selected_rows
-                ]
+            ]
             # list_selected_rows += df_diff.index.tolist()
             # list_selected_rows = list(set(list_selected_rows))
 
@@ -207,11 +209,7 @@ def get_metadata_callbacks(app):
         State("upload-data", "filename"),
     )
     def export_selected_rows_as_yaml(
-        n_clicks_export,
-        data,
-        list_selected_rows,
-        up_content,
-        up_filename
+        n_clicks_export, data, list_selected_rows, up_content, up_filename
     ):
         if n_clicks_export > 0:
 
@@ -230,7 +228,9 @@ def get_metadata_callbacks(app):
             # Export selected rows
             for row in [data[i] for i in list_selected_rows]:
                 # extract key per row (typically, the value under 'File')
-                key = row[metadata_key_str].split('.')[0]  # remove video extension
+                key = row[metadata_key_str].split(".")[
+                    0
+                ]  # remove video extension
 
                 # write each row to yaml
                 yaml_filename = key + ".metadata.yaml"
