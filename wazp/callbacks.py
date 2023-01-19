@@ -2,11 +2,11 @@ import base64
 import pathlib as pl
 import re
 
-import pandas as pd
+import dash_bootstrap_components as dbc
 import yaml
 from dash import Input, Output, State, html
 
-import wazp.utils
+import wazp.utils as utils
 
 ##########
 VIDEO_TYPES = [".avi", ".mp4"]
@@ -22,7 +22,6 @@ def get_metadata_callbacks(app):
         Output("output-data-upload", "children"),
         Input("upload-data", "contents"),
         State("upload-data", "filename"),
-        # State('upload-data', 'last-modified'),
     )
     def update_file_drop_output(up_content, up_filename):
         """
@@ -49,8 +48,8 @@ def get_metadata_callbacks(app):
 
             return html.Div(
                 [
-                    wazp.utils.metadata_tbl_component_from_df(
-                        wazp.utils.df_from_metadata_yaml_files(
+                    utils.metadata_tbl_component_from_df(
+                        utils.df_from_metadata_yaml_files(
                             video_dir, metadata_fields_dict
                         )
                     ),
@@ -69,10 +68,23 @@ def get_metadata_callbacks(app):
                                 style={"margin-right": "10px"},
                             ),
                             html.Button(
+                                children="Select/unselect all rows",
+                                id="select-all-rows-button",
+                                n_clicks=0,
+                                style={"margin-right": "10px"},
+                            ),
+                            html.Button(
                                 children="Export selected rows as yaml",
                                 id="export-selected-rows-button",
                                 n_clicks=0,
                                 style={"margin-right": "10px"},
+                            ),
+                            dbc.Alert(
+                                children="",
+                                id="alert",
+                                dismissable=True,
+                                fade=False,
+                                is_open=False,
                             ),
                         ]
                     ),
@@ -160,31 +172,41 @@ def get_metadata_callbacks(app):
         return table_rows, n_clicks_add_row_manually, n_clicks_add_rows_missing
 
     ###########################
-    # If a cell has been edited: change state (checkbox) of the row
-    # https://community.plotly.com/t/detecting-changed-cell-in-editable-datatable/26219/5
-    # https://dash.plotly.com/datatable/editable#adding-or-removing-rows
-
+    # Modify rows selection: after editing or after clicking export
     @app.callback(
         Output("metadata-table", "selected_rows"),
+        Output("select-all-rows-button", "n_clicks"),
         Output("export-selected-rows-button", "n_clicks"),
+        Output("alert", "is_open"),
+        Output("alert", "children"),
+        Input("select-all-rows-button", "n_clicks"),
         Input("export-selected-rows-button", "n_clicks"),
         Input("metadata-table", "data_previous"),
         State("metadata-table", "data"),
+        State(
+            "metadata-table", "derived_viewport_data"
+        ),  # data on the current page
         State("metadata-table", "selected_rows"),
         State("upload-data", "contents"),
         State("upload-data", "filename"),
+        State("alert", "is_open"),
     )
     def modify_rows_selection(
+        n_clicks_select_all,
         n_clicks_export,
         data_previous,
         data,
+        data_page,
         list_selected_rows,
         up_content,
         up_filename,
+        alert_state,
     ):
+        alert_message = ""
+
         # if there is a change to the data: set checkbox to True
         if data_previous is not None:
-            list_selected_rows = set_edited_row_checkbox_to_true(
+            list_selected_rows = utils.set_edited_row_checkbox_to_true(
                 data_previous,
                 data,
                 list_selected_rows,
@@ -194,61 +216,39 @@ def get_metadata_callbacks(app):
         if (n_clicks_export > 0) and list_selected_rows:
 
             # export yaml files
-            export_selected_rows_as_yaml(
+            utils.export_selected_rows_as_yaml(
                 data, list_selected_rows, up_content, up_filename
             )
-            # rest rows and nclicks
+
+            # display alert if successful import
+            # (what is a better way to check successful export?)
+            if not alert_state:
+                alert_state = not alert_state
+            list_files = [data[i]["File"] for i in list_selected_rows]
+            # alert message: add timestamp? add name of files?
+            alert_message = f"""Successfully exported
+            {len(list_selected_rows)} yaml files: {list_files}"""
+
+            # reset rows and nclicks
             list_selected_rows = []
             n_clicks_export = 0
 
-        return list_selected_rows, n_clicks_export
+        # if 'select all' is clicked
+        if (
+            n_clicks_select_all % 2 != 0 and n_clicks_select_all > 0
+        ):  # if odd: select
+            list_selected_rows = list(range(len(data_page)))
+            # n_clicks_select_all = 0
+        elif (
+            n_clicks_select_all % 2 == 0 and n_clicks_select_all > 0
+        ):  # if even: unselect
+            list_selected_rows = []
+            # n_clicks_select_all = 0
 
-    def set_edited_row_checkbox_to_true(
-        data_previous, data, list_selected_rows
-    ):
-
-        # TODO: potentially faster by comparing dicts rather than dfs?
-        # (find the dict in the 'data' list with same key but diff value)
-        df = pd.DataFrame(data=data)
-        df_previous = pd.DataFrame(data_previous)
-        df_diff = df.merge(df_previous, how="outer", indicator=True).loc[
-            lambda x: x["_merge"] == "left_only"
-        ]
-
-        # update selected rows
-        # could pandas indices and dash indices  mismatch?
-        list_selected_rows += [
-            i for i in df_diff.index.tolist() if i not in list_selected_rows
-        ]
-
-        return list_selected_rows
-
-    #########################
-    # Export selected rows as yaml
-    def export_selected_rows_as_yaml(
-        data, list_selected_rows, up_content, up_filename
-    ):
-
-        # Get config from uploaded file
-        if up_content is not None:
-            _, content_str = up_content.split(",")
-        try:
-            if "yaml" in up_filename:
-                cfg = yaml.safe_load(base64.b64decode(content_str))
-                video_dir = cfg["videos_dir_path"]
-                metadata_key_str = cfg["metadata_key_field_str"]
-        except Exception as e:
-            print(e)
-            return html.Div(["There was an error processing this file."])
-
-        # Export selected rows
-        for row in [data[i] for i in list_selected_rows]:
-            # extract key per row (typically, the value under 'File')
-            key = row[metadata_key_str].split(".")[0]  # remove video extension
-
-            # write each row to yaml
-            yaml_filename = key + ".metadata.yaml"
-            with open(pl.Path(video_dir) / yaml_filename, "w") as yamlf:
-                yaml.dump(row, yamlf, sort_keys=False)
-
-        return
+        return (
+            list_selected_rows,
+            n_clicks_select_all,
+            n_clicks_export,
+            alert_state,
+            alert_message,
+        )

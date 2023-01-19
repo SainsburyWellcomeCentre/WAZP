@@ -1,8 +1,9 @@
+import base64
 import pathlib as pl
 
 import pandas as pd
 import yaml
-from dash import dash_table
+from dash import dash_table, html
 
 
 def df_from_metadata_yaml_files(parent_dir, metadata_fields_dict):
@@ -165,3 +166,55 @@ def metadata_tbl_component_from_df(df):
     )
 
     return table  # dbc.Container(table, className="p-5")
+
+
+def set_edited_row_checkbox_to_true(data_previous, data, list_selected_rows):
+
+    # TODO: potentially faster by comparing dicts rather than dfs?
+    # (find the dict in the 'data' list with same key but diff value)
+    df = pd.DataFrame(data=data)
+    df_previous = pd.DataFrame(data_previous)
+    df_diff = df.merge(df_previous, how="outer", indicator=True).loc[
+        lambda x: x["_merge"] == "left_only"
+    ]
+
+    # update selected rows
+    # could pandas indices and dash indices  mismatch?
+    list_selected_rows += [
+        i for i in df_diff.index.tolist() if i not in list_selected_rows
+    ]
+
+    return list_selected_rows
+
+
+#########################
+# Export selected rows as yaml
+def export_selected_rows_as_yaml(
+    data, list_selected_rows, up_content, up_filename
+):
+
+    # Get config from uploaded file
+    if up_content is not None:
+        _, content_str = up_content.split(",")
+    try:
+        if "yaml" in up_filename:
+            cfg = yaml.safe_load(base64.b64decode(content_str))
+            video_dir = cfg["videos_dir_path"]
+            metadata_key_str = cfg["metadata_key_field_str"]
+    except Exception as e:
+        print(e)
+        return html.Div(["There was an error processing this file."])
+
+    # Export selected rows
+    for row in [data[i] for i in list_selected_rows]:
+        # extract key per row (typically, the value under 'File')
+        key = row[metadata_key_str].split(".")[0]  # remove video extension
+
+        # write each row to yaml
+        yaml_filename = key + ".metadata.yaml"
+        with open(pl.Path(video_dir) / yaml_filename, "w") as yamlf:
+            yaml.dump(row, yamlf, sort_keys=False)
+
+        # if successful export (how to properly check?) pop a message
+
+    return
