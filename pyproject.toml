@@ -21,6 +21,7 @@ dependencies = [
   "dash-bootstrap-components",
   "dash-player",
   "dash-daq",
+  "opencv-python",
 ]
 
 classifiers = [
