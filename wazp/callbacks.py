@@ -166,6 +166,7 @@ def get_metadata_callbacks(app):
 
     @app.callback(
         Output("metadata-table", "selected_rows"),
+        Output("export-selected-rows-button", "n_clicks"),
         Input("export-selected-rows-button", "n_clicks"),
         Input("metadata-table", "data_previous"),
         State("metadata-table", "data"),
@@ -181,18 +182,17 @@ def get_metadata_callbacks(app):
         up_content,
         up_filename,
     ):
-
-        # if there is a change to the data: set checkbox to Truee
+        # if there is a change to the data: set checkbox to True
         if data_previous is not None:
-            # pdb.set_trace()
             list_selected_rows = set_edited_row_checkbox_to_true(
                 data_previous,
                 data,
                 list_selected_rows,
             )
 
-        # if export button is clicked: export and set all rows to False?
-        if n_clicks_export > 0 and list_selected_rows:
+        # if export is clicked: export selected rows and unselect
+        if (n_clicks_export > 0) and list_selected_rows:
+
             # export yaml files
             export_selected_rows_as_yaml(
                 data, list_selected_rows, up_content, up_filename
@@ -201,7 +201,7 @@ def get_metadata_callbacks(app):
             list_selected_rows = []
             n_clicks_export = 0
 
-        return list_selected_rows
+        return list_selected_rows, n_clicks_export
 
     def set_edited_row_checkbox_to_true(
         data_previous, data, list_selected_rows
