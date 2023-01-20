@@ -8,28 +8,29 @@ from dash import Input, Output, State, html
 
 import wazp.utils as utils
 
-##########
 VIDEO_TYPES = [".avi", ".mp4"]
 # TODO: other video extensions? have this in project config file instead?
 
 
-##########
 def get_metadata_callbacks(app):
+    """
+    Return all callback functions defined for the app
 
-    #####################################
-    # Config file upload
+    """
+
     @app.callback(
         Output("output-data-upload", "children"),
         Input("upload-data", "contents"),
         State("upload-data", "filename"),
     )
-    def update_file_drop_output(up_content, up_filename):
+    def update_file_drop_output(up_content: str, up_filename: str):
         """
-        Read uploaded project config file and return component to visualise
-        table with metadata per video.
+        Read uploaded config file and return component with:
+        - table with metadata per video,
+        - auxiliary buttons for common table manipulations
 
-        The component includes auxiliary buttons.
         """
+        # Read uploaded content
         if up_content is not None:
             _, content_str = up_content.split(",")
             try:
@@ -41,18 +42,20 @@ def get_metadata_callbacks(app):
                     # get metadata fields dict
                     with open(cfg["metadata_fields_file_path"]) as mdf:
                         metadata_fields_dict = yaml.safe_load(mdf)
-
             except Exception as e:
                 print(e)
                 return html.Div(["There was an error processing this file."])
 
+            # Define component layout
             return html.Div(
                 [
+                    # metadata table
                     utils.metadata_tbl_component_from_df(
                         utils.df_from_metadata_yaml_files(
                             video_dir, metadata_fields_dict
                         )
                     ),
+                    # auxiliary buttons
                     html.Div(
                         [
                             html.Button(
@@ -89,53 +92,52 @@ def get_metadata_callbacks(app):
                         ]
                     ),
                 ]
-            )  # returns children of 'output-data-upload'
+            )
 
-    ############################################################
-    # Add rows to table (manually or for missing files)
     @app.callback(
         Output("metadata-table", "data"),
         Output("add-row-manually-button", "n_clicks"),
         Output("add-rows-for-missing-button", "n_clicks"),
         Input("add-row-manually-button", "n_clicks"),
         Input("add-rows-for-missing-button", "n_clicks"),
-        State("metadata-table", "data"),  # (list of dicts, one dict per row)
-        State("metadata-table", "columns"),  # table columns
+        State("metadata-table", "data"),
+        State("metadata-table", "columns"),
         State("upload-data", "contents"),
-        # prevent_initial_call=True,  # to avoid errors due to input/output
-        # components not existing in initial layout---TODO: fails if I refresh!
     )
     def add_rows(
-        n_clicks_add_row_manually,
-        n_clicks_add_rows_missing,
-        table_rows,
-        table_columns,
-        up_content,
+        n_clicks_add_row_manually: int,
+        n_clicks_add_rows_missing: int,
+        table_rows: list,
+        table_columns: list,
+        up_content: str,
     ):
         """
-        Add rows to table, either manually or by checking missing files
+        Add rows to metadata table, either:
+        - manually
+        - based on videos with missing yaml files
+
+        Both are triggered by clicking the corresponding buttons
+
         """
 
-        # Manually
+        # Add empty rows manually
         if n_clicks_add_row_manually > 0 and table_columns:
             table_rows.append({c["id"]: "" for c in table_columns})
-            n_clicks_add_row_manually = 0
-            # reset manual clicks
-            # (otherwise triggered anytime a button is clicked)
+            n_clicks_add_row_manually = 0  # reset clicks
 
-        # For missing files
+        # Add rows for videos w/ missing metadata
         if n_clicks_add_rows_missing > 0 and table_columns:
-            # Get list of Files currently in table
-            list_files_in_tbl = [
-                d["File"] for d in table_rows
-            ]  # TODO check if a better way?
-
             # Read config for videos directory
             _, content_str = up_content.split(",")
             cfg = yaml.safe_load(base64.b64decode(content_str))
             video_dir = cfg["videos_dir_path"]
 
-            # Get list of videos without metadata and not in table
+            # List of files currently shown in table
+            list_files_in_tbl = [
+                d[cfg["metadata_key_field_str"]] for d in table_rows
+            ]
+
+            # List of videos w/o metadata and not in table
             list_video_files = []
             list_metadata_files = []
             for f in pl.Path(video_dir).iterdir():
@@ -145,7 +147,6 @@ def get_metadata_callbacks(app):
                     )
                 elif any(v in str(f) for v in VIDEO_TYPES):
                     list_video_files.append(f)  # list of PosixPaths
-
             list_videos_wo_metadata = [
                 f.name
                 for f in list_video_files
@@ -153,7 +154,7 @@ def get_metadata_callbacks(app):
                 and (f.name not in list_files_in_tbl)
             ]
 
-            # Add a row for every 'missing' video
+            # Add a row for every video w/o metadata
             for vid in list_videos_wo_metadata:
                 table_rows.append(
                     {
@@ -164,15 +165,13 @@ def get_metadata_callbacks(app):
                 n_clicks_add_rows_missing = 0  # reset clicks
 
             # If the original table had only one empty row: pop it
-            # (it occurs if initially no yaml files)
-            # TODO: this is a bit hacky maybe? is there a better way
+            # (it occurs if initially there are no yaml files)
+            # TODO: this is a bit hacky maybe? is there a better way?
             if list_files_in_tbl == [""]:
                 table_rows = table_rows[1:]
 
         return table_rows, n_clicks_add_row_manually, n_clicks_add_rows_missing
 
-    ###########################
-    # Modify rows selection: after editing or after clicking export
     @app.callback(
         Output("metadata-table", "selected_rows"),
         Output("select-all-rows-button", "n_clicks"),
@@ -192,19 +191,29 @@ def get_metadata_callbacks(app):
         State("alert", "is_open"),
     )
     def modify_rows_selection(
-        n_clicks_select_all,
-        n_clicks_export,
-        data_previous,
-        data,
-        data_page,
-        list_selected_rows,
-        up_content,
-        up_filename,
-        alert_state,
+        n_clicks_select_all: int,
+        n_clicks_export: int,
+        data_previous: list,
+        data: list,
+        data_page: list,
+        list_selected_rows: list,
+        up_content: str,
+        up_filename: str,
+        alert_state: bool,
     ):
+        """
+        Modify the set of rows that are selected.
+
+        A row's checkbox is modified if:
+        - the user edits the data on that row (checkbox set to True)
+        - the export button is clicked (checkbox set to False after exporting)
+        - the 'select/unselect' all button is clicked
+        """
+
+        # Initialise alert message w empty
         alert_message = ""
 
-        # if there is a change to the data: set checkbox to True
+        # If there is an edit to the row data: set checkbox to True
         if data_previous is not None:
             list_selected_rows = utils.set_edited_row_checkbox_to_true(
                 data_previous,
@@ -212,7 +221,7 @@ def get_metadata_callbacks(app):
                 list_selected_rows,
             )
 
-        # if export is clicked: export selected rows and unselect
+        # If the export button is clicked: export selected rows and unselect
         if (n_clicks_export > 0) and list_selected_rows:
 
             # export yaml files
@@ -221,29 +230,27 @@ def get_metadata_callbacks(app):
             )
 
             # display alert if successful import
-            # (what is a better way to check successful export?)
+            # TODO: what is a better way to check if export was successful?
+            # TODO: add timestamp? remove name of files in message?
             if not alert_state:
                 alert_state = not alert_state
             list_files = [data[i]["File"] for i in list_selected_rows]
-            # alert message: add timestamp? add name of files?
             alert_message = f"""Successfully exported
             {len(list_selected_rows)} yaml files: {list_files}"""
 
-            # reset rows and nclicks
+            # reset selected rows and nclicks
             list_selected_rows = []
             n_clicks_export = 0
 
-        # if 'select all' is clicked
+        # If 'select/unselect all' button is clicked
         if (
             n_clicks_select_all % 2 != 0 and n_clicks_select_all > 0
-        ):  # if odd: select
+        ):  # if odd number of clicks: select all
             list_selected_rows = list(range(len(data_page)))
-            # n_clicks_select_all = 0
         elif (
             n_clicks_select_all % 2 == 0 and n_clicks_select_all > 0
-        ):  # if even: unselect
+        ):  # if even number of clicks: unselect all
             list_selected_rows = []
-            # n_clicks_select_all = 0
 
         return (
             list_selected_rows,

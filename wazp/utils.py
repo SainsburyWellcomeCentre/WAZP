@@ -8,33 +8,34 @@ from dash import dash_table, html
 
 def df_from_metadata_yaml_files(parent_dir, metadata_fields_dict):
     """
-    Build a dataframe from all the metadata.yaml files in the input parent
+    Build a dataframe from all the metadata.yaml files in the selected parent
     directory. If there are no metadata.yaml files, make a dataframe with
     the columns as in metadata_fields_dict and empty (string) fields
 
     """
-    # TODO: refactor, I think it could be more compact
+    # TODO: refactor, I think it could be more compact?
     # TODO: this was the previous approach with json, can I do it as compact?
     # read_fn = lambda x: pd.read_json(os.path.join(parent_dir, x),
     #   orient="index")
     # df = pd.concat(map(read_fn, list_metadata_files),
     #   ignore_index=True, axis=1)
 
-    # Compute list of metadata files in parentdir
+    # List of metadata files in parentdir
     list_metadata_files = [
         str(f)
         for f in pl.Path(parent_dir).iterdir()
-        if str(f).endswith("metadata.yaml")  # '---
+        if str(f).endswith("metadata.yaml")
     ]
 
-    # If there are no metadata files: build table from metadata_fields_dict
+    # If there are no metadata (yaml) files:
+    #  build dataframe from metadata_fields_dict
     if not list_metadata_files:
         return pd.DataFrame.from_dict(
             [{c: "" for c in metadata_fields_dict.keys()}],
             # because we are passing only one row, wrap in a list
             orient="columns",
         )
-    # If there are metadata files: build table from those yaml files
+    # If there are metadata (yaml) files: build dataframe from yaml files
     else:
         list_df_metadata = []
         for yl in list_metadata_files:
@@ -50,19 +51,22 @@ def df_from_metadata_yaml_files(parent_dir, metadata_fields_dict):
 
 def metadata_tbl_component_from_df(df):
     """
-    Build a table component for the Dash/Plotly app populated
-    with input dataframe
+    Build a Dash table component populated with the input dataframe
+
     """
+
     # Change format of date fields in dataframe
+    # (this is to allow for sorting in the dash table)
+    # TODO: review this, have simply as string?
     list_date_columns = [col for col in df.columns if "date" in col.lower()]
     for col in list_date_columns:
         df[col] = pd.to_datetime(df[col]).dt.strftime("%Y-%m-%d")
 
-    # Using dash table
+    # Define dash table component
     table = dash_table.DataTable(
         id="metadata-table",
         data=df.to_dict("records"),
-        data_previous=None,  # to avoid issues with callback
+        data_previous=None,
         selected_rows=[],
         columns=[
             {
@@ -90,11 +94,10 @@ def metadata_tbl_component_from_df(df):
         row_selectable="multi",
         page_size=25,
         page_action="native",
-        fixed_rows={"headers": True},  # fix header w/ vert scrolling
-        fixed_columns={"headers": True, "data": 1},  # fix 'File' column
+        fixed_rows={"headers": True},  # fix header w/ vertical scrolling
+        fixed_columns={"headers": True, "data": 1},  # fix first column
         sort_action="native",
-        sort_mode="single",  # if 'multi': sorting across multiple columns
-        # (e.g. sort by country, sort within each country)
+        sort_mode="single",
         tooltip_header={i: {"value": i} for i in df.columns},
         tooltip_data=[
             {
@@ -109,7 +112,6 @@ def metadata_tbl_component_from_df(df):
             "fontWeight": "bold",
             "textAlign": "left",
             "fontFamily": "Helvetica",
-            # "'Open Sans', verdana, arial, sans-serif",
         },
         style_table={
             "height": "720px",
@@ -124,26 +126,24 @@ def metadata_tbl_component_from_df(df):
             "overflowY": "scroll",
             "overflowX": "scroll",
         },
-        style_cell={  # all cells (the whole table)
+        style_cell={  # refers to all cells (the whole table)
             "textAlign": "left",
             "padding": 7,
             "minWidth": 70,
             "width": 175,
             "maxWidth": 300,  # 200
             "fontFamily": "Helvetica",
-            # "'Open Sans', verdana, arial, sans-serif",
         },
-        style_data={  # data cells (all cells except header and filter cells)
+        style_data={  # refers to data cells (all except header and filter)
             "color": "black",
             "backgroundColor": "white",
             "overflow": "hidden",
-            # 'lineHeight': '10px',
             "textOverflow": "ellipsis",
         },
         style_header_conditional=[
             {
                 "if": {"column_id": "File"},
-                "backgroundColor": "rgb(200, 200, 400)",  # darker blue
+                "backgroundColor": "rgb(200, 200, 400)",
             }
         ],
         style_data_conditional=[
@@ -165,21 +165,28 @@ def metadata_tbl_component_from_df(df):
         ],
     )
 
-    return table  # dbc.Container(table, className="p-5")
+    return table
 
 
-def set_edited_row_checkbox_to_true(data_previous, data, list_selected_rows):
+def set_edited_row_checkbox_to_true(
+    data_previous: list, data: list, list_selected_rows: list
+):
+    """
+    When the data in a row is edited, set its checkbox to True
 
-    # TODO: potentially faster by comparing dicts rather than dfs?
-    # (find the dict in the 'data' list with same key but diff value)
+    """
+
+    # Compute difference between current and previous table
+    # TODO: is this faster if I compare dicts rather than dfs?
+    # (that would be: find the dict in the 'data' list with
+    # same key but different value)
     df = pd.DataFrame(data=data)
     df_previous = pd.DataFrame(data_previous)
     df_diff = df.merge(df_previous, how="outer", indicator=True).loc[
         lambda x: x["_merge"] == "left_only"
     ]
 
-    # update selected rows
-    # could pandas indices and dash indices  mismatch?
+    # Update set of selected rows
     list_selected_rows += [
         i for i in df_diff.index.tolist() if i not in list_selected_rows
     ]
@@ -187,13 +194,16 @@ def set_edited_row_checkbox_to_true(data_previous, data, list_selected_rows):
     return list_selected_rows
 
 
-#########################
-# Export selected rows as yaml
 def export_selected_rows_as_yaml(
-    data, list_selected_rows, up_content, up_filename
+    data: list, list_selected_rows: list, up_content: str, up_filename: str
 ):
+    """
+    Export selected rows as yaml files
+
+    """
 
     # Get config from uploaded file
+    # TODO: refactor this as another utils function? it's used a few times
     if up_content is not None:
         _, content_str = up_content.split(",")
     try:
@@ -214,7 +224,5 @@ def export_selected_rows_as_yaml(
         yaml_filename = key + ".metadata.yaml"
         with open(pl.Path(video_dir) / yaml_filename, "w") as yamlf:
             yaml.dump(row, yamlf, sort_keys=False)
-
-        # if successful export (how to properly check?) pop a message
 
     return

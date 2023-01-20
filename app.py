@@ -6,19 +6,16 @@ from dash import Dash, dcc, html
 
 import wazp.callbacks as callbacks
 
-#######################
-# initialise app
+# Initialise app
 app = Dash(
     __name__,
     use_pages=True,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],  # dbc.themes.DARKLY
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
     suppress_callback_exceptions=True
     # TODO: is there an alternative to prevent error w/ chained callbacks?
 )
 
-#############################
-# Sidebar
-# style
+# Sidebar style
 SIDEBAR_STYLE = {
     "position": "fixed",
     "top": 0,
@@ -28,7 +25,8 @@ SIDEBAR_STYLE = {
     "padding": "2rem 1rem",
     "background-color": "#f8f9fa",
 }
-# component
+
+# Sidebar component definition
 sidebar = html.Div(
     [
         html.H2("WAZP 🐝", className="display-4"),
@@ -60,28 +58,27 @@ sidebar = html.Div(
     style=SIDEBAR_STYLE,
 )
 
-###############################
-# Main content
-# style (to the right of the sidebar and some padding.)
+# Main content style
 CONTENT_STYLE = {
     "margin-left": "18rem",
     "margin-right": "2rem",
     "padding": "2rem 1rem",
 }
-# component
+
+# Main content component definition
 content = html.Div(
     id="page-content", style=CONTENT_STYLE, children=dash.page_container
 )
 
-###########################
+
 # Define app layout
 app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
 
-##################
+
 # Load callbacks
 callbacks.get_metadata_callbacks(app)
 
-######################
+
 # Driver
 if __name__ == "__main__":
     app.run_server(debug=True)
