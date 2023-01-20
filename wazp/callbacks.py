@@ -6,7 +6,7 @@ import dash
 import dash_bootstrap_components as dbc
 import utils
 import yaml
-from dash import Input, Output, State, html
+from dash import Input, Output, State, dash_table, html
 
 VIDEO_TYPES = [".avi", ".mp4"]
 # TODO: other video extensions? have this in project config file instead?
@@ -17,6 +17,35 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
     Return all metadata callback functions
 
     """
+
+    @app.callback(
+        Output("session-storage", "data"),
+        Input("upload-data", "contents"),
+        State("upload-data", "filename"),
+    )
+    def save_config_to_storage(up_content: str, up_filename: str):
+        """
+        Save config to temp shared memory
+        see https://community.plotly.com/t/
+        dash-plotly-share-callback-input-in-another-page
+        -with-dcc-store/44190/2
+
+        """
+        data_to_store = tuple([..., ...])
+        if up_content is not None:
+            _, content_str = up_content.split(",")
+
+            if "yaml" in up_filename:
+                # get config
+                cfg = yaml.safe_load(base64.b64decode(content_str))
+
+                # get metadata fields dict
+                with open(cfg["metadata_fields_file_path"]) as mdf:
+                    metadata_fields_dict = yaml.safe_load(mdf)
+
+                data_to_store = (cfg, metadata_fields_dict)
+
+        return data_to_store
 
     @app.callback(
         Output("output-data-upload", "children"),
@@ -259,3 +288,57 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
             alert_state,
             alert_message,
         )
+
+
+def get_dashboard_callbacks(app):
+    @app.callback(
+        Output("table-container", "children"),
+        Input("table-container", "children"),
+        State("session-storage", "data"),
+    )
+    def create_data_selector_as_tbl(
+        tbl_container_children: list,
+        cfg_params_in_storage: tuple,
+    ):
+        """
+        Create table of videos with metadata with checkboxes
+
+        """
+
+        if not tbl_container_children:
+
+            # videos list as df
+            (cfg, metadata_fields_dict) = cfg_params_in_storage
+            df_metadata = utils.df_from_metadata_yaml_files(
+                cfg["videos_dir_path"], metadata_fields_dict
+            )
+            df_metadata = df_metadata[[cfg["metadata_key_field_str"]]]
+
+            # table component
+            tbl_container_children = [
+                dash_table.DataTable(
+                    id="hdata-table",
+                    data=df_metadata.to_dict("records"),
+                    selected_rows=[],
+                    row_selectable="multi",
+                    fixed_rows={"headers": True},
+                    page_size=4,
+                    page_action="native",
+                    sort_action="native",
+                    sort_mode="single",
+                    style_table={
+                        "height": "200px",
+                        "maxHeight": "200px",
+                        "width": "100%",
+                        "maxWidth": "100%",
+                        "overflowY": "scroll",
+                        "overflowX": "scroll",
+                    },
+                    style_cell={  # refers to all cells (the whole table)
+                        "textAlign": "left",
+                        "padding": 7,
+                        "fontFamily": "Helvetica",
+                    },
+                )
+            ]
+        return tbl_container_children

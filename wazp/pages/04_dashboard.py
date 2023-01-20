@@ -144,22 +144,7 @@ fig_entries_exits = px.scatter(
 fig_entries_exits.update_layout(clickmode="event+select")
 fig_entries_exits.update_traces(marker_size=5)
 
-# ############
-# /* restyle radio items */
-# .radio-group .form-check {
-#   padding-left: 0;
-# }
 
-# .radio-group .btn-group > .form-check:not(:last-child) > .btn {
-#   border-top-right-radius: 0;
-#   border-bottom-right-radius: 0;
-# }
-
-# .radio-group .btn-group > .form-check:not(:first-child) > .btn {
-#   border-top-left-radius: 0;
-#   border-bottom-left-radius: 0;
-#   margin-left: -1px;
-# }
 ###############
 # Dashboard layout
 variable_name = ["a", "c", "d"]
@@ -171,13 +156,13 @@ layout = html.Div(
         html.H5(
             "Input data", style={"margin-top": "20px", "margin-bottom": "10px"}
         ),
+        html.Div(children=[], id="table-container"),
         html.Div(
             [
-                table_h5_data,
                 html.Hr(),
-                html.Div(
+                html.Div(  # first row
                     children=[
-                        html.Div(
+                        html.Div(  # figure and radio item first row left
                             [
                                 dcc.Graph(
                                     id="graph-trajectories",
@@ -203,7 +188,7 @@ layout = html.Div(
                             ],
                             style={"width": "49%", "display": "inline-block"},
                         ),
-                        dcc.Graph(
+                        dcc.Graph(  # figure first row right
                             id="graph-heatmap",
                             figure=fig_heatmap,
                             style={
@@ -214,7 +199,7 @@ layout = html.Div(
                         ),
                     ]
                 ),
-                html.Div(
+                html.Div(  # second row figures
                     children=[
                         dcc.Graph(
                             id="graph-barplot",

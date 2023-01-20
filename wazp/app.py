@@ -69,14 +69,27 @@ content = html.Div(
     id="page-content", style=CONTENT_STYLE, children=dash.page_container
 )
 
+# Storage for the session
+storage = dcc.Store(
+    id="session-storage",
+    storage_type="session",
+    data=tuple(),
+)
 
 # Define app layout
-app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
+app.layout = html.Div(
+    [
+        dcc.Location(id="url"),
+        sidebar,
+        content,
+        storage,
+    ]
+)
 
 
 # Load callbacks
 callbacks.get_metadata_callbacks(app)
-# callbacks.get_dashboard_callbacks(app)
+callbacks.get_dashboard_callbacks(app)
 
 
 # Driver
