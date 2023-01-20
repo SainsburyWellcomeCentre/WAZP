@@ -9,64 +9,17 @@ import dash
 # import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
-import yaml
-from dash import dash_table, dcc, html
 
-import wazp.utils as utils
+# import yaml
+from dash import dcc, html  # dash_table
+
+# import wazp.utils as utils
 
 dash.register_page(__name__)
 
 
-##############################
-# Build table for input data selection
-
-# dataframe
-cfg_path = """/Users/sofia/Documents_local/Zoo_SWC project/
-WAZP/sample_project_2/input_config.yaml"""
-with open(cfg_path.replace("\n", ""), "r") as stream:
-    cfg = yaml.safe_load(stream)  # base64.b64decode(content_str))
-video_dir = cfg["videos_dir_path"]
-with open(cfg["metadata_fields_file_path"]) as mdf:
-    metadata_fields_dict = yaml.safe_load(mdf)
-
-df_metadata = utils.df_from_metadata_yaml_files(
-    video_dir, metadata_fields_dict
-)
-df_metadata = df_metadata[[cfg["metadata_key_field_str"]]]
-
-# table component
-table_h5_data = dash_table.DataTable(
-    id="hdata-table",
-    data=df_metadata.to_dict("records"),
-    selected_rows=[],
-    row_selectable="multi",
-    fixed_rows={"headers": True},
-    page_size=4,
-    page_action="native",
-    sort_action="native",
-    sort_mode="single",
-    style_table={
-        "height": "200px",
-        "maxHeight": "200px",
-        # css overwrites the table height when fixed_rows is enabled;
-        # setting height and maxHeight to the same value seems a quick
-        # hack to fix it
-        # (see https://community.plotly.com/t/
-        # setting-datatable-max-height-when-using-fixed-headers/26417/10)
-        "width": "100%",
-        "maxWidth": "100%",
-        "overflowY": "scroll",
-        "overflowX": "scroll",
-    },
-    style_cell={  # refers to all cells (the whole table)
-        "textAlign": "left",
-        "padding": 7,
-        "fontFamily": "Helvetica",
-    },
-)
-
 ##########################
-# Read dataframe for one h5 file
+# Read dataframe for one h5 file---this will be part of the figs' callbacks
 h5_file_path = """/Users/sofia/Documents_local/Zoo_SWC project/WAZP/
 sample_project_2/pose_estimation_results/jwaspE_nectar-open-
 close_controlDLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000.h5"""
@@ -92,13 +45,8 @@ fig_trajectories = px.scatter(
 )
 fig_trajectories.update_layout(
     clickmode="event+select",
-    # title={
-    #     'text': 1, #"Raw trajectories",
-    #     'y': 0.9,
-    #     'x': 0.5,
-    #     'xanchor': 'center',
-    #     'yanchor': 'top'
-    # }
+    # xaxis_range=[0,1300],
+    # yaxis_range=[0,1100]
 )
 fig_trajectories.update_yaxes(
     scaleanchor="x",
@@ -107,47 +55,86 @@ fig_trajectories.update_yaxes(
 fig_trajectories.update_traces(marker_size=5)
 
 # Heatmap
-fig_heatmap = px.scatter(
+fig_heatmap = px.density_heatmap(
     df_trajectories["head"],
     x="x",
     y="y",
-    color="likelihood",
-    custom_data=df_trajectories["head"].columns,
+    labels={
+        "x": "x-axis (px)",
+        "y": "y-axis (px)",
+    },
+    nbinsx=10,
+    nbinsy=10,
     title="Heatmap",
 )
-fig_heatmap.update_layout(clickmode="event+select")
-fig_heatmap.update_traces(marker_size=5)
-
+fig_heatmap.update_layout(
+    clickmode="event+select",
+    # xaxis_range=[0,1300],
+    # yaxis_range=[0,1200]
+)
+fig_heatmap.update_yaxes(
+    scaleanchor="x",
+    scaleratio=1,
+)
 
 # Barplot occupancy
-fig_barplot = px.scatter(
-    df_trajectories["head"],
-    x="x",
-    y="y",
-    color="likelihood",
-    custom_data=df_trajectories["head"].columns,
+# counts, xedges, yedges, _ = plt.hist2d(
+#     data['head'].x.dropna(),
+#     data['head'].y.dropna(),
+#     bins=100)
+
+# mesh = np.meshgrid(xedges, yedges)
+
+# mask_top_centre = (mesh[0] > 400) & (mesh[0] < 600) & (mesh[1] > 500)
+# & (mesh[1] < 900)
+# 100*np.sum(mask_top_centre[:-1,:-1] * counts) / np.sum(counts)
+
+df_occupancy = pd.DataFrame(
+    {
+        "ROI": [
+            "ROI 1",
+            "ROI 2",
+            "ROI 3",
+            "ROI 4",
+            "ROI 1",
+            "ROI 2",
+            "ROI 3",
+            "ROI 4",
+        ],
+        "occupancy": [0.4, 0.2, 0.4, 0.5, 0.3, 0.8, 0.7, 0.1],
+        "sex": ["M", "M", "M", "M", "F", "F", "F", "F"],
+    }
+)
+
+fig_barplot = px.bar(
+    df_occupancy,
+    x="ROI",
+    y="occupancy",
+    color="sex",
+    barmode="group",
     title="Barplot occupancy",
 )
 fig_barplot.update_layout(clickmode="event+select")
-fig_barplot.update_traces(marker_size=5)
 
 
 # Entries/exits matrix
-fig_entries_exits = px.scatter(
-    df_trajectories["head"],
-    x="x",
-    y="y",
-    color="likelihood",
-    custom_data=df_trajectories["head"].columns,
+data = [[10, 25, 30, 50], [20, 60, 80, 30], [30, 60, 15, 20], [80, 50, 20, 39]]
+fig_entries_exits = px.imshow(
+    data,
+    labels=dict(x="departure ROI", y="destination ROI", color="count"),
+    x=["ROI 1", "ROI 2", "ROI 3", "ROI 4"],
+    y=["ROI 1", "ROI 2", "ROI 3", "ROI 4"],
     title="Entries/exits matrix",
 )
-fig_entries_exits.update_layout(clickmode="event+select")
-fig_entries_exits.update_traces(marker_size=5)
+
+fig_entries_exits.update_layout(
+    clickmode="event+select", height=500, width=500
+)
+fig_entries_exits.update_xaxes(side="top")
 
 
 ###############
 # Dashboard layout
-variable_name = ["a", "c", "d"]
 layout = html.Div(
     className="row",
     children=[
@@ -188,14 +175,32 @@ layout = html.Div(
                             ],
                             style={"width": "49%", "display": "inline-block"},
                         ),
-                        dcc.Graph(  # figure first row right
-                            id="graph-heatmap",
-                            figure=fig_heatmap,
-                            style={
-                                "width": "49%",
-                                "display": "inline-block",
-                                "float": "right",
-                            },
+                        html.Div(
+                            [
+                                html.Div(
+                                    [
+                                        dcc.Input(
+                                            id="bin-size",
+                                            type="number",
+                                            placeholder="nbins per axis",
+                                            debounce=True,  # need to enter,
+                                        )  # "value" will be in callback
+                                    ],
+                                    style={
+                                        "float": "right",
+                                    },
+                                ),
+                                dcc.Graph(  # figure first row right
+                                    id="graph-heatmap",
+                                    figure=fig_heatmap,
+                                    style={
+                                        "width": "85%",
+                                        "display": "inline-block",
+                                        "float": "right",
+                                    },
+                                ),
+                            ],
+                            style={"width": "49%", "display": "inline-block"},
                         ),
                     ]
                 ),
@@ -210,7 +215,7 @@ layout = html.Div(
                             id="graph-entries-exits",
                             figure=fig_entries_exits,
                             style={
-                                "width": "49%",
+                                "width": "42%",
                                 "display": "inline-block",
                                 "float": "right",
                             },

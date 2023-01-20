@@ -1,5 +1,7 @@
 import base64
 import pathlib as pl
+
+# import pdb
 import re
 
 import dash
@@ -23,7 +25,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
         Input("upload-data", "contents"),
         State("upload-data", "filename"),
     )
-    def save_config_to_storage(up_content: str, up_filename: str):
+    def save_config_to_storage(up_content, up_filename):
         """
         Save config to temp shared memory
         see https://community.plotly.com/t/
@@ -31,7 +33,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
         -with-dcc-store/44190/2
 
         """
-        data_to_store = tuple([..., ...])
+        data_to_store = tuple()
         if up_content is not None:
             _, content_str = up_content.split(",")
 
@@ -296,7 +298,7 @@ def get_dashboard_callbacks(app):
         Input("table-container", "children"),
         State("session-storage", "data"),
     )
-    def create_data_selector_as_tbl(
+    def create_input_data_tbl(
         tbl_container_children: list,
         cfg_params_in_storage: tuple,
     ):
@@ -317,7 +319,7 @@ def get_dashboard_callbacks(app):
             # table component
             tbl_container_children = [
                 dash_table.DataTable(
-                    id="hdata-table",
+                    id="input-data-table",
                     data=df_metadata.to_dict("records"),
                     selected_rows=[],
                     row_selectable="multi",
@@ -342,3 +344,68 @@ def get_dashboard_callbacks(app):
                 )
             ]
         return tbl_container_children
+
+    # @app.callback(
+    #     Output("graph-trajectories", "figure"),
+    #     Input("input-data-table", "selected_rows"),
+    #     State("session-storage", "data"),
+    # )
+    # def plot_trajectories_from_selected_inputs(
+    #     list_selected_rows: list,
+    #     cfg_params_in_storage: tuple,
+
+    # ):
+    #     pdb.set_trace()
+    #     (cfg, metadata_fields_dict) = cfg_params_in_storage
+    #     df_metadata = utils.df_from_metadata_yaml_files(
+    #             cfg["videos_dir_path"], metadata_fields_dict
+    #         )
+    #     df_metadata = df_metadata[[cfg["metadata_key_field_str"]]]
+    #     df_metadata_selected = df_metadata.iloc[list_selected_rows]
+
+    #     pdb.set_trace()
+    #     # list of h5 files to concatenate
+    #     list_h5_files_prefix = [
+    #         f+cfg['pose_estimation_model_str']
+    #         for f in df_metadata_selected.tolist()
+    #     ]
+
+    #     # list_h5_files = [ if f.startswith in df_metadata_selected.tolist()]
+    #     # for row in :
+    #     #     # list of files that start with...
+    #           #cfg['pose_estimation_model_str']
+    #     #     cfg['pose_estimation_results_path']
+
+    #     pdb.set_trace()
+    #     # read all h5 into one dataframe
+    #     # TODO: more efficient approach?
+    #     dfs = [pd.read_hdf(filename, 'df') for filename in list_h5_files]
+    #     df = pd.concat(dfs)
+
+    #     pdb.set_trace()
+    #     # plot figure
+    #     fig = px.scatter(
+    #         df["head"],
+    #         x="x",
+    #         y="y",
+    #         labels={
+    #             "x": "x-axis (px)",
+    #             "y": "y-axis (px)",
+    #             "likelihood": "likelihood",
+    #         },
+    #         color="likelihood",
+    #         custom_data=df["head"].columns,
+    #         title="Raw trajectories",
+    #     )
+    #     fig.update_layout(
+    #         clickmode="event+select",
+    #     )
+    #     fig.update_yaxes(
+    #         scaleanchor="x",
+    #         scaleratio=1,
+    #     )
+    #     fig.update_traces(
+    #         marker_size=5
+    #     )
+
+    #     return fig
