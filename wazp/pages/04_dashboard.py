@@ -1,7 +1,12 @@
 # import base64
 # import pdb
 
+# import pathlib as pl
+# import pdb
+
 import dash
+
+# import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import yaml
@@ -18,7 +23,7 @@ dash.register_page(__name__)
 # dataframe
 cfg_path = """/Users/sofia/Documents_local/Zoo_SWC project/
 WAZP/sample_project_2/input_config.yaml"""
-with open(cfg_path, "r") as stream:
+with open(cfg_path.replace("\n", ""), "r") as stream:
     cfg = yaml.safe_load(stream)  # base64.b64decode(content_str))
 video_dir = cfg["videos_dir_path"]
 with open(cfg["metadata_fields_file_path"]) as mdf:
@@ -62,68 +67,99 @@ table_h5_data = dash_table.DataTable(
 
 ##########################
 # Read dataframe for one h5 file
-df = pd.DataFrame(
-    {
-        "x": [1, 2, 1, 2],
-        "y": [1, 2, 3, 4],
-        "customdata": [1, 2, 3, 4],
-        "fruit": ["apple", "apple", "orange", "orange"],
-    }
-)
+h5_file_path = """/Users/sofia/Documents_local/Zoo_SWC project/WAZP/
+sample_project_2/pose_estimation_results/jwaspE_nectar-open-
+close_controlDLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000.h5"""
+df_trajectories = pd.read_hdf(h5_file_path.replace("\n", ""))
+df_trajectories.columns = df_trajectories.columns.droplevel()
+
 
 ########################
 # Prepare figures
 # Trajectories
 fig_trajectories = px.scatter(
-    df,
+    df_trajectories["head"],
     x="x",
     y="y",
-    color="fruit",
-    custom_data=["customdata"],
+    labels={
+        "x": "x-axis (px)",
+        "y": "y-axis (px)",
+        "likelihood": "likelihood",
+    },
+    color="likelihood",
+    custom_data=df_trajectories["head"].columns,
     title="Raw trajectories",
 )
-fig_trajectories.update_layout(clickmode="event+select")
-fig_trajectories.update_traces(marker_size=20)
+fig_trajectories.update_layout(
+    clickmode="event+select",
+    # title={
+    #     'text': 1, #"Raw trajectories",
+    #     'y': 0.9,
+    #     'x': 0.5,
+    #     'xanchor': 'center',
+    #     'yanchor': 'top'
+    # }
+)
+fig_trajectories.update_yaxes(
+    scaleanchor="x",
+    scaleratio=1,
+)
+fig_trajectories.update_traces(marker_size=5)
 
 # Heatmap
 fig_heatmap = px.scatter(
-    df,
+    df_trajectories["head"],
     x="x",
     y="y",
-    color="fruit",
-    custom_data=["customdata"],
+    color="likelihood",
+    custom_data=df_trajectories["head"].columns,
     title="Heatmap",
 )
 fig_heatmap.update_layout(clickmode="event+select")
-fig_heatmap.update_traces(marker_size=20)
+fig_heatmap.update_traces(marker_size=5)
 
 
 # Barplot occupancy
 fig_barplot = px.scatter(
-    df,
+    df_trajectories["head"],
     x="x",
     y="y",
-    color="fruit",
-    custom_data=["customdata"],
+    color="likelihood",
+    custom_data=df_trajectories["head"].columns,
     title="Barplot occupancy",
 )
 fig_barplot.update_layout(clickmode="event+select")
-fig_barplot.update_traces(marker_size=20)
+fig_barplot.update_traces(marker_size=5)
 
 
 # Entries/exits matrix
 fig_entries_exits = px.scatter(
-    df,
+    df_trajectories["head"],
     x="x",
     y="y",
-    color="fruit",
-    custom_data=["customdata"],
+    color="likelihood",
+    custom_data=df_trajectories["head"].columns,
     title="Entries/exits matrix",
 )
 fig_entries_exits.update_layout(clickmode="event+select")
-fig_entries_exits.update_traces(marker_size=20)
+fig_entries_exits.update_traces(marker_size=5)
 
+# ############
+# /* restyle radio items */
+# .radio-group .form-check {
+#   padding-left: 0;
+# }
 
+# .radio-group .btn-group > .form-check:not(:last-child) > .btn {
+#   border-top-right-radius: 0;
+#   border-bottom-right-radius: 0;
+# }
+
+# .radio-group .btn-group > .form-check:not(:first-child) > .btn {
+#   border-top-left-radius: 0;
+#   border-bottom-left-radius: 0;
+#   margin-left: -1px;
+# }
 ###############
 # Dashboard layout
 variable_name = ["a", "c", "d"]
@@ -141,9 +177,30 @@ layout = html.Div(
                 html.Hr(),
                 html.Div(
                     children=[
-                        dcc.Graph(
-                            id="graph-trajectories",
-                            figure=fig_trajectories,
+                        html.Div(
+                            [
+                                dcc.Graph(
+                                    id="graph-trajectories",
+                                    figure=fig_trajectories,
+                                    style={
+                                        "width": "85%",
+                                        "display": "inline-block",
+                                    },
+                                ),
+                                dcc.RadioItems(
+                                    ["likelihood", "frame", "input data"],
+                                    "likelihood",
+                                    style={
+                                        "width": "15%",
+                                        "float": "right",
+                                        "margin-top": "110px",
+                                    },
+                                    labelStyle={
+                                        "display": "block",
+                                        "fontSize": ".8rem",
+                                    },
+                                ),
+                            ],
                             style={"width": "49%", "display": "inline-block"},
                         ),
                         dcc.Graph(
@@ -162,7 +219,7 @@ layout = html.Div(
                         dcc.Graph(
                             id="graph-barplot",
                             figure=fig_barplot,
-                            style={"width": "49%", "display": "inline-block"},
+                            style={"width": "42%", "display": "inline-block"},
                         ),
                         dcc.Graph(
                             id="graph-entries-exits",
