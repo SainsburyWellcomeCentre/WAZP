@@ -76,6 +76,7 @@ app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
 
 # Load callbacks
 callbacks.get_metadata_callbacks(app)
+# callbacks.get_dashboard_callbacks(app)
 
 
 # Driver
