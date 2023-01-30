@@ -3,10 +3,9 @@ import pathlib as pl
 import re
 
 import dash_bootstrap_components as dbc
+import utils
 import yaml
 from dash import Input, Output, State, html
-
-import wazp.utils as utils
 
 VIDEO_TYPES = [".avi", ".mp4"]
 # TODO: other video extensions? have this in project config file instead?
