@@ -6,7 +6,9 @@ import yaml
 from dash import dash_table, html
 
 
-def df_from_metadata_yaml_files(parent_dir, metadata_fields_dict):
+def df_from_metadata_yaml_files(
+    parent_dir: str, metadata_fields_dict: dict
+) -> pd.DataFrame:
     """
     Build a dataframe from all the metadata.yaml files in the selected parent
     directory. If there are no metadata.yaml files, make a dataframe with
@@ -31,7 +33,7 @@ def df_from_metadata_yaml_files(parent_dir, metadata_fields_dict):
     #  build dataframe from metadata_fields_dict
     if not list_metadata_files:
         return pd.DataFrame.from_dict(
-            [{c: "" for c in metadata_fields_dict.keys()}],
+            {c: [""] for c in metadata_fields_dict.keys()},
             # because we are passing only one row, wrap in a list
             orient="columns",
         )
@@ -42,14 +44,15 @@ def df_from_metadata_yaml_files(parent_dir, metadata_fields_dict):
             with open(yl) as ylf:
                 list_df_metadata.append(
                     pd.DataFrame.from_dict(
-                        [yaml.safe_load(ylf)], orient="columns"
+                        {k: [v] for k, v in yaml.safe_load(ylf).items()},
+                        orient="columns",
                     )
                 )
 
         return pd.concat(list_df_metadata, ignore_index=True)
 
 
-def metadata_tbl_component_from_df(df):
+def metadata_table_component_from_df(df: pd.DataFrame) -> dash_table.DataTable:
     """
     Build a Dash table component populated with the input dataframe
 
@@ -58,7 +61,9 @@ def metadata_tbl_component_from_df(df):
     # Change format of date fields in dataframe
     # (this is to allow for sorting in the dash table)
     # TODO: review this, have simply as string?
-    list_date_columns = [col for col in df.columns if "date" in col.lower()]
+    list_date_columns = [
+        col for col in df.columns.tolist() if "date" in col.lower()
+    ]
     for col in list_date_columns:
         df[col] = pd.to_datetime(df[col]).dt.strftime("%Y-%m-%d")
 
@@ -169,8 +174,8 @@ def metadata_tbl_component_from_df(df):
 
 
 def set_edited_row_checkbox_to_true(
-    data_previous: list, data: list, list_selected_rows: list
-):
+    data_previous: list[dict], data: list[dict], list_selected_rows: list[int]
+) -> list[int]:
     """
     When the data in a row is edited, set its checkbox to True
 
@@ -182,8 +187,11 @@ def set_edited_row_checkbox_to_true(
     # same key but different value)
     df = pd.DataFrame(data=data)
     df_previous = pd.DataFrame(data_previous)
+
+    # ignore static type checking here,
+    # see https://github.com/pandas-dev/pandas-stubs/issues/256
     df_diff = df.merge(df_previous, how="outer", indicator=True).loc[
-        lambda x: x["_merge"] == "left_only"
+        lambda x: x["_merge"] == "left_only"  # type: ignore
     ]
 
     # Update set of selected rows
@@ -195,8 +203,11 @@ def set_edited_row_checkbox_to_true(
 
 
 def export_selected_rows_as_yaml(
-    data: list, list_selected_rows: list, up_content: str, up_filename: str
-):
+    data: list[dict],
+    list_selected_rows: list[int],
+    up_content: str,
+    up_filename: str,
+) -> None:
     """
     Export selected rows as yaml files
 

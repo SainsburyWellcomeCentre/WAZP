@@ -1,10 +1,10 @@
 File:
     Type: string
     LongName: name of the video file
-    Description: File naming system = commonnamesubjectletter_treatment_videonumber.avi (eg, jwaspB_rock_2.avi = The second video of the second jewel wasp subject, B, with a treatment of "rock", which is described further in the "Treatment_description" column). To view the file names within the master-list.xlsx, you will need version 2020 or later, becuase I employ sequence arrays - a command only available after 2020).
+    Description: File naming system = commonnamesubjectletter_treatment_videonumber.avi (eg, jwaspB_rock_2.avi = The second video of the second jewel wasp subject, B, with a treatment of "rock", which is described further in the "Treatment_description" column). To view the file names within the master-list.xlsx, you will need version 2020 or later, because I employ sequence arrays - a command only available after 2020).
 Species_name:
     Type: string
-    LongName: lating species name
+    LongName: Latin species name
     Description: Latin species name in a syntax of Genus_species (e.g. Ampulex_compressa).
     TermURL: https://en.wikipedia.org/wiki/Binomial_nomenclature
 Common_name:

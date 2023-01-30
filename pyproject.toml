@@ -105,3 +105,15 @@ ignore = [
   "tests/test_integration/*",
   ".flake8"
 ]
+
+[[tool.mypy.overrides]]
+module = [
+  "dash.*",
+  "dash_bootstrap_components.*",
+  "callbacks.*",
+  "utils.*",
+  "h5py.*",
+  "matplotlib.*",
+  "plotly.*"
+]
+ignore_missing_imports = true

@@ -2,6 +2,7 @@ import base64
 import pathlib as pl
 import re
 
+import dash
 import dash_bootstrap_components as dbc
 import utils
 import yaml
@@ -11,9 +12,9 @@ VIDEO_TYPES = [".avi", ".mp4"]
 # TODO: other video extensions? have this in project config file instead?
 
 
-def get_metadata_callbacks(app):
+def get_metadata_callbacks(app: dash.Dash) -> None:
     """
-    Return all callback functions defined for the app
+    Return all metadata callback functions
 
     """
 
@@ -22,7 +23,7 @@ def get_metadata_callbacks(app):
         Input("upload-data", "contents"),
         State("upload-data", "filename"),
     )
-    def update_file_drop_output(up_content: str, up_filename: str):
+    def update_file_drop_output(up_content: str, up_filename: str) -> html.Div:
         """
         Read uploaded config file and return component with:
         - table with metadata per video,
@@ -49,7 +50,7 @@ def get_metadata_callbacks(app):
             return html.Div(
                 [
                     # metadata table
-                    utils.metadata_tbl_component_from_df(
+                    utils.metadata_table_component_from_df(
                         utils.df_from_metadata_yaml_files(
                             video_dir, metadata_fields_dict
                         )
@@ -106,10 +107,10 @@ def get_metadata_callbacks(app):
     def add_rows(
         n_clicks_add_row_manually: int,
         n_clicks_add_rows_missing: int,
-        table_rows: list,
-        table_columns: list,
+        table_rows: list[dict],
+        table_columns: list[dict],
         up_content: str,
-    ):
+    ) -> tuple[list[dict], int, int]:
         """
         Add rows to metadata table, either:
         - manually
@@ -193,13 +194,13 @@ def get_metadata_callbacks(app):
         n_clicks_select_all: int,
         n_clicks_export: int,
         data_previous: list,
-        data: list,
-        data_page: list,
-        list_selected_rows: list,
+        data: list[dict],
+        data_page: list[dict],
+        list_selected_rows: list[int],
         up_content: str,
         up_filename: str,
         alert_state: bool,
-    ):
+    ) -> tuple[list[int], int, int, bool, str]:
         """
         Modify the set of rows that are selected.
 
