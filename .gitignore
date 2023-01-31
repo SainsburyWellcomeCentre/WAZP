@@ -89,3 +89,4 @@ venv/
 
 sample_project_2/pose_estimation_results/*.csv
 sample_project_2/pose_estimation_results/*.pickle
+*.pickle
