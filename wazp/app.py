@@ -88,6 +88,7 @@ app.layout = html.Div(
 
 
 # Load callbacks
+callbacks.get_home_callbacks(app)
 callbacks.get_metadata_callbacks(app)
 callbacks.get_dashboard_callbacks(app)
 

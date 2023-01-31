@@ -3,6 +3,7 @@ import pathlib as pl
 
 # import pdb
 import re
+from typing import Any
 
 import dash
 import dash_bootstrap_components as dbc
@@ -14,6 +15,69 @@ VIDEO_TYPES = [".avi", ".mp4"]
 # TODO: other video extensions? have this in project config file instead?
 
 
+def get_home_callbacks(app: dash.Dash) -> None:
+    """
+    Return all home callback functions
+
+    """
+
+    @app.callback(
+        Output("session-storage", "data"),
+        Output("upload-message", "is_open"),
+        Output("upload-message", "children"),
+        Output("upload-message", "color"),
+        Input("upload-data", "contents"),
+        State("upload-data", "filename"),
+        State("upload-message", "is_open"),
+    )
+    def save_input_config_to_storage(
+        up_content: str, up_filename: str, up_message_state: bool
+    ) -> tuple[tuple[Any, Any], bool, str, str]:
+        """
+        Save input config to temp shared memory
+        see https://community.plotly.com/t/
+        dash-plotly-share-callback-input-in-another-page
+        -with-dcc-store/44190/2
+
+        """
+        data_to_store = ((), ())
+        output_message = ""
+        output_color = "light"
+        if up_content is not None:
+            _, content_str = up_content.split(",")
+            try:
+                if "yaml" in up_filename:
+                    # get config
+                    cfg = yaml.safe_load(base64.b64decode(content_str))
+
+                    # get metadata fields dict
+                    with open(cfg["metadata_fields_file_path"]) as mdf:
+                        metadata_fields_dict = yaml.safe_load(mdf)
+
+                    # bundle data
+                    data_to_store = (cfg, metadata_fields_dict)
+
+                    # message
+                    # pdb.set_trace()
+                    if not up_message_state:
+                        up_message_state = not up_message_state
+                    output_message = '''f"Input config for:
+                    {cfg['videos_dir_path']} processed successfully."'''
+                    output_color = "success"
+                    # TODO: print path to config file instead?
+                    # pdb.set_trace()
+                    # return (data_to_store, up_message_state, output_message)
+
+            except Exception as e:
+                print(e)  # TODO: check this, it prints something odd
+                if not up_message_state:
+                    up_message_state = not up_message_state
+                output_message = "There was an error processing this file."
+                output_color = "danger"
+
+        return (data_to_store, up_message_state, output_message, output_color)
+
+
 def get_metadata_callbacks(app: dash.Dash) -> None:
     """
     Return all metadata callback functions
@@ -21,69 +85,31 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
     """
 
     @app.callback(
-        Output("session-storage", "data"),
-        Input("upload-data", "contents"),
-        State("upload-data", "filename"),
-    )
-    def save_config_to_storage(up_content, up_filename):
-        """
-        Save config to temp shared memory
-        see https://community.plotly.com/t/
-        dash-plotly-share-callback-input-in-another-page
-        -with-dcc-store/44190/2
-
-        """
-        data_to_store = tuple()
-        if up_content is not None:
-            _, content_str = up_content.split(",")
-
-            if "yaml" in up_filename:
-                # get config
-                cfg = yaml.safe_load(base64.b64decode(content_str))
-
-                # get metadata fields dict
-                with open(cfg["metadata_fields_file_path"]) as mdf:
-                    metadata_fields_dict = yaml.safe_load(mdf)
-
-                data_to_store = (cfg, metadata_fields_dict)
-
-        return data_to_store
-
-    @app.callback(
         Output("output-data-upload", "children"),
-        Input("upload-data", "contents"),
-        State("upload-data", "filename"),
+        Input("output-data-upload", "children"),
+        State("session-storage", "data"),
     )
-    def update_file_drop_output(up_content: str, up_filename: str) -> html.Div:
+    def generate_metadata_table(
+        metadata_output_children: list, cfg_params_in_storage: tuple
+    ) -> html.Div:
         """
-        Read uploaded config file and return component with:
+        Read uploaded config file from cache and return component with:
         - table with metadata per video,
         - auxiliary buttons for common table manipulations
 
         """
-        # Read uploaded content
-        if up_content is not None:
-            _, content_str = up_content.split(",")
-            try:
-                if "yaml" in up_filename:
-                    # get config
-                    cfg = yaml.safe_load(base64.b64decode(content_str))
-                    # get video dir
-                    video_dir = cfg["videos_dir_path"]
-                    # get metadata fields dict
-                    with open(cfg["metadata_fields_file_path"]) as mdf:
-                        metadata_fields_dict = yaml.safe_load(mdf)
-            except Exception as e:
-                print(e)
-                return html.Div(["There was an error processing this file."])
 
-            # Define component layout
+        if not metadata_output_children:
+            # get config and metadata fields
+            (cfg, metadata_fields_dict) = cfg_params_in_storage
+
+            # return table+buttons
             return html.Div(
                 [
                     # metadata table
                     utils.metadata_table_component_from_df(
                         utils.df_from_metadata_yaml_files(
-                            video_dir, metadata_fields_dict
+                            cfg["videos_dir_path"], metadata_fields_dict
                         )
                     ),
                     # auxiliary buttons
@@ -133,14 +159,16 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
         Input("add-rows-for-missing-button", "n_clicks"),
         State("metadata-table", "data"),
         State("metadata-table", "columns"),
-        State("upload-data", "contents"),
+        State(
+            "session-storage", "data"
+        ),  # State("upload-data", "contents"), #--------
     )
     def add_rows(
         n_clicks_add_row_manually: int,
         n_clicks_add_rows_missing: int,
         table_rows: list[dict],
         table_columns: list[dict],
-        up_content: str,
+        cfg_params_in_storage: tuple,
     ) -> tuple[list[dict], int, int]:
         """
         Add rows to metadata table, either:
@@ -159,8 +187,9 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
         # Add rows for videos w/ missing metadata
         if n_clicks_add_rows_missing > 0 and table_columns:
             # Read config for videos directory
-            _, content_str = up_content.split(",")
-            cfg = yaml.safe_load(base64.b64decode(content_str))
+            (cfg, _) = cfg_params_in_storage
+            # _, content_str = up_content.split(",")
+            # cfg = yaml.safe_load(base64.b64decode(content_str))
             video_dir = cfg["videos_dir_path"]
 
             # List of files currently shown in table
@@ -217,8 +246,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
             "metadata-table", "derived_viewport_data"
         ),  # data on the current page
         State("metadata-table", "selected_rows"),
-        State("upload-data", "contents"),
-        State("upload-data", "filename"),
+        State("session-storage", "data"),  #
         State("alert", "is_open"),
     )
     def modify_rows_selection(
@@ -228,12 +256,11 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
         data: list[dict],
         data_page: list[dict],
         list_selected_rows: list[int],
-        up_content: str,
-        up_filename: str,
+        cfg_params_in_storage: tuple,
         alert_state: bool,
     ) -> tuple[list[int], int, int, bool, str]:
         """
-        Modify the set of rows that are selected.
+        Modify the set of rows that are selected in metadata table.
 
         A row's checkbox is modified if:
         - the user edits the data on that row (checkbox set to True)
@@ -256,9 +283,8 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
         if (n_clicks_export > 0) and list_selected_rows:
 
             # export yaml files
-            utils.export_selected_rows_as_yaml(
-                data, list_selected_rows, up_content, up_filename
-            )
+            (cfg, _) = cfg_params_in_storage
+            utils.export_selected_rows_as_yaml(data, list_selected_rows, cfg)
 
             # display alert if successful import
             # TODO: what is a better way to check if export was successful?

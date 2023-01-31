@@ -1,9 +1,8 @@
-import base64
 import pathlib as pl
 
 import pandas as pd
 import yaml
-from dash import dash_table, html
+from dash import dash_table
 
 
 def df_from_metadata_yaml_files(
@@ -203,28 +202,16 @@ def set_edited_row_checkbox_to_true(
 
 
 def export_selected_rows_as_yaml(
-    data: list[dict],
-    list_selected_rows: list[int],
-    up_content: str,
-    up_filename: str,
+    data: list[dict], list_selected_rows: list[int], cfg: dict
 ) -> None:
     """
     Export selected rows as yaml files
 
     """
 
-    # Get config from uploaded file
-    # TODO: refactor this as another utils function? it's used a few times
-    if up_content is not None:
-        _, content_str = up_content.split(",")
-    try:
-        if "yaml" in up_filename:
-            cfg = yaml.safe_load(base64.b64decode(content_str))
-            video_dir = cfg["videos_dir_path"]
-            metadata_key_str = cfg["metadata_key_field_str"]
-    except Exception as e:
-        print(e)
-        return html.Div(["There was an error processing this file."])
+    # Get config from storage
+    video_dir = cfg["videos_dir_path"]
+    metadata_key_str = cfg["metadata_key_field_str"]
 
     # Export selected rows
     for row in [data[i] for i in list_selected_rows]:

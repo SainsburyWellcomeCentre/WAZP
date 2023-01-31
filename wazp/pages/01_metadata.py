@@ -2,7 +2,7 @@
 # a function called layout that returns the content.
 
 import dash
-from dash import dcc, html
+from dash import html
 
 # Register this page
 # - dash.page_registry is an ordered dict with :
@@ -11,33 +11,12 @@ from dash import dcc, html
 dash.register_page(__name__)
 
 
-# Define upload component
-upload = dcc.Upload(
-    id="upload-data",
-    children=html.Div(
-        ["Drag and Drop or ", html.A("Select project config file")]
-    ),
-    style={
-        "width": "100%",
-        "height": "60px",
-        "lineHeight": "60px",
-        "borderWidth": "1px",
-        "borderStyle": "dashed",
-        "borderRadius": "5px",
-        "textAlign": "center",
-        "margin": "10px",
-    },
-    multiple=False,  # allow multiple files upload
-)
-
-
 # Metadata layout
 layout = html.Div(
     children=[
         html.H1(children="Metadata"),
-        upload,
         html.Div(
-            id="output-data-upload", style={"height": "1200px"}
+            id="output-data-upload", style={"height": "1200px"}, children=[]
         ),  # component to hold the output from the data upload
     ]
 )
