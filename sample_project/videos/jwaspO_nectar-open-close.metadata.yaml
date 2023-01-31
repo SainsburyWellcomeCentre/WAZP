@@ -1,0 +1,19 @@
+File: jwaspO_nectar-open-close.avi
+Species_name: Ampulex_compressa
+Common_name: jewel_wasp
+Subject: O_female
+Treatment: nectar-open-close
+Treatment_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Date_start: 10/11/22
+Time_start: '10:43:35'
+Date_end: 10/11/22
+Time_end: '15:48:48'
+Time_recorded: 05:05:13
+Video_length: 05:04:09
+Hardware_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Software_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Further_description: 'Concatenated video from individually recorded conditions (in
+  order: _wateronly + _control + _nectar1 + _nectar2). Concatenated via ffmpeg. '

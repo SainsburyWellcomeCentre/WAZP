@@ -1,0 +1,65 @@
+File:
+    Type: string
+    LongName: name of the video file
+    Description: File naming system = commonnamesubjectletter_treatment_videonumber.avi (eg, jwaspB_rock_2.avi = The second video of the second jewel wasp subject, B, with a treatment of "rock", which is described further in the "Treatment_description" column). To view the file names within the master-list.xlsx, you will need version 2020 or later, because I employ sequence arrays - a command only available after 2020).
+Species_name:
+    Type: string
+    LongName: Latin species name
+    Description: Latin species name in a syntax of Genus_species (e.g. Ampulex_compressa).
+    TermURL: https://en.wikipedia.org/wiki/Binomial_nomenclature
+Common_name:
+    Type: string
+    LongName: common name
+    Description: Common name in a syntax where _ replace spaces.
+Subject:
+    Type: string
+    LongName: name of the recorded subject (single animal)
+    Description: Filmed individuals are designated a letter, where the first individual filmed is A, the second is B, etc. This individual's sex follows it's designated subject letter. For example, A_female was the first individual of that species filmed and it was a female.
+Treatment:
+    Type: string
+    LongName: an identifier for the experimental treatment
+    Description: An isolated column to restate the employed treatment in that specific video
+Treatment_description:
+    Type: string
+    LongName: a detailed description of the experimental treatment
+    Description: A text-formatted column to provide further detail on the designated "Treatment."
+Date_start:
+    Type: string
+    LongName: date in which the video recording started
+    Description: The date in which acquisition of this video was intiated. Input is formatted as day/month/last two digits of the year, but displayed in the webapp as YYYY-MM-DD to allow for sorting
+Time_start:
+    Type: string
+    LongName: time in which the video recording started
+    Unit: HH:MM:SS
+    Description: A time-formatted column (hours:minute:seconds) representing the time in which acquisition of this video was intiated. Videos initiated between 27/5/22 and 30/10/22 are in respect to BST, while those collected prior to 27/5/22 or after 30/10/22 are in respect to GMT.
+Date_end:
+    Type: string
+    LongName: date in which the video recording terminated
+    Description: The date in which acquisition of this video was terminated. Input is formatted as day/month/last two digits of the year, but displayed in the webapp as YYYY-MM-DD to allow for sorting
+Time_end:
+    Type: string
+    LongName: time in which the video recording terminated
+    Unit: HH:MM:SS
+    Description: A time-formatted column (hours:minute:seconds) representing the time in which acquisition of this video was terminated. Videos terminated between 27/5/22 and 30/10/22 are in respect to BST, while those collected prior to 27/5/22 or after 30/10/22 are in respect to GMT.
+Time_recorded:
+    Type: string
+    LongName: length of time the video was recorded
+    Unit: HH:MM:SS
+    Description: A time-formatted column (hours:minute:seconds) representing the length of time the video was recorded.
+Video_length:
+    Type: string
+    LongName: length of time the video plays
+    Unit: HH:MM:SS
+    Description: A time-formatted column (hours:minute:seconds) representing the length of time the video plays. This column came into existence because at the beginning of this project, we had some issues acquiring a certain frame rate and playing back the video at another frame rate (due to mismatching the acquisition frame rate and the frame rate within Bonsai's VideoWriter node). Therefore, some videos are altered in speed (typically they are sped up).
+Hardware_description:
+    Type: string
+    LongName: description of the hardware used in the video
+    Description: A text-formatted column providing a general description of all the hardware used in this video (eg, camera drivers, lenses, enclosures). When enclosures or aquaria are mentioned, you can locate specific blueprints and photos in the Enclosures folder (\\ceph-gw01.hpc.swc.ucl.ac.uk\Z:\raw\LondonZoo\Enclosures).
+Software_description:
+    Type: string
+    LongName: description of the software used in the video
+    Description: A text-formatted column providing a general description of all the software used in this video (eg, OS, SDKs).
+Further_description:
+    Type: string
+    LongName: additional notes about the recorded video
+    Description: A text-formatted column to provide space for any additional notes (eg, video playback speed, size). For environmental parameters for each video (ie, temperature, humidity, lux, UVA and UVB), please reference the Environmental-parameters folder.
