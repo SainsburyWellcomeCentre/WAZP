@@ -43,18 +43,19 @@ user_support = "https://github.com/SainsburyWellcomeCentre/WAZP/issues"
 
 [project.optional-dependencies]
 dev = [
-	"pytest",
-	"pytest-cov",
-	"coverage",
-	"tox",
-	"black",
-  "isort",
-  "mypy",
-	"pre-commit",
-	"flake8",
- 	"setuptools_scm",
-  "types-PyYAML",
-  "pandas-stubs",
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "tox",
+    "black",
+    "isort",
+    "mypy",
+    "pre-commit",
+    "flake8",
+    "setuptools_scm",
+    "types-PyYAML",
+    "pandas-stubs",
+    "types-Pillow",
 ]
 
 
