@@ -121,10 +121,9 @@ ignore = [
 module = [
   "dash.*",
   "dash_bootstrap_components.*",
-  "callbacks.*",
-  "utils.*",
   "h5py.*",
   "matplotlib.*",
-  "plotly.*"
+  "plotly.*",
+  "cv2.*",
 ]
 ignore_missing_imports = true
