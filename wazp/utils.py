@@ -93,8 +93,7 @@ def metadata_table_component_from_df(df: pd.DataFrame) -> dash_table.DataTable:
                     """,
             }
         ],  # to fix issue of different cell heights if row is empty;
-        # see https://dash.plotly.com/datatable/width#wrapping-onto-
-        # multiple-lines-while-constraining-the-height-of-cells
+        # see https://dash.plotly.com/datatable/width#wrapping-onto-multiple-lines-while-constraining-the-height-of-cells # noqa
         row_selectable="multi",
         page_size=25,
         page_action="native",
@@ -123,8 +122,7 @@ def metadata_table_component_from_df(df: pd.DataFrame) -> dash_table.DataTable:
             # css overwrites the table height when fixed_rows is enabled;
             # setting height and maxHeight to the same value seems a quick
             # hack to fix it
-            # (see https://community.plotly.com/t/
-            # setting-datatable-max-height-when-using-fixed-headers/26417/10)
+            # (see https://community.plotly.com/t/setting-datatable-max-height-when-using-fixed-headers/26417/10) # noqa
             "width": "100%",
             "maxWidth": "100%",
             "overflowY": "scroll",

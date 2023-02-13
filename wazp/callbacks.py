@@ -35,11 +35,11 @@ def get_home_callbacks(app: dash.Dash) -> None:
     ) -> tuple[tuple[Any, Any], bool, str, str]:
         """
         Save input config to temp shared memory
-        see https://community.plotly.com/t/
-        dash-plotly-share-callback-input-in-another-page
-        -with-dcc-store/44190/2
 
-        """
+        See https://community.plotly.com/t/dash-plotly-share-callback-input-in-another-page-with-dcc-store/44190/2
+
+        """  # noqa
+
         data_to_store = ((), ())
         output_message = ""
         output_color = "light"
@@ -61,7 +61,7 @@ def get_home_callbacks(app: dash.Dash) -> None:
                     # pdb.set_trace()
                     if not up_message_state:
                         up_message_state = not up_message_state
-                    output_message = '''f"Input config for:
+                    output_message = f'''"Input config for:
                     {cfg['videos_dir_path']} processed successfully."'''
                     output_color = "success"
                     # TODO: print path to config file instead?
