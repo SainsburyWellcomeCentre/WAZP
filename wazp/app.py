@@ -69,7 +69,7 @@ content = html.Div(
     id="page-content", style=CONTENT_STYLE, children=dash.page_container
 )
 
-# Storage for the session
+# Storage component for the session
 storage = dcc.Store(
     id="session-storage",
     storage_type="session",

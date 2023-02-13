@@ -32,7 +32,7 @@ def get_home_callbacks(app: dash.Dash) -> None:
     )
     def save_input_config_to_storage(
         up_content: str, up_filename: str, up_message_state: bool
-    ) -> tuple[tuple[Any, Any], bool, str, str]:
+    ) -> tuple[dict[Any, Any], bool, str, str]:
         """
         Save input config to temp shared memory
 
@@ -40,7 +40,9 @@ def get_home_callbacks(app: dash.Dash) -> None:
 
         """  # noqa
 
-        data_to_store = ((), ())
+        # data_to_store = ((), ())
+
+        # default parameters for confirmation message
         output_message = ""
         output_color = "light"
         if up_content is not None:
@@ -55,18 +57,18 @@ def get_home_callbacks(app: dash.Dash) -> None:
                         metadata_fields_dict = yaml.safe_load(mdf)
 
                     # bundle data
-                    data_to_store = (cfg, metadata_fields_dict)
+                    data_to_store = {
+                        "config": cfg,
+                        "metadata_fields": metadata_fields_dict,
+                    }
 
-                    # message
-                    # pdb.set_trace()
+                    # output message
                     if not up_message_state:
                         up_message_state = not up_message_state
                     output_message = f'''"Input config for:
                     {cfg['videos_dir_path']} processed successfully."'''
                     output_color = "success"
                     # TODO: print path to config file instead?
-                    # pdb.set_trace()
-                    # return (data_to_store, up_message_state, output_message)
 
             except Exception as e:
                 print(e)  # TODO: check this, it prints something odd
@@ -90,7 +92,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
         State("session-storage", "data"),
     )
     def generate_metadata_table(
-        metadata_output_children: list, cfg_params_in_storage: tuple
+        metadata_output_children: list, data_in_storage: dict
     ) -> html.Div:
         """
         Read uploaded config file from cache and return component with:
@@ -101,7 +103,10 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
 
         if not metadata_output_children:
             # get config and metadata fields
-            (cfg, metadata_fields_dict) = cfg_params_in_storage
+            (cfg, metadata_fields_dict) = (
+                data_in_storage["config"],
+                data_in_storage["metadata_fields"],
+            )
 
             # return table+buttons
             return html.Div(
@@ -326,7 +331,7 @@ def get_dashboard_callbacks(app):
     )
     def create_input_data_tbl(
         tbl_container_children: list,
-        cfg_params_in_storage: tuple,
+        data_in_storage: dict,
     ):
         """
         Create table of videos with metadata with checkboxes
@@ -336,7 +341,10 @@ def get_dashboard_callbacks(app):
         if not tbl_container_children:
 
             # videos list as df
-            (cfg, metadata_fields_dict) = cfg_params_in_storage
+            (cfg, metadata_fields_dict) = (
+                data_in_storage["config"],
+                data_in_storage["metadata_fields"],
+            )
             df_metadata = utils.df_from_metadata_yaml_files(
                 cfg["videos_dir_path"], metadata_fields_dict
             )
