@@ -21,16 +21,16 @@ dash.register_page(__name__)
 ##########################
 # Read dataframe for one h5 file---this will be part of the figs' callbacks
 h5_file_path = (
-    "./sample_project_2/pose_estimation_results"
-    "jwaspE_nectar-open-close_"
-    "controlDLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000.h5"
+    "sample_project_2/pose_estimation_results/"
+    "jwaspE_nectar-open-close_controlDLC_"
+    "resnet50_jwasp_femaleandmaleSep12shuffle1_1000000.h5"
 )
 df_trajectories = pd.read_hdf(h5_file_path.replace("\n", ""))
 df_trajectories.columns = df_trajectories.columns.droplevel()
 
 
 ########################
-# Prepare figures
+# Prepare figures --this will be updated with callbacks
 # Trajectories
 fig_trajectories = px.scatter(
     df_trajectories["head"],
@@ -79,18 +79,6 @@ fig_heatmap.update_yaxes(
     scaleratio=1,
 )
 
-# Barplot occupancy
-# counts, xedges, yedges, _ = plt.hist2d(
-#     data['head'].x.dropna(),
-#     data['head'].y.dropna(),
-#     bins=100)
-
-# mesh = np.meshgrid(xedges, yedges)
-
-# mask_top_centre = (mesh[0] > 400) & (mesh[0] < 600) & (mesh[1] > 500)
-# & (mesh[1] < 900)
-# 100*np.sum(mask_top_centre[:-1,:-1] * counts) / np.sum(counts)
-
 df_occupancy = pd.DataFrame(
     {
         "ROI": [
@@ -137,6 +125,82 @@ fig_entries_exits.update_xaxes(side="top")
 
 ###############
 # Dashboard layout
+
+
+def plots_first_row_left():
+    """Configure the HTML div contents for the first row left hand side"""
+    trajectories_graph = dcc.Graph(
+        id="graph-trajectories",
+        figure=fig_trajectories,
+        style={
+            "width": "85%",
+            "display": "inline-block",
+        },
+    )
+    radio_button = dcc.RadioItems(
+        ["likelihood", "frame", "input data"],
+        "likelihood",
+        style={
+            "width": "15%",
+            "float": "right",
+            "margin-top": "110px",
+        },
+        labelStyle={
+            "display": "block",
+            "fontSize": ".8rem",
+        },
+    )
+    return html.Div(
+        children=[trajectories_graph, radio_button],
+        style={"width": "49%", "display": "inline-block"},
+    )
+
+
+def plots_first_row_right():
+
+    nbins_button = dcc.Input(
+        id="bin-size",
+        type="number",
+        placeholder="nbins per axis",
+        debounce=True,  # need to enter,
+        style={"float": "right"},
+    )  # "value" will be in callback
+
+    heatmap_graph = dcc.Graph(  # figure first row right
+        id="graph-heatmap",
+        figure=fig_heatmap,
+        style={
+            "width": "85%",
+            "display": "inline-block",
+            "float": "right",
+        },
+    )
+    return html.Div(
+        children=[nbins_button, heatmap_graph],
+        style={"width": "49%", "display": "inline-block"},
+    )
+
+
+def second_row_left():
+    return dcc.Graph(
+        id="graph-barplot",
+        figure=fig_barplot,
+        style={"width": "42%", "display": "inline-block"},
+    )
+
+
+def second_row_right():
+    return dcc.Graph(
+        id="graph-entries-exits",
+        figure=fig_entries_exits,
+        style={
+            "width": "42%",
+            "display": "inline-block",
+            "float": "right",
+        },
+    )
+
+
 layout = html.Div(
     className="row",
     children=[
@@ -151,77 +215,14 @@ layout = html.Div(
                 html.Hr(),
                 html.Div(  # first row
                     children=[
-                        html.Div(  # figure and radio item first row left
-                            [
-                                dcc.Graph(
-                                    id="graph-trajectories",
-                                    figure=fig_trajectories,
-                                    style={
-                                        "width": "85%",
-                                        "display": "inline-block",
-                                    },
-                                ),
-                                dcc.RadioItems(
-                                    ["likelihood", "frame", "input data"],
-                                    "likelihood",
-                                    style={
-                                        "width": "15%",
-                                        "float": "right",
-                                        "margin-top": "110px",
-                                    },
-                                    labelStyle={
-                                        "display": "block",
-                                        "fontSize": ".8rem",
-                                    },
-                                ),
-                            ],
-                            style={"width": "49%", "display": "inline-block"},
-                        ),
-                        html.Div(
-                            [
-                                html.Div(
-                                    [
-                                        dcc.Input(
-                                            id="bin-size",
-                                            type="number",
-                                            placeholder="nbins per axis",
-                                            debounce=True,  # need to enter,
-                                        )  # "value" will be in callback
-                                    ],
-                                    style={
-                                        "float": "right",
-                                    },
-                                ),
-                                dcc.Graph(  # figure first row right
-                                    id="graph-heatmap",
-                                    figure=fig_heatmap,
-                                    style={
-                                        "width": "85%",
-                                        "display": "inline-block",
-                                        "float": "right",
-                                    },
-                                ),
-                            ],
-                            style={"width": "49%", "display": "inline-block"},
-                        ),
+                        plots_first_row_left(),
+                        plots_first_row_right(),
                     ]
                 ),
                 html.Div(  # second row figures
                     children=[
-                        dcc.Graph(
-                            id="graph-barplot",
-                            figure=fig_barplot,
-                            style={"width": "42%", "display": "inline-block"},
-                        ),
-                        dcc.Graph(
-                            id="graph-entries-exits",
-                            figure=fig_entries_exits,
-                            style={
-                                "width": "42%",
-                                "display": "inline-block",
-                                "float": "right",
-                            },
-                        ),
+                        second_row_left(),
+                        second_row_right(),
                     ]
                 ),
             ]
