@@ -40,7 +40,7 @@ def get_home_callbacks(app: dash.Dash) -> None:
 
         """  # noqa
 
-        # data_to_store = ((), ())
+        data_to_store = dict()
 
         # default parameters for confirmation message
         output_message = ""
@@ -65,8 +65,10 @@ def get_home_callbacks(app: dash.Dash) -> None:
                     # output message
                     if not up_message_state:
                         up_message_state = not up_message_state
-                    output_message = f'''"Input config for:
-                    {cfg['videos_dir_path']} processed successfully."'''
+                    output_message = (
+                        f"Input config for:"
+                        f"{cfg['videos_dir_path']} processed successfully."
+                    )
                     output_color = "success"
                     # TODO: print path to config file instead?
 
@@ -74,7 +76,9 @@ def get_home_callbacks(app: dash.Dash) -> None:
                 print(e)  # TODO: check this, it prints something odd
                 if not up_message_state:
                     up_message_state = not up_message_state
-                output_message = "There was an error processing this file."
+                output_message = (
+                    "There was an error processing the" "config file."
+                )
                 output_color = "danger"
 
         return (data_to_store, up_message_state, output_message, output_color)
