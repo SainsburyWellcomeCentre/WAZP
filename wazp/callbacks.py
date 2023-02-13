@@ -77,7 +77,7 @@ def get_home_callbacks(app: dash.Dash) -> None:
                 if not up_message_state:
                     up_message_state = not up_message_state
                 output_message = (
-                    "There was an error processing the" "config file."
+                    "There was an error processing the config file."
                 )
                 output_color = "danger"
 
@@ -333,8 +333,8 @@ def get_dashboard_callbacks(app):
         Input("table-container", "children"),
         State("session-storage", "data"),
     )
-    def create_input_data_tbl(
-        tbl_container_children: list,
+    def create_input_data_table(
+        table_container_children: list,
         data_in_storage: dict,
     ):
         """
@@ -342,7 +342,7 @@ def get_dashboard_callbacks(app):
 
         """
 
-        if not tbl_container_children:
+        if not table_container_children:
 
             # videos list as df
             (cfg, metadata_fields_dict) = (
@@ -355,7 +355,7 @@ def get_dashboard_callbacks(app):
             df_metadata = df_metadata[[cfg["metadata_key_field_str"]]]
 
             # table component
-            tbl_container_children = [
+            table_container_children = [
                 dash_table.DataTable(
                     id="input-data-table",
                     data=df_metadata.to_dict("records"),
@@ -381,7 +381,7 @@ def get_dashboard_callbacks(app):
                     },
                 )
             ]
-        return tbl_container_children
+        return table_container_children
 
     # @app.callback(
     #     Output("graph-trajectories", "figure"),

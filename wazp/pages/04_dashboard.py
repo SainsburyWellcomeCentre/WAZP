@@ -20,9 +20,11 @@ dash.register_page(__name__)
 
 ##########################
 # Read dataframe for one h5 file---this will be part of the figs' callbacks
-h5_file_path = """/Users/sofia/Documents_local/project_Zoo_SWC/WAZP/
-sample_project_2/pose_estimation_results/jwaspE_nectar-open-
-close_controlDLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000.h5"""
+h5_file_path = (
+    "./sample_project_2/pose_estimation_results"
+    "jwaspE_nectar-open-close_"
+    "controlDLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000.h5"
+)
 df_trajectories = pd.read_hdf(h5_file_path.replace("\n", ""))
 df_trajectories.columns = df_trajectories.columns.droplevel()
 
