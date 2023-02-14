@@ -264,7 +264,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
             video_dir = app_storage["config"]["videos_dir_path"]
 
             # List of files currently shown in table
-            list_files_in_tbl = [
+            list_files_in_table = [
                 d[app_storage["config"]["metadata_key_field_str"]]
                 for d in table_rows
             ]
@@ -283,7 +283,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
                 f.name
                 for f in list_video_files
                 if (f.stem not in list_metadata_files)
-                and (f.name not in list_files_in_tbl)
+                and (f.name not in list_files_in_table)
             ]
 
             # Add a row for every video w/o metadata
@@ -299,7 +299,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
             # If the original table had only one empty row: pop it
             # (it occurs if initially there are no yaml files)
             # TODO: this is a bit hacky maybe? is there a better way?
-            if list_files_in_tbl == [""]:
+            if list_files_in_table == [""]:
                 table_rows = table_rows[1:]
 
         return table_rows, n_clicks_add_row_manually, n_clicks_add_rows_missing
