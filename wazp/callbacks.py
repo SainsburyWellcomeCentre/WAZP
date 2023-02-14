@@ -210,9 +210,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
         Input("add-rows-for-missing-button", "n_clicks"),
         State("metadata-table", "data"),
         State("metadata-table", "columns"),
-        State(
-            "session-storage", "data"
-        ),
+        State("session-storage", "data"),
     )
     def add_rows(
         n_clicks_add_row_manually: int,
@@ -491,4 +489,3 @@ def get_dashboard_callbacks(app):
                 )
             ]
         return table_container_children
-
