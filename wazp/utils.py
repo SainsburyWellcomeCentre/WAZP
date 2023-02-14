@@ -1,3 +1,4 @@
+import csv
 import pathlib as pl
 
 import pandas as pd
@@ -259,5 +260,52 @@ def export_selected_rows_as_yaml(
             pl.Path(app_storage["videos_dir_path"]) / yaml_filename, "w"
         ) as yamlf:
             yaml.dump(row, yamlf, sort_keys=False)
+
+    return
+
+
+def csv_to_yaml_per_video(
+    csv_file_path: str,
+    col_to_use_as_filename: str,
+    yaml_parent_dir: str,
+):
+    """Convert input csv to a set of YAML files.
+
+    One YAML file is generated per row. The value at the column
+    'field_to_use_as_filename' will be the YAML filename.
+
+    Parameters
+    ----------
+    csv_file_path : str
+        path to the input csv file
+    field_to_use_as_filename : str
+        the name of the column that should be used as the YAML filename
+    yaml_parent_dir : str
+        path to the directory in which to save the YAML files
+
+    """
+    # TODO: this function will be a utility fn in a callback
+    # when a button is pressed, a set of YAML files is generated from
+    # the input csv file in the project's video directory.
+    # the project config will passed as state (for the fields_str_key
+    # and the video directory)
+
+    # TODO: create directory if it doesnt exist?
+
+    # TODO: accept xlsx input?
+
+    with open(csv_file_path, "r", encoding="utf-8-sig") as csvf:
+
+        csv_reader = csv.DictReader(csvf)
+
+        for row in csv_reader:
+            # extract key
+            key = row[col_to_use_as_filename]
+
+            # write each row to yaml
+            # pl.Path()
+            yaml_filename = pl.Path(key).stem + ".metadata.yaml"
+            with open(pl.Path(yaml_parent_dir) / yaml_filename, "w") as yamlf:
+                yaml.dump(row, yamlf, sort_keys=False)
 
     return
