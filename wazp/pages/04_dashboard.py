@@ -1,25 +1,17 @@
-# import base64
-# import pdb
-
-# import pathlib as pl
-# import pdb
-
 import dash
-
-# import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
+from dash import dcc, html
 
-# import yaml
-from dash import dcc, html  # dash_table
-
-# import wazp.utils as utils
-
+######################
+# Add page to registry
+#########################
 dash.register_page(__name__)
 
 
 ##########################
-# Read dataframe for one h5 file---this will be part of the figs' callbacks
+# Read dataframe for one h5 file
+# TODO: this will be part of the figs' callbacks
 h5_file_path = (
     "sample_project_2/pose_estimation_results/"
     "jwaspE_nectar-open-close_controlDLC_"
@@ -30,7 +22,7 @@ df_trajectories.columns = df_trajectories.columns.droplevel()
 
 
 ########################
-# Prepare figures --this will be updated with callbacks
+# Prepare figures --- TODO: this will be updated with callbacks
 # Trajectories
 fig_trajectories = px.scatter(
     df_trajectories["head"],
@@ -162,11 +154,11 @@ def plots_first_row_right():
         id="bin-size",
         type="number",
         placeholder="nbins per axis",
-        debounce=True,  # need to enter,
+        debounce=True,  # need to press enter,
         style={"float": "right"},
     )  # "value" will be in callback
 
-    heatmap_graph = dcc.Graph(  # figure first row right
+    heatmap_graph = dcc.Graph(
         id="graph-heatmap",
         figure=fig_heatmap,
         style={
@@ -181,7 +173,7 @@ def plots_first_row_right():
     )
 
 
-def second_row_left():
+def plots_second_row_left():
     return dcc.Graph(
         id="graph-barplot",
         figure=fig_barplot,
@@ -189,7 +181,7 @@ def second_row_left():
     )
 
 
-def second_row_right():
+def plots_second_row_right():
     return dcc.Graph(
         id="graph-entries-exits",
         figure=fig_entries_exits,
@@ -213,16 +205,16 @@ layout = html.Div(
         html.Div(
             [
                 html.Hr(),
-                html.Div(  # first row
+                html.Div(
                     children=[
                         plots_first_row_left(),
                         plots_first_row_right(),
                     ]
                 ),
-                html.Div(  # second row figures
+                html.Div(
                     children=[
-                        second_row_left(),
-                        second_row_right(),
+                        plots_second_row_left(),
+                        plots_second_row_right(),
                     ]
                 ),
             ]

@@ -5,7 +5,9 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
 
+#################
 # Initialise app
+##############
 app = Dash(
     __name__,
     use_pages=True,
@@ -14,6 +16,9 @@ app = Dash(
     # TODO: is there an alternative to prevent error w/ chained callbacks?
 )
 
+###############
+# Components
+################
 # Sidebar style
 SIDEBAR_STYLE = {
     "position": "fixed",
@@ -25,7 +30,7 @@ SIDEBAR_STYLE = {
     "background-color": "#f8f9fa",
 }
 
-# Sidebar component definition
+# Sidebar component
 sidebar = html.Div(
     [
         html.H2("WAZP 🐝", className="display-4"),
@@ -46,7 +51,7 @@ sidebar = html.Div(
             children=[
                 dcc.Link(
                     children=f"{page['name']}",
-                    href=page["relative_path"],  # the url
+                    href=page["relative_path"],  # url of each page
                 )
                 for page in dash.page_registry.values()
             ],
@@ -64,9 +69,11 @@ CONTENT_STYLE = {
     "padding": "2rem 1rem",
 }
 
-# Main content component definition
+# Main content component
 content = html.Div(
-    id="page-content", style=CONTENT_STYLE, children=dash.page_container
+    id="page-content",
+    children=dash.page_container,
+    style=CONTENT_STYLE,
 )
 
 # Storage component for the session
@@ -76,7 +83,9 @@ storage = dcc.Store(
     data=tuple(),
 )
 
-# Define app layout
+###############
+# Layout
+################
 app.layout = html.Div(
     [
         dcc.Location(id="url"),
@@ -87,12 +96,16 @@ app.layout = html.Div(
 )
 
 
-# Load callbacks
+###############
+# Callbacks
+################
 callbacks.get_home_callbacks(app)
 callbacks.get_metadata_callbacks(app)
 callbacks.get_dashboard_callbacks(app)
 
 
+###############
 # Driver
+################
 if __name__ == "__main__":
     app.run_server(debug=True)

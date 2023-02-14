@@ -2,10 +2,16 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
+######################
+# Add page to registry
+#########################
 dash.register_page(__name__, path="/")
 
-# Define upload component
-upload = dcc.Upload(
+###############
+# Components
+################
+# Upload component for project config
+upload_component = dcc.Upload(
     id="upload-data",
     children=html.Div(
         ["Drag and Drop or ", html.A("Select project config file")]
@@ -21,21 +27,26 @@ upload = dcc.Upload(
         "textAlign": "center",
         "margin": "10px",
     },
-    multiple=False,  # allow multiple files upload
+    multiple=False,
 )
 
-# Define layout for home page
+# Upload message
+upload_message = dbc.Alert(
+    id="upload-message",
+    children="",
+    dismissable=False,
+    fade=False,
+    is_open=False,
+    color="light",
+)
+
+###############
+# Layout
+################
 layout = html.Div(
     children=[
         html.H1(children="Home"),
-        upload,
-        dbc.Alert(
-            children="",
-            id="upload-message",
-            dismissable=False,
-            fade=False,
-            is_open=False,
-            color="light",
-        ),
+        upload_component,
+        upload_message,
     ]
 )

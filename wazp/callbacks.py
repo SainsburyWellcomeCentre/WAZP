@@ -16,9 +16,12 @@ VIDEO_TYPES = [".avi", ".mp4"]
 
 
 def get_home_callbacks(app: dash.Dash) -> None:
-    """
-    Return all home callback functions
+    """Return all callback functions for the home tab.
 
+    Parameters
+    ----------
+    app : dash.Dash
+        Dash app object for which these callbacks are defined
     """
 
     @app.callback(
@@ -33,11 +36,32 @@ def get_home_callbacks(app: dash.Dash) -> None:
     def save_input_config_to_storage(
         up_content: str, up_filename: str, up_message_state: bool
     ) -> tuple[dict[Any, Any], bool, str, str]:
-        """
-        Save input config to temp shared memory
+        """Save project configuration file to temporary memory storage for the current session.
 
         See https://community.plotly.com/t/dash-plotly-share-callback-input-in-another-page-with-dcc-store/44190/2
 
+        Parameters
+        ----------
+        up_content : str
+            data from the project config file upload
+        up_filename : str
+            name of the uploaded file (project config file)
+        up_message_state : bool
+            visibility of the upload message
+
+        Returns
+        -------
+        data_to_store : dict
+            dictionary with the following keys and values:
+            - 'config': a dict with the project configuration parameters
+            - 'metadata_fields': a dict with a set of attributes (description, type...)
+            for each metadata field
+        up_message_state : bool
+            visibility of the upload message
+        output_message : str
+            content of the upload message
+        output_color : str
+            color of the upload message
         """  # noqa
 
         data_to_store = dict()
@@ -50,15 +74,15 @@ def get_home_callbacks(app: dash.Dash) -> None:
             try:
                 if "yaml" in up_filename:
                     # get config
-                    cfg = yaml.safe_load(base64.b64decode(content_str))
+                    config = yaml.safe_load(base64.b64decode(content_str))
 
                     # get metadata fields dict
-                    with open(cfg["metadata_fields_file_path"]) as mdf:
+                    with open(config["metadata_fields_file_path"]) as mdf:
                         metadata_fields_dict = yaml.safe_load(mdf)
 
                     # bundle data
                     data_to_store = {
-                        "config": cfg,
+                        "config": config,
                         "metadata_fields": metadata_fields_dict,
                     }
 
@@ -67,7 +91,7 @@ def get_home_callbacks(app: dash.Dash) -> None:
                         up_message_state = not up_message_state
                     output_message = (
                         f"Input config for:"
-                        f"{cfg['videos_dir_path']} processed successfully."
+                        f"{config['videos_dir_path']} processed successfully."
                     )
                     output_color = "success"
                     # TODO: print path to config file instead?
@@ -85,78 +109,96 @@ def get_home_callbacks(app: dash.Dash) -> None:
 
 
 def get_metadata_callbacks(app: dash.Dash) -> None:
-    """
-    Return all metadata callback functions
+    """Return all callback functions for the metadata tab.
+
+
+    Parameters
+    ----------
+    app : dash.Dash
+        Dash app object for which these callbacks are defined
 
     """
 
     @app.callback(
-        Output("output-data-upload", "children"),
-        Input("output-data-upload", "children"),
+        Output("output-metadata", "children"),
+        Input("output-metadata", "children"),
         State("session-storage", "data"),
     )
     def generate_metadata_table(
-        metadata_output_children: list, data_in_storage: dict
+        metadata_output_children: list, app_storage: dict
     ) -> html.Div:
-        """
-        Read uploaded config file from cache and return component with:
-        - table with metadata per video,
-        - auxiliary buttons for common table manipulations
+        """Generate html component with a table holding the
+        metadata per video and with auxiliary buttons for
+        common table manipulations.
 
+        The project configuration file is read from temporary
+        memory storage for the current session.
+
+        Parameters
+        ----------
+        metadata_output_children : list
+            list of html components that will be passed to
+            the metadata tab's output component
+        app_storage : dict
+            data held in temporary memory storage,
+            accessible to all tabs in the app
+
+        Returns
+        -------
+        html.Div
+            html component holding the metadata dash_table and
+            the auxiliary buttons for common table manipulations
         """
 
         if not metadata_output_children:
-            # get config and metadata fields
-            (cfg, metadata_fields_dict) = (
-                data_in_storage["config"],
-                data_in_storage["metadata_fields"],
+
+            metadata_table = utils.metadata_table_component_from_df(
+                utils.df_from_metadata_yaml_files(
+                    app_storage["config"]["videos_dir_path"],
+                    app_storage["metadata_fields"],
+                )
             )
 
-            # return table+buttons
+            auxiliary_buttons = html.Div(
+                [
+                    html.Button(
+                        children="Check for missing metadata files",
+                        id="add-rows-for-missing-button",
+                        n_clicks=0,
+                        style={"margin-right": "10px"},
+                    ),
+                    html.Button(
+                        children="Add empty row",
+                        id="add-row-manually-button",
+                        n_clicks=0,
+                        style={"margin-right": "10px"},
+                    ),
+                    html.Button(
+                        children="Select/unselect all rows",
+                        id="select-all-rows-button",
+                        n_clicks=0,
+                        style={"margin-right": "10px"},
+                    ),
+                    html.Button(
+                        children="Export selected rows as yaml",
+                        id="export-selected-rows-button",
+                        n_clicks=0,
+                        style={"margin-right": "10px"},
+                    ),
+                    dbc.Alert(
+                        children="",
+                        id="alert",
+                        dismissable=True,
+                        fade=False,
+                        is_open=False,
+                    ),
+                ]
+            )
+
             return html.Div(
                 [
-                    # metadata table
-                    utils.metadata_table_component_from_df(
-                        utils.df_from_metadata_yaml_files(
-                            cfg["videos_dir_path"], metadata_fields_dict
-                        )
-                    ),
-                    # auxiliary buttons
-                    html.Div(
-                        [
-                            html.Button(
-                                children="Check for missing metadata files",
-                                id="add-rows-for-missing-button",
-                                n_clicks=0,
-                                style={"margin-right": "10px"},
-                            ),
-                            html.Button(
-                                children="Add empty row",
-                                id="add-row-manually-button",
-                                n_clicks=0,
-                                style={"margin-right": "10px"},
-                            ),
-                            html.Button(
-                                children="Select/unselect all rows",
-                                id="select-all-rows-button",
-                                n_clicks=0,
-                                style={"margin-right": "10px"},
-                            ),
-                            html.Button(
-                                children="Export selected rows as yaml",
-                                id="export-selected-rows-button",
-                                n_clicks=0,
-                                style={"margin-right": "10px"},
-                            ),
-                            dbc.Alert(
-                                children="",
-                                id="alert",
-                                dismissable=True,
-                                fade=False,
-                                is_open=False,
-                            ),
-                        ]
-                    ),
+                    metadata_table,
+                    auxiliary_buttons,
                 ]
             )
 
@@ -177,15 +219,38 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
         n_clicks_add_rows_missing: int,
         table_rows: list[dict],
         table_columns: list[dict],
-        cfg_params_in_storage: tuple,
+        app_storage: dict,
     ) -> tuple[list[dict], int, int]:
-        """
-        Add rows to metadata table, either:
-        - manually
-        - based on videos with missing yaml files
+        """Add rows to metadata table.
 
-        Both are triggered by clicking the corresponding buttons
+        Rows are added either manually or semiautomatically based on videos
+        with missing yaml files. Both actions are triggered by clicking the
+        corresponding buttons
 
+        Parameters
+        ----------
+        n_clicks_add_row_manually : int
+            number of clicks on the 'add row manually' button
+        n_clicks_add_rows_missing : int
+            number of clicks on the 'add missing rows' button
+        table_rows : list[dict]
+            a list of dictionaries holding the data of each row in the table
+        table_columns : list[dict]
+            a list of dictionaries holding the data of each column in the table
+        app_storage : dict
+            data held in temporary memory storage,
+            accessible to all tabs in the app
+
+        Returns
+        -------
+        table_rows : list[dict]
+            a list of dictionaries holding the data of each row in the table
+
+        n_clicks_add_row_manually : int
+            number of clicks on the 'add row manually' button
+
+        n_clicks_add_rows_missing : int
+            number of clicks on the 'add missing rows' button
         """
 
         # Add empty rows manually
@@ -196,14 +261,12 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
         # Add rows for videos w/ missing metadata
         if n_clicks_add_rows_missing > 0 and table_columns:
             # Read config for videos directory
-            (cfg, _) = cfg_params_in_storage
-            # _, content_str = up_content.split(",")
-            # cfg = yaml.safe_load(base64.b64decode(content_str))
-            video_dir = cfg["videos_dir_path"]
+            video_dir = app_storage["config"]["videos_dir_path"]
 
             # List of files currently shown in table
             list_files_in_tbl = [
-                d[cfg["metadata_key_field_str"]] for d in table_rows
+                d[app_storage["config"]["metadata_key_field_str"]]
+                for d in table_rows
             ]
 
             # List of videos w/o metadata and not in table
@@ -261,20 +324,46 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
     def modify_rows_selection(
         n_clicks_select_all: int,
         n_clicks_export: int,
-        data_previous: list,
+        data_previous: list[dict],
         data: list[dict],
         data_page: list[dict],
         list_selected_rows: list[int],
-        cfg_params_in_storage: tuple,
+        app_storage: dict,
         alert_state: bool,
     ) -> tuple[list[int], int, int, bool, str]:
-        """
-        Modify the set of rows that are selected in metadata table.
+        """Modify the selection status of the rows in the metadata table.
 
-        A row's checkbox is modified if:
-        - the user edits the data on that row (checkbox set to True)
-        - the export button is clicked (checkbox set to False after exporting)
-        - the 'select/unselect' all button is clicked
+        A row's selection status (i.e., its checkbox) is modified if (1) the
+        user edits the data on that row (then its checkbox is set to True),
+        (2) the export button is clicked (then the selected rows are reset
+        to False), or (3) the 'select/unselect' all button is clicked
+
+        Parameters
+        ----------
+        n_clicks_select_all : int
+            number of clicks on the 'select/unselect all' button
+        n_clicks_export : int
+            number of clicks on the 'export' button
+        data_previous : list[dict]
+            a list of dictionaries holding the previous state of the table
+            (read-only)
+        data : list[dict]
+            a list of dictionaries holding the table data
+        data_page : list[dict]
+            a list of dictionaries holding the data of the table in
+            the current page
+        list_selected_rows : list[int]
+            a list of indices for the currently selected rows
+        app_storage : dict
+            data held in temporary memory storage,
+            accessible to all tabs in the app
+        alert_state : bool
+            visibility of the information message
+
+        Returns
+        -------
+        tuple[list[int], int, int, bool, str]
+            _description_
         """
 
         # Initialise alert message w empty
@@ -292,8 +381,9 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
         if (n_clicks_export > 0) and list_selected_rows:
 
             # export yaml files
-            (cfg, _) = cfg_params_in_storage
-            utils.export_selected_rows_as_yaml(data, list_selected_rows, cfg)
+            utils.export_selected_rows_as_yaml(
+                data, list_selected_rows, app_storage["config"]
+            )
 
             # display alert if successful import
             # TODO: what is a better way to check if export was successful?
@@ -328,6 +418,14 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
 
 
 def get_dashboard_callbacks(app):
+    """Return all callback functions for the dashboard tab.
+
+    Parameters
+    ----------
+    app : dash.Dash
+        Dash app object for which these callbacks are defined
+    """
+
     @app.callback(
         Output("table-container", "children"),
         Input("table-container", "children"),
@@ -335,24 +433,35 @@ def get_dashboard_callbacks(app):
     )
     def create_input_data_table(
         table_container_children: list,
-        data_in_storage: dict,
+        app_storage: dict,
     ):
-        """
-        Create table of videos with metadata with checkboxes
+        """Create table to select videos to include in plots.
 
+        Parameters
+        ----------
+        table_container_children : list
+            list of html elements to pass to the table container
+        app_storage : dict
+            data held in temporary memory storage,
+            accessible to all tabs in the app
+
+        Returns
+        -------
+        table_container_children
+            list of html elements to pass to the table container
         """
 
+        # Create table of videos with metadata with checkboxes
         if not table_container_children:
 
             # videos list as df
-            (cfg, metadata_fields_dict) = (
-                data_in_storage["config"],
-                data_in_storage["metadata_fields"],
-            )
             df_metadata = utils.df_from_metadata_yaml_files(
-                cfg["videos_dir_path"], metadata_fields_dict
+                app_storage["config"]["videos_dir_path"],
+                app_storage["metadata_fields"],
             )
-            df_metadata = df_metadata[[cfg["metadata_key_field_str"]]]
+            df_metadata = df_metadata[
+                [app_storage["config"]["metadata_key_field_str"]]
+            ]
 
             # table component
             table_container_children = [
