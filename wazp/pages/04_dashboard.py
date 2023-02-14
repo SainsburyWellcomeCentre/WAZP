@@ -13,7 +13,7 @@ dash.register_page(__name__)
 # Read dataframe for one h5 file
 # TODO: this will be part of the figs' callbacks
 h5_file_path = (
-    "sample_project_2/pose_estimation_results/"
+    "sample_project/pose_estimation_results/"
     "jwaspE_nectar-open-close_controlDLC_"
     "resnet50_jwasp_femaleandmaleSep12shuffle1_1000000.h5"
 )
