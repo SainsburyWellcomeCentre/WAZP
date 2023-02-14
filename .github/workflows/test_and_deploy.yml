@@ -26,8 +26,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # Run all supported Python versions on linux
-        python-version: ["3.8", "3.9", "3.10"]
+        # Run all supported Python versions on linux (plus one development unsupported)
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
         os: [ubuntu-latest]
         # Include one windows and macos run
         include:
