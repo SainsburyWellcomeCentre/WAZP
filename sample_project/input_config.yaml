@@ -2,3 +2,8 @@ videos_dir_path: ./sample_project/videos # eventually: \processed\LondonZoo\jewe
 metadata_fields_file_path: ./sample_project/metadata_fields.yaml
 metadata_key_field_str: File
 pose_estimation_results_path: ./sample_project/pose_estimation_results
+event_tags:
+  - experiment_start
+  - box_1_open
+  - box_1_closed
+  - experiment_end

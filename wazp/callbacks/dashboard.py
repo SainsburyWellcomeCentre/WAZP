@@ -1,8 +1,9 @@
 import pathlib as pl
 import re
 
+import dash_bootstrap_components as dbc
 import utils
-from dash import Input, Output, State, dash_table
+from dash import Input, Output, State, dash_table, dcc, html
 
 
 def get_callbacks(app):
@@ -81,13 +82,6 @@ def get_callbacks(app):
                 for v in list_videos_w_metadata
             ]
 
-            # # list of videos with metadata but no h5 file
-            # list_videos_w_missing_pose_results = [
-            #    v for v in list_videos_w_metadata
-            #    if v not in list_videos_w_pose_results
-            # ]
-            # # TODO: use sets and (non-symmetric) differnece?
-
             # table component
             table_container_children = [
                 dash_table.DataTable(
@@ -148,3 +142,157 @@ def get_callbacks(app):
             ]
 
         return table_container_children
+
+    @app.callback(
+        Output("slider-container", "children"),
+        Input("slider-container", "children"),
+        State("session-storage", "data"),
+    )
+    def create_time_slider(slider_container_children: list, app_storage: dict):
+
+        # For now, a slider between events
+        if not slider_container_children:
+            offset = 1
+            max_loc = len(app_storage["config"]["event_tags"]) + offset
+            slider_container_children = dcc.RangeSlider(
+                min=0,  # TODO: based on max number of frames to first event
+                max=max_loc,
+                # TODO: max number of frames after last event in a video?
+                step=1,
+                value=[offset, max_loc - offset],
+                marks={
+                    i
+                    + offset: {
+                        "label": tag,
+                        "style": {
+                            "color": (
+                                "#055099"
+                                if i
+                                in [
+                                    0,
+                                    len(app_storage["config"]["event_tags"])
+                                    - 1,
+                                ]
+                                else "#7BB2DD"
+                            ),
+                            "font-size": "16px",
+                        },
+                    }
+                    for i, tag in enumerate(
+                        app_storage["config"]["event_tags"]
+                    )
+                },
+                allowCross=False,
+                # tooltip={"placement": "top", "always_visible": True}
+            )
+
+        return slider_container_children
+
+    @app.callback(
+        Output("export-container", "children"),
+        Input("export-container", "children"),
+        State("session-storage", "data"),
+    )
+    def create_export_button_and_message(
+        export_container_children, app_storage
+    ):
+        if not export_container_children:  # TODO: Do I need this?
+
+            export_button = html.Button(
+                children="Export selected data",  # csv? h5?
+                id="export-df-button",
+                n_clicks=0,
+                style={"margin-right": "10px", "margin-left": "10px"},
+            )
+
+            export_message = dbc.Alert(
+                children="Data export message",
+                id="export-message",
+                dismissable=True,
+                fade=False,
+                is_open=True,
+                style={
+                    "margin-right": "10px",
+                    "margin-left": "10px",
+                    "margin-top": "5px",
+                },
+            )
+
+            export_container_children = html.Div(
+                [
+                    export_button,
+                    export_message,
+                ]
+            )
+
+        return export_container_children
+
+    @app.callback(
+        Output("custom-plot-container", "children"),
+        Input("custom-plot-container", "children"),
+        State("session-storage", "data"),
+    )
+    def create_custom_plots(custom_plot_container_children, app_storage):
+        if not custom_plot_container_children:
+
+            code_block = """
+                import dash
+                import pandas as pd
+                import plotly.express as px
+                from dash import dcc, html
+
+                ######################
+                # Add page to registry
+                #########################
+                dash.register_page(__name__)
+
+
+                ##########################
+                # Read dataframe for one h5 file
+                # TODO: this will be part of the figs' callbacks
+                h5_file_path = (
+                    "sample_project/pose_estimation_results/"
+                    "jwaspE_nectar-open-close_controlDLC_"
+                    "resnet50_jwasp_femaleandmaleSep12shuffle1_1000000.h5"
+                )
+                df_trajectories = pd.read_hdf(h5_file_path.replace("\n", ""))
+                df_trajectories.columns = df_trajectories.columns.droplevel()
+
+
+                ########################
+                # Prepare figures --- TODO: this will be updated with callbacks
+                # Trajectories
+                fig_trajectories = px.scatter(
+                    df_trajectories["head"],
+                    x="x",
+                    y="y",
+                    labels={
+                        "x": "x-axis (px)",
+                        "y": "y-axis (px)",
+                        "likelihood": "likelihood",
+                    },
+                    color="likelihood",
+                    custom_data=df_trajectories["head"].columns,
+                    title="Raw trajectories",
+                )
+                fig_trajectories.update_layout(
+                    clickmode="event+select",
+                    # xaxis_range=[0,1300],
+                    # yaxis_range=[0,1100]
+                )
+                fig_trajectories.update_yaxes(
+                    scaleanchor="x",
+                    scaleratio=1,
+                )
+                fig_trajectories.update_traces(marker_size=5)
+            """
+
+            custom_plot_container_children = html.Script(
+                code_block,
+                lang="en",
+                contentEditable="true",
+                # lang='Python',
+                spellCheck="true",
+            )
+
+        return custom_plot_container_children

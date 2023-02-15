@@ -21,6 +21,12 @@ dash.register_page(__name__)
 # df_trajectories.columns = df_trajectories.columns.droplevel()
 
 
+#######################
+# Slider component
+####################
+# TODO put this in a callback and get labels from project config
+
+
 ######################
 # Layout
 ####################
@@ -31,12 +37,39 @@ layout = html.Div(
         html.H1("Dashboard"),
         html.Br(),
         html.H5(
-            "Input data", style={"margin-top": "20px", "margin-bottom": "10px"}
+            "Input data", style={"margin-top": "20px", "margin-bottom": "20px"}
         ),
         html.Div(children=[], id="videos-table-container"),
+        # html.Hr(
+        #     style={"margin-top": "30px", "margin-bottom": "15px"}
+        # ),
+        # html.H5(
+        #     "Time range",
+        #     style={"margin-top": "20px", "margin-bottom": "25px"}
+        # ),
+        html.Div(
+            children=[],
+            id="slider-container",
+            style={"margin-top": "30px", "margin-bottom": "25px"},
+        ),
+        # html.Hr(
+        #     style={"margin-top": "60px", "margin-bottom": "15px"}
+        # ),
+        # html.H5(
+        #     "Export", style={"margin-top": "60px", "margin-bottom": "25px"}
+        # ),
+        html.Div(
+            children=[],
+            id="export-container",
+            style={"margin-top": "30px", "margin-bottom": "25px"},
+        ),
+        # html.H5(
+        #     "Plots", style={"margin-top": "60px", "margin-bottom": "25px"}
+        # ),
+        html.Div(children=[], id="custom-plot-container"),
         html.Div(
             [
-                html.Hr(),
+                # html.Hr(),
                 html.Div(children=[]),
                 html.Div(children=[]),
             ]
