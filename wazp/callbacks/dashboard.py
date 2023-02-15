@@ -95,6 +95,13 @@ def get_callbacks(app):
                     page_action="native",
                     sort_action="native",
                     sort_mode="single",
+                    style_header={
+                        "backgroundColor": "rgb(210, 210, 210)",
+                        "color": "black",
+                        "fontWeight": "bold",
+                        "textAlign": "left",
+                        "fontFamily": "Helvetica",
+                    },
                     style_table={
                         "height": "200px",
                         "maxHeight": "200px",
@@ -111,6 +118,13 @@ def get_callbacks(app):
                         "width": 55,
                         "maxWidth": 450,
                     },
+                    style_header_conditional=[
+                        {
+                            "if": {"column_id": "File"},
+                            # TODO: consider getting file from app_storage
+                            "backgroundColor": "rgb(200, 200, 400)",
+                        }
+                    ],
                     style_data_conditional=[
                         {
                             "if": {"column_id": pose_data_str},

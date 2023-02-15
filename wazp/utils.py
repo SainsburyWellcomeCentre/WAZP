@@ -93,7 +93,7 @@ def metadata_table_component_from_df(df: pd.DataFrame) -> dash_table.DataTable:
             {
                 "id": c,
                 "name": c,
-                "hideable": True,
+                "hideable": (True if c != "File" else False),
                 "editable": True,
                 "presentation": "input",
             }
