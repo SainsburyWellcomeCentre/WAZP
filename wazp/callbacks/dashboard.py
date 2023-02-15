@@ -301,12 +301,13 @@ def get_callbacks(app):
                 fig_trajectories.update_traces(marker_size=5)
             """
 
-            custom_plot_container_children = html.Script(
-                code_block,
+            custom_plot_container_children = dcc.Textarea(  # html.Script(
+                value=code_block,
                 lang="en",
                 contentEditable="true",
                 # lang='Python',
                 spellCheck="true",
+                style={"width": "50%", "height": 400},
             )
 
         return custom_plot_container_children
