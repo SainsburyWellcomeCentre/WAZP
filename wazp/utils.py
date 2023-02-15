@@ -33,7 +33,7 @@ def df_from_metadata_yaml_files(
     list_metadata_files = [
         str(f)
         for f in pl.Path(parent_dir).iterdir()
-        if str(f).endswith("metadata.yaml")
+        if str(f).endswith(".metadata.yaml")
     ]
 
     # If there are no metadata (yaml) files:

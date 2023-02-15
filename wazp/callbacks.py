@@ -271,7 +271,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
             list_video_files = []
             list_metadata_files = []
             for f in pl.Path(video_dir).iterdir():
-                if str(f).endswith("metadata.yaml"):
+                if str(f).endswith(".metadata.yaml"):
                     list_metadata_files.append(
                         re.sub(".metadata$", "", f.stem)
                     )
