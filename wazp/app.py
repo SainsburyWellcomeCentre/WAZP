@@ -99,9 +99,9 @@ app.layout = html.Div(
 ###############
 # Callbacks
 ################
-callbacks.get_home_callbacks(app)
-callbacks.get_metadata_callbacks(app)
-callbacks.get_dashboard_callbacks(app)
+callbacks.home.get_callbacks(app)
+callbacks.metadata.get_callbacks(app)
+callbacks.dashboards.get_callbacks(app)
 
 
 ###############
