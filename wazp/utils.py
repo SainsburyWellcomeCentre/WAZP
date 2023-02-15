@@ -152,7 +152,7 @@ def metadata_table_component_from_df(df: pd.DataFrame) -> dash_table.DataTable:
             "padding": 7,
             "minWidth": 70,
             "width": 175,
-            "maxWidth": 300,
+            "maxWidth": 450,
             "fontFamily": "Helvetica",
         },
         style_data={  # refers to data cells (all except header and filter)
@@ -164,6 +164,7 @@ def metadata_table_component_from_df(df: pd.DataFrame) -> dash_table.DataTable:
         style_header_conditional=[
             {
                 "if": {"column_id": "File"},
+                # TODO: consider getting file from app_storage
                 "backgroundColor": "rgb(200, 200, 400)",
             }
         ],

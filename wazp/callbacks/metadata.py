@@ -192,7 +192,10 @@ def get_callbacks(app: dash.Dash) -> None:
             for vid in list_videos_wo_metadata:
                 table_rows.append(
                     {
-                        c["id"]: vid if c["id"] == "File" else ""
+                        c["id"]: vid
+                        if c["id"]
+                        == app_storage["config"]["metadata_key_field_str"]
+                        else ""
                         for c in table_columns
                     }
                 )
@@ -292,7 +295,10 @@ def get_callbacks(app: dash.Dash) -> None:
             # TODO: add timestamp? remove name of files in message?
             if not alert_state:
                 alert_state = not alert_state
-            list_files = [data[i]["File"] for i in list_selected_rows]
+            list_files = [
+                data[i][app_storage["config"]["metadata_key_field_str"]]
+                for i in list_selected_rows
+            ]
             alert_message = f"""Successfully exported
             {len(list_selected_rows)} yaml files: {list_files}"""
 
