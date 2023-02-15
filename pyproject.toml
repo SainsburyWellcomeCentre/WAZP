@@ -6,7 +6,7 @@ authors = [{name = "Sofia Miñano", email= "s.minano@ucl.ac.uk"},
            {name = "Adam Tyson", email= "code@adamltyson.com"}]
 description = "Wasp Animal-tracking Zoo project with Pose estimation"
 readme = "README.md"
-requires-python = ">=3.8.0"
+requires-python = ">=3.9.0"
 dynamic = ["version"]
 
 license = {text = "BSD-3-Clause"}
@@ -17,7 +17,6 @@ classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Operating System :: OS Independent",
@@ -68,7 +67,7 @@ exclude = ["tests*"]
 addopts = "--cov=wazp"
 
 [tool.black]
-target-version = ['py38', 'py39', 'py310']
+target-version = ['py39', 'py310']
 skip-string-normalization = false
 line-length = 79
 exclude = '''
