@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import callbacks
+import callbacks.dashboard
+import callbacks.home
+import callbacks.metadata
 import dash
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
@@ -101,7 +103,7 @@ app.layout = html.Div(
 ################
 callbacks.home.get_callbacks(app)
 callbacks.metadata.get_callbacks(app)
-callbacks.dashboards.get_callbacks(app)
+callbacks.dashboard.get_callbacks(app)
 
 
 ###############
