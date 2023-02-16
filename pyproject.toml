@@ -35,6 +35,7 @@ dev = [
 	"pytest",
 	"pytest-cov",
 	"coverage",
+  "dash[testing]",
 	"tox",
 	"black",
   "isort",
