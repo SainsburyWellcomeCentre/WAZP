@@ -3,16 +3,19 @@ import pathlib as pl
 
 # import pdb
 import re
-from typing import Any
+from typing import Any, Optional
 
 import dash
 import dash_bootstrap_components as dbc
+import plotly.express as px
 import utils
 import yaml
 from dash import Input, Output, State, dash_table, html
 
 VIDEO_TYPES = [".avi", ".mp4"]
 # TODO: other video extensions? have this in project config file instead?
+ROI_CMAP = px.colors.qualitative.Dark24
+# TODO: make colomap this a project config parameter?
 
 
 def get_home_callbacks(app: dash.Dash) -> None:
@@ -434,7 +437,7 @@ def get_roi_callbacks(app):
     )
     def update_video_select_options(
         app_storage: dict,
-    ) -> tuple[list, str]:
+    ) -> Optional[tuple[list, str]]:
         """Update the options of the video select dropdown.
 
         Parameters
@@ -473,6 +476,52 @@ def get_roi_callbacks(app):
             return options, value
         else:
             return dash.no_update, dash.no_update
+
+    @app.callback(
+        [
+            Output("roi-select", "options"),
+            Output("roi-select", "value"),
+            Output("roi-colors-storage", "data"),
+        ],
+        Input("session-storage", "data"),
+    )
+    def update_roi_select_options(
+        app_storage: dict,
+    ) -> Optional[tuple[list[dict], str, dict]]:
+        """Update the options of the ROI select dropdown.
+
+        Parameters
+        ----------
+        app_storage : dict
+            data held in temporary memory storage,
+            accessible to all tabs in the app
+
+        Returns
+        -------
+        list[dict]
+            list of dictionaries with keys 'label' and 'value'
+        str
+            value of the first ROI in the list
+        dict
+            dictionary with the folowing keys:
+                - roi2color: dict mapping ROI names to colors
+                - color2roi: dict mapping colors to ROI names
+        """
+        if "config" in app_storage.keys():
+            # Get ROI names from stored config
+            config = app_storage["config"]
+            roi_names = config["roi_names"]
+            options = [{"label": r, "value": r} for r in roi_names]
+            value = roi_names[0]
+
+            # Get ROI-to-color mapping
+            roi_color_mapping = utils.assign_roi_colors(
+                roi_names, cmap=ROI_CMAP
+            )
+
+            return options, value, roi_color_mapping
+        else:
+            return dash.no_update, dash.no_update, dash.no_update
 
 
 def get_dashboard_callbacks(app):

@@ -1,6 +1,7 @@
 import pathlib as pl
 
 import pandas as pd
+import plotly.express as px
 import yaml
 from dash import dash_table
 
@@ -261,3 +262,43 @@ def export_selected_rows_as_yaml(
             yaml.dump(row, yamlf, sort_keys=False)
 
     return
+
+
+def assign_roi_colors(
+    roi_names: list[str],
+    cmap: list[str] = px.colors.qualitative.Dark24,
+) -> dict:
+    """
+    Match ROI names to colors
+    Parameters
+    ----------
+    roi_names : list of str
+        List of ROI names
+    cmap : list of str
+        colormap for ROIs.
+        Defaults to plotly.express.colors.qualitative.Dark24.
+        Each color is a string in hex format, e.g. '#FD3216'
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+        - roi2color: dict mapping ROI names to colors
+        - color2roi: dict mapping colors to ROI names
+    """
+
+    # Prepare roi-to-color mapping
+    roi_color_pairs = [
+        (roi, cmap[i % len(cmap)]) for i, roi in enumerate(roi_names)
+    ]
+
+    # roi-to-color and color-to-roi dicts
+    roi2color = {}
+    color2roi = {}
+    for roi, color in roi_color_pairs:
+        roi2color[roi] = color
+        color2roi[color] = roi
+
+    return {
+        "roi2color": roi2color,
+        "color2roi": color2roi,
+    }

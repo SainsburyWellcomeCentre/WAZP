@@ -18,7 +18,7 @@ init_videos = ["No videos found yet"]
 # Get initial set of ROIs to initialize dropdown
 init_roi_names = ["No ROIs defined yet"]
 # Default color for ROI drawing
-init_roi_color = px.colors.qualitative.Dark24[0]
+init_roi_color = "#fff"
 # Columns for ROI table
 init_roi_table_columns = ["ROI", "path"]
 
@@ -127,6 +127,7 @@ table_card = dbc.Card(
                         align="center",
                     )
                 ),
+                dcc.Store(data={}, id="roi-colors-storage"),
             ]
         ),
     ]
