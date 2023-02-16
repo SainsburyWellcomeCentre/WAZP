@@ -82,6 +82,22 @@ frame_input = dbc.Input(
     debounce=True,
 )
 
+# frame status alert
+frame_status_alert = dbc.Alert(
+    "",
+    id="frame-status-alert",
+    color="light",
+    is_open=False,
+)
+
+# ROI status alert
+roi_status_alert = dbc.Alert(
+    "No ROIs to save.",
+    id="rois-status-alert",
+    color="light",
+    is_open=False,
+)
+
 ###############################
 # Table of ROIs               #
 ###############################
@@ -140,6 +156,7 @@ frame_card = dbc.Card(
             ]
         ),
         dbc.CardBody(frame_graph),
+        dbc.CardFooter(frame_status_alert),
     ],
 )
 
@@ -163,6 +180,7 @@ table_card = dbc.Card(
                 dcc.Store(data={}, id="roi-colors-storage"),
             ]
         ),
+        dbc.CardFooter(roi_status_alert),
     ]
 )
 
