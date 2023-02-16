@@ -327,6 +327,32 @@ def get_num_frames(video_path):
     return int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
 
 
+def extract_frame(
+    video_path: str, frame_number: int, output_path: str
+) -> None:
+    """
+    Extract a single frame from a video and save it.
+
+    Parameters
+    ----------
+    video_path : str
+        Path to the video file
+    frame_number : int
+        Number of the frame to extract
+    output_path : str
+        Path to the output image file
+    """
+    print(f"Extracting frame {frame_number} from video {video_path}")
+    vidcap = cv2.VideoCapture(video_path)
+    vidcap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+    success, image = vidcap.read()
+    if success:
+        cv2.imwrite(output_path, image)
+        print(f"Saved frame to {output_path}")
+    else:
+        print("Error extracting frame from video")
+
+
 def time_passed(start=0):
     """Return time passed since start in seconds
 
