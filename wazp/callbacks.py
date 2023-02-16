@@ -621,6 +621,48 @@ def get_roi_callbacks(app):
                     )
             return roi_table
 
+    @app.callback(
+        Output("roi-table", "style_data_conditional"),
+        Input("roi-table", "data"),
+        State("roi-colors-storage", "data"),
+    )
+    def set_table_roi_color(roi_table: list, roi_color_mapping: dict) -> list:
+        """
+        Set the color of the ROI names in the ROI table
+        based on the color assigned to that ROI shape.
+
+        Parameters
+        ----------
+        roi_table : list
+            List of dictionaries with ROI table data.
+        roi_color_mapping : dict
+            Dictionary with the folowing keys:
+                - roi2color: dict mapping ROI names to colors
+                - color2roi: dict mapping colors to ROI names
+
+        Returns
+        -------
+        list[dict]
+            List of dictionaries with conditional formatting
+            rules for the ROI table.
+        """
+        if len(roi_table) == 0:
+            return dash.no_update
+        else:
+            cond_format = []
+            roi2color = roi_color_mapping["roi2color"]
+            for roi in roi2color.keys():
+                cond_format.append(
+                    {
+                        "if": {
+                            "column_id": "ROI",
+                            "filter_query": f"{{ROI}} = {roi}",
+                        },
+                        "color": roi2color[roi],
+                    }
+                )
+            return cond_format
+
     # TODO: refactor this callback into smaller ones
     @app.callback(
         [
