@@ -19,6 +19,8 @@ init_videos = ["No videos found yet"]
 init_roi_names = ["No ROIs defined yet"]
 # Default color for ROI drawing
 init_roi_color = "#fff"
+# Initialize the number of frames in the video
+init_num_frames: dict = {v: 1 for v in init_videos}
 # Columns for ROI table
 init_roi_table_columns = ["ROI", "path"]
 
@@ -68,6 +70,18 @@ video_dropdown = dcc.Dropdown(
     clearable=False,
 )
 
+# Frame selection input box
+frame_input = dbc.Input(
+    id="frame-input",
+    type="number",
+    placeholder="Frame number",
+    min=0,
+    max=init_num_frames[init_videos[0]],
+    step=1,
+    value=0,
+    debounce=True,
+)
+
 ###############################
 # Table of ROIs               #
 ###############################
@@ -105,7 +119,26 @@ roi_dropdown = dcc.Dropdown(
 frame_card = dbc.Card(
     id="frame-card",
     children=[
-        dbc.CardHeader(video_dropdown),
+        dbc.CardHeader(
+            [
+                dbc.Row(
+                    [
+                        dbc.Col(dcc.Markdown("Select video"), width=4),
+                        dbc.Col(video_dropdown, width=8),
+                        dcc.Store(
+                            id="num-frames-storage",
+                            data=init_num_frames,
+                        ),
+                    ]
+                ),
+                dbc.Row(
+                    [
+                        dbc.Col(dcc.Markdown("Frame shown"), width=4),
+                        dbc.Col(frame_input, width=8),
+                    ]
+                ),
+            ]
+        ),
         dbc.CardBody(frame_graph),
     ],
 )
