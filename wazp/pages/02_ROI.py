@@ -1,7 +1,7 @@
 import dash
 import dash_bootstrap_components as dbc
 import plotly.express as px
-from dash import dcc, html
+from dash import dash_table, dcc, html
 from PIL import Image
 
 ###############################
@@ -19,6 +19,8 @@ init_videos = ["No videos found yet"]
 init_roi_names = ["No ROIs defined yet"]
 # Default color for ROI drawing
 init_roi_color = px.colors.qualitative.Dark24[0]
+# Columns for ROI table
+init_roi_table_columns = ["ROI", "path"]
 
 
 ###############################
@@ -58,15 +60,66 @@ frame_graph = dcc.Graph(
 )
 
 ###############################
+# Table of ROIs               #
+###############################
+
+roi_table = dash_table.DataTable(
+    id="roi-table",
+    columns=[dict(name=c, id=c) for c in init_roi_table_columns],
+    data=[],
+    editable=False,
+    style_data={"height": 40},
+    style_cell={
+        "overflow": "hidden",
+        "textOverflow": "ellipsis",
+        "maxWidth": 0,
+        "textAlign": "left",
+    },
+    style_data_conditional=[],
+    fill_width=True,
+)
+
+# Dropdown for ROI selection
+roi_dropdown = dcc.Dropdown(
+    id="roi-select",
+    placeholder="Select ROI",
+    options=[{"label": roi, "value": roi} for roi in init_roi_names],
+    value=init_roi_names[0],
+    clearable=False,
+)
+
+###############################
 # Put elements into cards     #
 ###############################
 
-# Cards
+# Video frame card
 frame_card = dbc.Card(
     id="frame-card",
     children=[
         dbc.CardBody(frame_graph),
     ],
+)
+
+# ROI table card
+table_card = dbc.Card(
+    [
+        dbc.CardBody(
+            [
+                dbc.Row(dbc.Col(html.H4("Defined ROIs"))),
+                dbc.Row(dbc.Col(roi_table)),
+                dbc.Row(
+                    dbc.Col(
+                        [
+                            html.Br(),
+                            html.H4("Create new ROI for"),
+                            roi_dropdown,
+                        ],
+                        align="center",
+                    )
+                ),
+            ]
+        ),
+    ]
 )
 
 ###############################
@@ -76,7 +129,12 @@ frame_card = dbc.Card(
 layout = dbc.Container(
     [
         html.H1(children="ROI definition"),
-        dbc.Row(frame_card),
+        dbc.Row(
+            [
+                dbc.Col(frame_card, width=7),
+                dbc.Col(table_card, width=5),
+            ],
+        ),
     ],
     fluid=True,
 )
