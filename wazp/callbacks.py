@@ -8,9 +8,11 @@ from typing import Any, Optional
 import dash
 import dash_bootstrap_components as dbc
 import plotly.express as px
+import plotly.graph_objs as go
 import utils
 import yaml
 from dash import Input, Output, State, dash_table, html
+from PIL import Image
 
 VIDEO_TYPES = [".avi", ".mp4"]
 # TODO: other video extensions? have this in project config file instead?
@@ -563,6 +565,199 @@ def get_roi_callbacks(app):
             updated_num_frames_storage = num_frames_storage.copy()
             updated_num_frames_storage[video_name] = num_frames
         return num_frames, updated_num_frames_storage
+
+    @app.callback(
+        Output("roi-table", "data"),
+        [
+            Input("video-select", "value"),
+            Input("frame-graph", "relayoutData"),
+        ],
+        [
+            State("roi-table", "data"),
+            State("roi-storage", "data"),
+            State("roi-colors-storage", "data"),
+        ],
+    )
+    def update_table_entries(
+        video_path: str,
+        graph_relayout: dict,
+        roi_table: list,
+        roi_storage: dict,
+        roi_color_mapping: dict,
+    ) -> list:
+        # Get trigger for callback
+        trigger = [p["prop_id"] for p in dash.callback_context.triggered][0]
+
+        if trigger == "frame-graph.relayoutData":
+            if "shapes" in graph_relayout.keys():
+                # this means that a shapes has been created,
+                # so, add it as a new row in the table
+                roi_table = [
+                    utils.shape_to_table_row(sh, roi_color_mapping)
+                    for sh in graph_relayout["shapes"]
+                ]
+                return roi_table
+            elif re.match(
+                "shapes\[[0-9]+\].path", list(graph_relayout.keys())[0]
+            ):
+                # this means a shape was updated,
+                # so, update only its corresponding row in the table
+                roi_table = utils.roi_table_shape_resize(
+                    roi_table, graph_relayout
+                )
+                return roi_table
+            else:
+                return dash.no_update
+
+        else:
+            # this means that a new video was selected,
+            # so we load the stored shapes for that video (if any)
+            roi_table = []
+            video_name = pl.Path(video_path).name
+            if video_name in roi_storage.keys():
+                for sh in roi_storage[video_name]["shapes"]:
+                    roi_table.append(
+                        utils.shape_to_table_row(sh, roi_color_mapping)
+                    )
+            return roi_table
+
+    # TODO: refactor this callback into smaller ones
+    @app.callback(
+        [
+            Output("frame-graph", "figure"),
+            Output("frame-status-alert", "children"),
+            Output("frame-status-alert", "color"),
+            Output("frame-status-alert", "is_open"),
+            Output("roi-storage", "data"),
+        ],
+        [
+            Input("roi-table", "data"),
+            Input("video-select", "value"),
+            Input("frame-input", "value"),
+            Input("roi-select", "value"),
+        ],
+        [
+            State("roi-storage", "data"),
+            State("roi-colors-storage", "data"),
+        ],
+    )
+    def update_frame_graph(
+        roi_table,
+        video_path,
+        frame_idx,
+        roi_value,
+        roi_storage,
+        roi_color_mapping,
+    ) -> tuple[go.Figure, str, str, bool, dict]:
+        # Get info from stored config
+        video_path = pl.Path(video_path)
+        video_name = video_path.name
+
+        # Cache frames in a .WAZP folder in the home directory
+        frames_dir = pl.Path.home() / ".WAZP" / "roi_frames"
+        frames_dir.mkdir(parents=True, exist_ok=True)
+        frame_path = frames_dir / f"{video_path.stem}_frame-{frame_idx}.png"
+
+        # Get trigger for callback
+        trigger = [p["prop_id"] for p in dash.callback_context.triggered][0]
+
+        # Status display under the frame graph
+        alert_msg = f"Defining ROIs on frame {frame_idx} from {video_name}"
+        alert_color = "light"
+        alert_is_open = True
+
+        # When a new video or frame is selected
+        # Extract roi frame if it doesn't exist
+        if (trigger == "video-select.value") or (
+            trigger == "frame-input.value"
+        ):
+            if frame_idx is None:
+                alert_msg = "Please select a valid frame number"
+                alert_color = "warning"
+                alert_is_open = True
+                return (
+                    dash.no_update,
+                    alert_msg,
+                    alert_color,
+                    alert_is_open,
+                    dash.no_update,
+                )
+
+            if frame_path.exists():
+                alert_msg = (
+                    f"Showing cached frame {frame_idx} from {video_name}"
+                )
+                alert_color = "success"
+                alert_is_open = True
+            else:
+                print(f"Extracting frame {frame_idx} for {video_name}")
+                try:
+                    utils.extract_frame(
+                        video_path.as_posix(), frame_idx, frame_path.as_posix()
+                    )
+                    alert_msg = (
+                        f"Extracted frame {frame_idx} from {video_name}"
+                    )
+                    alert_color = "success"
+                    alert_is_open = True
+                except Exception as e:
+                    print(e)
+                    alert_msg = (
+                        f"Failed to extract frame "
+                        f"{frame_idx} from {video_name}"
+                    )
+                    alert_color = "danger"
+                    alert_is_open = True
+                    return (
+                        dash.no_update,
+                        alert_msg,
+                        alert_color,
+                        alert_is_open,
+                        dash.no_update,
+                    )
+
+        # Convert table rows to shapes
+        table_shapes = [
+            utils.table_row_to_shape(sh, roi_color_mapping) for sh in roi_table
+        ]
+
+        # Update ROI store with new video name if it doesn't exist
+        if video_name not in roi_storage.keys():
+            roi_storage[video_name] = {"shapes": []}
+        # Find which of the stored shapes are new
+        stored_shapes = roi_storage[video_name]["shapes"]
+        new_shapes_i, old_shapes_i = [], []
+        for i, shape in enumerate(table_shapes):
+            if utils.shape_in_list(stored_shapes)(shape):
+                old_shapes_i.append(i)
+            else:
+                new_shapes_i.append(i)
+        # Add timestamps to the new shapes
+        for i in new_shapes_i:
+            table_shapes[i]["timestamp"] = utils.time_passed(
+                roi_storage["start_time"]
+            )
+        # Copy previous timestamps to the old shapes
+        for i in old_shapes_i:
+            old_i = utils.index_of_shape(stored_shapes, table_shapes[i])
+            table_shapes[i]["timestamp"] = stored_shapes[old_i]["timestamp"]
+        # Update roi store
+        roi_storage[video_name]["shapes"] = table_shapes
+        # load extracted frame
+        new_frame = Image.open(frame_path)
+        new_fig = px.imshow(new_frame)
+        new_fig.update_layout(
+            shapes=[
+                utils.shape_data_remove_timestamp(sh) for sh in table_shapes
+            ],
+            newshape_line_color=roi_color_mapping["roi2color"][roi_value],
+            dragmode="drawclosedpath",
+            margin=dict(l=0, r=0, t=0, b=0),
+            yaxis={"visible": False, "showticklabels": False},
+            xaxis={"visible": False, "showticklabels": False},
+        )
+
+        return new_fig, alert_msg, alert_color, alert_is_open, roi_storage
 
 
 def get_dashboard_callbacks(app):
