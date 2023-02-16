@@ -166,7 +166,7 @@ roi_status_alert = dbc.Alert(
     "No ROIs to save.",
     id="rois-status-alert",
     color="light",
-    is_open=False,
+    is_open=True,
 )
 
 ###############################

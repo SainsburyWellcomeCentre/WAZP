@@ -876,3 +876,64 @@ def get_dashboard_callbacks(app):
                 )
             ]
         return table_container_children
+
+    @app.callback(
+        [
+            Output("save-rois-button", "download"),
+            Output("rois-status-alert", "children"),
+            Output("rois-status-alert", "color"),
+        ],
+        [
+            Input("save-rois-button", "n_clicks"),
+            Input("roi-table", "data"),
+        ],
+        [
+            State("video-select", "value"),
+        ],
+    )
+    def update_roi_status_alert(
+        save_clicks: int, roi_table: dict, video_path: str
+    ) -> tuple[str, str, str]:
+        metadata_filename = pl.Path(video_path).stem + ".metadata.yaml"
+        metadata_path = pl.Path(video_path).parent / metadata_filename
+        saved_rois: dict = {}
+        rois_to_save = {row["ROI"]: row["path"] for row in roi_table}
+        trigger = [p["prop_id"] for p in dash.callback_context.triggered][0]
+
+        if metadata_path.exists():
+            with open(metadata_path, "r") as yaml_file:
+                metadata = yaml.safe_load(yaml_file)
+                if "ROI_coords" in metadata.keys():
+                    saved_rois = metadata["ROI_coords"]
+        else:
+            alert_message = (
+                f"Could not find {metadata_filename}."
+                " ROIs cannot be saved or loaded."
+            )
+            alert_color = "danger"
+            return dash.no_update, alert_message, alert_color
+
+        if len(rois_to_save) > 0:
+            if rois_to_save == saved_rois:
+                alert_message = f"ROIs have been saved in {metadata_filename}."
+                alert_color = "light"
+                return dash.no_update, alert_message, alert_color
+            else:
+                alert_message = "Unsaved ROI changes."
+                alert_color = "warning"
+                if (trigger == "save-rois-button.n_clicks") and (
+                    save_clicks > 0
+                ):
+                    with open(metadata_path, "w") as yaml_file:
+                        metadata["ROI_coords"] = rois_to_save
+                        yaml.safe_dump(metadata, yaml_file)
+
+                    alert_message = f"Saved ROIs to {metadata_filename}."
+                    alert_color = "success"
+                    return metadata_path.as_posix(), alert_message, alert_color
+                else:
+                    return dash.no_update, alert_message, alert_color
+        else:
+            alert_message = "No ROIs to save"
+            alert_color = "light"
+            return dash.no_update, alert_message, alert_color
