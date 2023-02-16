@@ -415,6 +415,66 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
         )
 
 
+def get_roi_callbacks(app):
+    """
+    Return all callback functions for the ROI tab.
+
+    Parameters
+    ----------
+    app : dash.Dash
+        Dash app object for which these callbacks are defined
+    """
+
+    @app.callback(
+        [
+            Output("video-select", "options"),
+            Output("video-select", "value"),
+        ],
+        Input("session-storage", "data"),
+    )
+    def update_video_select_options(
+        app_storage: dict,
+    ) -> tuple[list, str]:
+        """Update the options of the video select dropdown.
+
+        Parameters
+        ----------
+        app_storage : dict
+            data held in temporary memory storage,
+            accessible to all tabs in the app
+
+        Returns
+        -------
+        list
+            list of dictionaries with keys 'label' and 'value'
+        str
+            value of the first video in the list
+        """
+        if "config" in app_storage.keys():
+            # Get videos directory from stored config
+            config = app_storage["config"]
+            videos_dir = config["videos_dir_path"]
+            # get all videos in the videos directory
+            video_paths = []
+            for video_type in VIDEO_TYPES:
+                video_paths += [
+                    p for p in pl.Path(videos_dir).glob(f"*{video_type}")
+                ]
+            video_paths.sort()
+            video_names = [p.name for p in video_paths]
+            video_paths_str = [p.absolute().as_posix() for p in video_paths]
+            # Video names become the labels and video paths the values
+            # of the video select dropdown
+            options = [
+                {"label": v, "value": p}
+                for v, p in zip(video_names, video_paths_str)
+            ]
+            value = video_paths_str[0]
+            return options, value
+        else:
+            return dash.no_update, dash.no_update
+
+
 def get_dashboard_callbacks(app):
     """Return all callback functions for the dashboard tab.
 
