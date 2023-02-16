@@ -585,6 +585,29 @@ def get_roi_callbacks(app):
         roi_storage: dict,
         roi_color_mapping: dict,
     ) -> list:
+        """Update the ROI table when a new video is selected
+        or when a shape is created or resized on the frame graph.
+
+        Parameters
+        ----------
+        video_path : str
+            Path to the video file.
+        graph_relayout : dict
+            Dictionary with the relayout data of the frame graph.
+        roi_table : list
+            List of dictionaries with the ROI table data (1 dict per row).
+        roi_storage : dict
+            Dictionary with stored ROI data.
+        roi_color_mapping : dict
+            Dictionary with keys:
+                - roi2color: dict mapping ROI names to colors
+                - color2roi: dict mapping colors to ROI names
+
+        Returns
+        -------
+        list
+            Updated ROI table data.
+        """
         # Get trigger for callback
         trigger = [p["prop_id"] for p in dash.callback_context.triggered][0]
 
@@ -663,7 +686,7 @@ def get_roi_callbacks(app):
                 )
             return cond_format
 
-    # TODO: refactor this callback into smaller ones
+    # TODO: refactor this monster callback into smaller ones
     @app.callback(
         [
             Output("frame-graph", "figure"),
@@ -691,6 +714,40 @@ def get_roi_callbacks(app):
         roi_storage,
         roi_color_mapping,
     ) -> tuple[go.Figure, str, str, bool, dict]:
+        """Update the frame graph when a new video/frama/ROI is selected
+        or when a new ROI is added to the table.
+
+        Parameters
+        ----------
+        roi_table : list
+            List of dictionaries with ROI table data (1 dict per row).
+        video_path : str
+            Path to the video file.
+        frame_idx : int
+            Index of the selected frame.
+        roi_value : str
+            Name of the selected ROI.
+        roi_storage : dict
+            Dictionary with stored ROI data.
+        roi_color_mapping : dict
+            Dictionary with keys:
+                - roi2color: dict mapping ROI names to colors
+                - color2roi: dict mapping colors to ROI names
+
+        Returns
+        -------
+        go.Figure
+            Updated frame graph figure.
+        str
+            Frame status alert message.
+        str
+            Frame status alert color.
+        bool
+            Frame status alert visibility.
+        dict
+            Updated ROI storage data.
+        """
+
         # Get info from stored config
         video_path = pl.Path(video_path)
         video_name = video_path.name
@@ -891,7 +948,7 @@ def get_dashboard_callbacks(app):
             State("video-select", "value"),
         ],
     )
-    def update_roi_status_alert(
+    def save_rois_and_update_status_alert(
         save_clicks: int, roi_table: dict, video_path: str
     ) -> tuple[str, str, str]:
         metadata_filename = pl.Path(video_path).stem + ".metadata.yaml"
