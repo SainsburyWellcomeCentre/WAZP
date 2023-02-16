@@ -1,4 +1,5 @@
 import pathlib as pl
+import time
 
 import cv2
 import pandas as pd
@@ -271,6 +272,7 @@ def assign_roi_colors(
 ) -> dict:
     """
     Match ROI names to colors
+
     Parameters
     ----------
     roi_names : list of str
@@ -279,6 +281,7 @@ def assign_roi_colors(
         colormap for ROIs.
         Defaults to plotly.express.colors.qualitative.Dark24.
         Each color is a string in hex format, e.g. '#FD3216'
+
     Returns
     -------
     dict
@@ -321,3 +324,14 @@ def get_num_frames(video_path):
     """
     vidcap = cv2.VideoCapture(video_path)
     return int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+
+def time_passed(start=0):
+    """Return time passed since start in seconds
+
+    Parameters
+    ----------
+    start : int, optional
+        Start time, by default 0
+    """
+    return round(time.mktime(time.localtime())) - start

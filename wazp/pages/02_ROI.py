@@ -4,6 +4,8 @@ import plotly.express as px
 from dash import dash_table, dcc, html
 from PIL import Image
 
+from wazp.utils import time_passed
+
 ###############################
 # Add page to registry        #
 ###############################
@@ -23,7 +25,10 @@ init_roi_color = "#fff"
 init_num_frames: dict = {v: 1 for v in init_videos}
 # Columns for ROI table
 init_roi_table_columns = ["ROI", "path"]
-
+# Initialize the ROI storage dictionary
+init_roi_storage: dict = {v: {"shapes": []} for v in init_videos}
+# Also add a start_time to the ROI storage
+init_roi_storage["start_time"] = time_passed()
 
 ###############################
 # Graph showing a video frame #
@@ -178,6 +183,7 @@ table_card = dbc.Card(
                     )
                 ),
                 dcc.Store(data={}, id="roi-colors-storage"),
+                dcc.Store(id="roi-storage", data=init_roi_storage),
             ]
         ),
         dbc.CardFooter(roi_status_alert),
