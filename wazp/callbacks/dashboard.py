@@ -5,6 +5,10 @@ import dash_bootstrap_components as dbc
 import utils
 from dash import Input, Output, State, dash_table, dcc, html
 
+POSE_DATA_STR = "Pose data available?"  # is this ok here?
+TRUE_EMOJI = "✔️"
+FALSE_EMOJI = "❌"
+
 
 def get_callbacks(app):
     """Return all callback functions for the dashboard tab.
@@ -20,7 +24,7 @@ def get_callbacks(app):
         Input("videos-table-container", "children"),
         State("session-storage", "data"),
     )
-    def create_input_data_table(
+    def create_video_data_table(
         table_container_children: list, app_storage: dict
     ):
         """Create table to select videos to include in plots.
@@ -75,10 +79,9 @@ def get_callbacks(app):
                         re.sub("DLC.*$", "", f.stem)
                     )
 
-            # append status of h5 to table
-            pose_data_str = "Pose data available?"
-            df_metadata[pose_data_str] = [
-                "✔️" if v in list_videos_w_pose_results else "❌"
+            # append status of h5 file per video to table
+            df_metadata[POSE_DATA_STR] = [
+                TRUE_EMOJI if v in list_videos_w_pose_results else FALSE_EMOJI
                 for v in list_videos_w_metadata
             ]
 
@@ -127,7 +130,7 @@ def get_callbacks(app):
                     ],
                     style_data_conditional=[
                         {
-                            "if": {"column_id": pose_data_str},
+                            "if": {"column_id": POSE_DATA_STR},
                             "textAlign": "center",
                         },
                         {
@@ -240,6 +243,97 @@ def get_callbacks(app):
             )
 
         return export_container_children
+
+    @app.callback(
+        Output("video-data-table", "selected_rows"),
+        Output("pose-data-unavailable-message", "message"),
+        Output("pose-data-unavailable-message", "displayed"),
+        # Output("select-all-videos-button", "n_clicks"),
+        # Output("export-df-button", "n_clicks"),
+        # Output("export-message", "is_open"),
+        # Output("export-message", "children"),
+        # Input("select-all-rows-button", "n_clicks"),
+        # Input("export-df-button", "n_clicks"),
+        Input("video-data-table", "selected_rows"),
+        State("video-data-table", "data"),
+        State("pose-data-unavailable-message", "message"),
+        State("pose-data-unavailable-message", "displayed"),
+        # State(
+        #     "video-data-table", "derived_viewport_data"
+        # ),  # data on the current page
+        # State("video-data-table", "data"),
+        # State("session-storage", "data"),
+        # State("export-message", "is_open"),
+    )
+    def modify_rows_selection(
+        # n_clicks_select_all: int,
+        # n_clicks_export: int,
+        list_selected_rows: list[int],
+        # data_page: list[dict],
+        videos_table_data: list[dict],
+        # app_storage: dict,
+        pose_unavail_message_str: str,
+        pose_unavail_message_state: bool,
+    ):
+        """Modify the selection status of the rows in the videos table.
+
+        A row's selection status (i.e., its checkbox) is modified if (1) the
+        user selects a row for which there is no pose data (then its checkbox
+        is set to False), (2) the export button is clicked (then the selected
+        rows are reset to False), or (3) the 'select/unselect' all button is
+        clicked
+
+        Parameters
+        ----------
+        n_clicks_export : int
+            _description_
+        list_selected_rows : list[int]
+            _description_
+        app_storage : dict
+            _description_
+        export_message_state : bool
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+
+        # export_message = ''
+
+        if (
+            videos_table_data and list_selected_rows
+        ):  # videos_table_data is not None and list_selected_rows:
+            # If pose data is not available: set to false
+            list_missing_pose_data_bool = [
+                videos_table_data[r][POSE_DATA_STR] == FALSE_EMOJI
+                for r in list_selected_rows
+            ]
+
+            if any(list_missing_pose_data_bool):
+                # ammend list of selected rows
+                list_selected_rows = [
+                    r
+                    for r in list_selected_rows
+                    if videos_table_data[r][POSE_DATA_STR] == TRUE_EMOJI
+                ]
+
+                # show popup message
+                pose_unavail_message_str = (
+                    "Pose data unavailable for the selected video"
+                )
+                pose_unavail_message_state = True
+
+            # # If the export button is clicked:
+            # export selected rows and unselect
+            # if (n_clicks_export > 0) and list_selected_rows:
+
+        return (
+            list_selected_rows,
+            pose_unavail_message_str,
+            pose_unavail_message_state,
+        )
 
     @app.callback(
         Output("custom-plot-container", "children"),

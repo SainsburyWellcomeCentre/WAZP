@@ -1,7 +1,9 @@
 import dash
 
 # import plotly.express as px
-from dash import html
+from dash import dcc, html
+
+# import dash_bootstrap_components as dbc
 
 ######################
 # Add page to registry
@@ -21,12 +23,6 @@ dash.register_page(__name__)
 # df_trajectories.columns = df_trajectories.columns.droplevel()
 
 
-#######################
-# Slider component
-####################
-# TODO put this in a callback and get labels from project config
-
-
 ######################
 # Layout
 ####################
@@ -40,6 +36,14 @@ layout = html.Div(
             "Input data", style={"margin-top": "20px", "margin-bottom": "20px"}
         ),
         html.Div(children=[], id="videos-table-container"),
+        dcc.ConfirmDialogProvider(
+            id="pose-data-unavailable-message",
+            message="",
+            children=html.Button(
+                "OK",
+            ),
+            displayed=False,
+        ),
         # html.Hr(
         #     style={"margin-top": "30px", "margin-bottom": "15px"}
         # ),
