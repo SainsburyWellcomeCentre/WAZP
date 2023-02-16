@@ -59,6 +59,15 @@ frame_graph = dcc.Graph(
     id="frame-graph",
 )
 
+# video selection dropdown
+video_dropdown = dcc.Dropdown(
+    id="video-select",
+    placeholder="Select video",
+    options=[{"label": v, "value": v} for v in init_videos],
+    value=init_videos[0],
+    clearable=False,
+)
+
 ###############################
 # Table of ROIs               #
 ###############################
@@ -96,6 +105,7 @@ roi_dropdown = dcc.Dropdown(
 frame_card = dbc.Card(
     id="frame-card",
     children=[
+        dbc.CardHeader(video_dropdown),
         dbc.CardBody(frame_graph),
     ],
 )
