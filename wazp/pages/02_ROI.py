@@ -20,7 +20,7 @@ init_videos = ["No videos found yet"]
 # Get initial set of ROIs to initialize dropdown
 init_roi_names = ["No ROIs defined yet"]
 # Default color for ROI drawing
-init_roi_color = "#fff"
+init_roi_color = px.colors.qualitative.Dark2[0]
 # Initialize the number of frames in the video
 init_num_frames: dict = {v: 1 for v in init_videos}
 # Columns for ROI table

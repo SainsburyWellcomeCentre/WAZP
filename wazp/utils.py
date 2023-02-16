@@ -1,5 +1,6 @@
 import pathlib as pl
 import time
+from typing import Callable
 
 import cv2
 import pandas as pd
@@ -335,3 +336,108 @@ def time_passed(start=0):
         Start time, by default 0
     """
     return round(time.mktime(time.localtime())) - start
+
+
+def shape_to_table_row(shape: dict, roi_color_mapping: dict) -> dict:
+    """Converts a shape to a table row
+
+    Parameters
+    ----------
+    shape : dict
+        Shape dictionary for a single ROI
+    roi_color_mapping : dict
+        Dictionary with keys:
+        - roi2color: dict mapping ROI names to colors
+        - color2roi: dict mapping colors to ROI names
+
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+        - ROI: ROI name
+        - path: SVG path for the ROI
+    """
+    color2roi = roi_color_mapping["color2roi"]
+    return {"ROI": color2roi[shape["line"]["color"]], "path": shape["path"]}
+
+
+def table_row_to_shape(row: dict, roi_color_mapping: dict) -> dict:
+    """Converts an ROI table row to an ROI shape
+
+    Parameters
+    ----------
+    row : dict
+        Dictionary with keys:
+        - ROI: ROI name
+        - path: SVG path for the ROI
+    roi_color_mapping : dict
+        Dictionary with keys:
+        - roi2color: dict mapping ROI names to colors
+        - color2roi: dict mapping colors to ROI names
+
+    Returns
+    -------
+    dict
+        Shape dictionary for a single ROI
+    """
+    roi2color = roi_color_mapping["roi2color"]
+    return {
+        "editable": True,
+        "xref": "x",
+        "yref": "y",
+        "layer": "above",
+        "opacity": 0.8,
+        "line": {
+            "color": roi2color[row["ROI"]],
+            "width": 3,
+            "dash": "solid",
+        },
+        "fillcolor": "rgba(0, 0, 0, 0)",
+        "fillrule": "evenodd",
+        "type": "path",
+        "path": row["path"],
+    }
+
+
+def roi_table_shape_resize(roi_table_data: list, fig_data: dict) -> list:
+    """
+    Extract index of resized shape and update its coords in the table
+    """
+    for key, _ in fig_data.items():
+        shape_n, svg_path = key.split(".")
+        # shape_n is for example 'shapes[2].path': this extracts the number
+        shape_n = int(shape_n.split(".")[0].split("[")[-1].split("]")[0])
+        # this should correspond to the same row in the data table
+        roi_table_data[shape_n][svg_path] = fig_data[key]
+    return roi_table_data
+
+
+def are_same_shape(shape0: dict, shape1: dict) -> bool:
+    """Checks if two shapes are the same"""
+    same_coords = shape0["path"] == shape1["path"]
+    same_color = shape0["line"]["color"] == shape1["line"]["color"]
+    return same_coords and same_color
+
+
+def shape_in_list(shape_list: list) -> Callable[[dict], bool]:
+    """Checks if a shape is already in a list of shapes"""
+    return lambda s: any(are_same_shape(s, s_) for s_ in shape_list)
+
+
+def index_of_shape(shape_list: list, shape: dict) -> int:
+    """Returns the index of a shape in a list of shapes"""
+    for i, shapes_item in enumerate(shape_list):
+        if are_same_shape(shapes_item, shape):
+            return i
+    raise ValueError("Shape not found in list")
+
+
+def shape_data_remove_timestamp(shape: dict) -> dict:
+    """
+    go.Figure complains if we include the 'timestamp' key when updating the
+    figure
+    """
+    new_shape = dict()
+    for k in shape.keys() - {"timestamp"}:
+        new_shape[k] = shape[k]
+    return new_shape
