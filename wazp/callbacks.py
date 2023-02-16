@@ -523,6 +523,47 @@ def get_roi_callbacks(app):
         else:
             return dash.no_update, dash.no_update, dash.no_update
 
+    @app.callback(
+        [
+            Output("frame-input", "max"),
+            Output("num-frames-storage", "data"),
+        ],
+        Input("video-select", "value"),
+        State("num-frames-storage", "data"),
+    )
+    def update_frame_input_max(
+        video_path: str, num_frames_storage: dict
+    ) -> tuple[int, dict]:
+        """
+        Update the maximum frame input value when a new video
+        is selected. Read the value from storage if available,
+        otherwise get from the video file (slower)
+        and add it to storage for reuse.
+
+        Parameters
+        ----------
+        video_path : str
+            Path to the video file.
+        num_frames_storage : dict
+            Dictionary storing the number of frames for each video.
+
+        Returns
+        -------
+        int
+            Maximum frame input value.
+        dict
+            Updated dictionary storing the number of frames for each video.
+        """
+        video_name = pl.Path(video_path).name
+        if video_path in num_frames_storage.keys():
+            num_frames = num_frames_storage[video_name]
+            return num_frames, dash.no_update
+        else:
+            num_frames = int(utils.get_num_frames(video_path))
+            updated_num_frames_storage = num_frames_storage.copy()
+            updated_num_frames_storage[video_name] = num_frames
+        return num_frames, updated_num_frames_storage
+
 
 def get_dashboard_callbacks(app):
     """Return all callback functions for the dashboard tab.

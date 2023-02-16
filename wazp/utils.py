@@ -1,5 +1,6 @@
 import pathlib as pl
 
+import cv2
 import pandas as pd
 import plotly.express as px
 import yaml
@@ -302,3 +303,21 @@ def assign_roi_colors(
         "roi2color": roi2color,
         "color2roi": color2roi,
     }
+
+
+def get_num_frames(video_path):
+    """
+    Get the number of frames in a video.
+
+    Parameters
+    ----------
+    video_path : str
+        Path to the video file
+
+    Returns
+    -------
+    int
+        Number of frames in the video
+    """
+    vidcap = cv2.VideoCapture(video_path)
+    return int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
