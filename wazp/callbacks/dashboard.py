@@ -302,10 +302,8 @@ def get_callbacks(app):
 
         # export_message = ''
 
-        if (
-            videos_table_data and list_selected_rows
-        ):  # videos_table_data is not None and list_selected_rows:
-            # If pose data is not available: set to false
+        # If pose data is not available: set to false
+        if videos_table_data and list_selected_rows:
             list_missing_pose_data_bool = [
                 videos_table_data[r][POSE_DATA_STR] == FALSE_EMOJI
                 for r in list_selected_rows
@@ -321,12 +319,12 @@ def get_callbacks(app):
 
                 # show popup message
                 pose_unavail_message_str = (
-                    "Pose data unavailable for the selected video"
+                    "ATTENTION! Pose data unavailable for the selected video"
                 )
                 pose_unavail_message_state = True
 
-            # # If the export button is clicked:
-            # export selected rows and unselect
+            # If the export button is clicked:
+            # export selected rows and unselect all
             # if (n_clicks_export > 0) and list_selected_rows:
 
         return (

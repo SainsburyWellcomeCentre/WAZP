@@ -36,12 +36,9 @@ layout = html.Div(
             "Input data", style={"margin-top": "20px", "margin-bottom": "20px"}
         ),
         html.Div(children=[], id="videos-table-container"),
-        dcc.ConfirmDialogProvider(
+        dcc.ConfirmDialog(
             id="pose-data-unavailable-message",
             message="",
-            children=html.Button(
-                "OK",
-            ),
             displayed=False,
         ),
         # html.Hr(
