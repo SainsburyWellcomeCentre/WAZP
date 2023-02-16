@@ -28,7 +28,7 @@ def get_callbacks(app: dash.Dash) -> None:
         Input("output-metadata", "children"),
         State("session-storage", "data"),
     )
-    def generate_metadata_table(
+    def create_metadata_table(
         metadata_output_children: list, app_storage: dict
     ) -> html.Div:
         """Generate html component with a table holding the
