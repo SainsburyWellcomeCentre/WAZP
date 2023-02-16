@@ -95,14 +95,6 @@ frame_status_alert = dbc.Alert(
     is_open=False,
 )
 
-# ROI status alert
-roi_status_alert = dbc.Alert(
-    "No ROIs to save.",
-    id="rois-status-alert",
-    color="light",
-    is_open=False,
-)
-
 ###############################
 # Table of ROIs               #
 ###############################
@@ -130,6 +122,51 @@ roi_dropdown = dcc.Dropdown(
     options=[{"label": roi, "value": roi} for roi in init_roi_names],
     value=init_roi_names[0],
     clearable=False,
+)
+
+# Buttons for saving/loading ROIs
+roi_save_button = dbc.Button(
+    "Save ROIs",
+    id="save-rois-button",
+    download="rois.yaml",
+    n_clicks=0,
+    outline=True,
+    color="dark",
+)
+roi_load_button = dbc.Button(
+    "Load ROIs",
+    id="load-rois-button",
+    n_clicks=0,
+    outline=True,
+    color="dark",
+)
+infer_rois_button = dbc.Button(
+    "Infer ROIs",
+    id="infer-rois-button",
+    n_clicks=0,
+    outline=True,
+    color="dark",
+)
+# Tooltips for ROI buttons
+save_rois_tooltip = dbc.Tooltip(
+    "Save the ROIs to the video's " ".metadata.yaml file",
+    target="save-rois-button",
+)
+load_rois_tooltip = dbc.Tooltip(
+    "Load ROIs from the video's " ".metadata.yaml file",
+    target="load-rois-button",
+)
+infer_rois_tooltip = dbc.Tooltip(
+    "Infer ROI positions" "based on defined ROIs",
+    target="infer-rois-button",
+)
+
+# ROI status alert
+roi_status_alert = dbc.Alert(
+    "No ROIs to save.",
+    id="rois-status-alert",
+    color="light",
+    is_open=False,
 )
 
 ###############################
@@ -168,6 +205,18 @@ frame_card = dbc.Card(
 # ROI table card
 table_card = dbc.Card(
     [
+        dbc.CardHeader(
+            dbc.Row(
+                [
+                    dbc.Col(roi_save_button, width=4),
+                    dbc.Col(roi_load_button, width=4),
+                    dbc.Col(infer_rois_button, width=4),
+                    save_rois_tooltip,
+                    load_rois_tooltip,
+                    infer_rois_tooltip,
+                ],
+            ),
+        ),
         dbc.CardBody(
             [
                 dbc.Row(dbc.Col(html.H4("Defined ROIs"))),
