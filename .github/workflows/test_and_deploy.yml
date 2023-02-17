@@ -36,6 +36,13 @@ jobs:
         - os: windows-latest
           python-version: "3.10"
     steps:
+      # A hack because chrome isn't in the PATH on Windows
+      - name: Fix Chrome application path on Windows
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          echo "C:\Program Files\Google\Chrome\Application" >> $GITHUB_PATH
+
       # Run tests
       - uses: neuroinformatics-unit/actions/test@main
         with:
