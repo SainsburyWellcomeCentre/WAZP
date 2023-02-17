@@ -230,7 +230,8 @@ def create_buttons_and_message():
         id="export-message",
         dismissable=True,
         fade=False,
-        is_open=True,
+        is_open=False,
+        color="success",  # warning or danger
         style={
             "margin-right": "10px",
             "margin-left": "10px",
@@ -294,8 +295,9 @@ def get_callbacks(app):
         Output("export-dataframe-button", "n_clicks"),
         Output("pose-data-unavailable-message", "message"),
         Output("pose-data-unavailable-message", "displayed"),
-        # Output("export-message", "is_open"),
-        # Output("export-message", "children"),
+        Output("export-message", "children"),
+        Output("export-message", "is_open"),
+        Output("export-message", "color"),
         Input(
             "video-data-table", "selected_rows"
         ),  # derived_viewport_selected_rows #"selected_rows"),
@@ -305,6 +307,9 @@ def get_callbacks(app):
         State("video-data-table", "data"),  # "data"), derived_viewport_data
         State("pose-data-unavailable-message", "message"),
         State("pose-data-unavailable-message", "displayed"),
+        State("export-message", "children"),
+        State("export-message", "is_open"),
+        State("export-message", "color"),
         # State(
         #     "video-data-table", "derived_viewport_data"
         # ),
@@ -317,6 +322,9 @@ def get_callbacks(app):
         videos_table_data: list[dict],
         pose_unavail_message_str: str,
         pose_unavail_message_state: bool,
+        export_message_str,
+        export_message_state,
+        export_message_color,
     ):
         """Modify the selection status of the rows in the videos table.
 
@@ -350,14 +358,25 @@ def get_callbacks(app):
         # print(list_missing_pose_data_bool)
         # ---------------------------
         # If export button is clicked and there is data selected
-        if n_clicks_export > 0:  # and list_selected_rows:
-            list_selected_rows = []
-            n_clicks_export = 0
-            # if not list_selected_rows:
+        if n_clicks_export > 0:
+            if not list_selected_rows:
+                n_clicks_export = 0
 
-            # else:
-            #     list_selected_rows = []
-            #     n_clicks_export = 0
+                export_message_str = "No data to export"
+                # TODO: add timestamp of message?
+                export_message_color = "warning"
+                export_message_state = True
+
+            else:
+                list_selected_rows = []
+                n_clicks_export = 0
+                # ----
+                # TODO: export selected dataframe as h5 file
+                # ----
+                export_message_str = "Data exported successfully"
+                # TODO: add timestamp of message?
+                export_message_color = "success"
+                export_message_state = True
 
         # ---------------------------
         # If 'select all' button is clicked
@@ -379,9 +398,7 @@ def get_callbacks(app):
             list_selected_rows = [
                 r
                 for r in list_selected_rows
-                if not list_missing_pose_data_bool[
-                    r
-                ]  # videos_table_data[r][POSE_DATA_STR] == TRUE_EMOJI
+                if not list_missing_pose_data_bool[r]
             ]
 
             # show popup message
@@ -398,6 +415,9 @@ def get_callbacks(app):
             n_clicks_export,
             pose_unavail_message_str,
             pose_unavail_message_state,
+            export_message_str,
+            export_message_state,
+            export_message_color,
         )
 
     @app.callback(
