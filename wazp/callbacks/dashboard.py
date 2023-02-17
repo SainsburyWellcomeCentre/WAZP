@@ -181,11 +181,15 @@ def create_time_slider(app_storage: dict):
 
 def create_buttons_and_message():
 
-    select_all_rows_button = html.Button(
+    select_all_videos_button = html.Button(
         children="Select/unselect all rows",
         id="select-all-videos-button",
-        n_clicks=None,
-        style={"margin-right": "10px", "margin-left": "10px"},
+        n_clicks=0,
+        style={
+            "margin-right": "10px",
+            "margin-left": "10px",
+            "margin-top": "60px",
+        },
     )
 
     export_button = html.Button(
@@ -210,7 +214,7 @@ def create_buttons_and_message():
 
     return html.Div(
         [
-            select_all_rows_button,
+            select_all_videos_button,
             export_button,
             export_message,
         ]
@@ -258,19 +262,19 @@ def get_callbacks(app):
 
     @app.callback(
         Output("video-data-table", "selected_rows"),
+        Output("select-all-videos-button", "n_clicks"),
         Output("pose-data-unavailable-message", "message"),
         Output("pose-data-unavailable-message", "displayed"),
-        # Output("export-df-button", "n_clicks"),
         # Output("export-message", "is_open"),
         # Output("export-message", "children"),
         Input("video-data-table", "selected_rows"),
         Input("select-all-videos-button", "n_clicks"),
         State("video-data-table", "data"),
+        State("pose-data-unavailable-message", "message"),
+        State("pose-data-unavailable-message", "displayed"),
         # State(
         #     "video-data-table", "derived_viewport_data"
         # ),
-        State("pose-data-unavailable-message", "message"),
-        State("pose-data-unavailable-message", "displayed"),
     )
     def modify_rows_selection(
         list_selected_rows: list[int],
@@ -312,22 +316,21 @@ def get_callbacks(app):
         # and list_selected_rows:
         #     print('PATATA')
 
-        # If pose data is not available: set to false
+        # If 'select/unselect all' button is clicked
         if (
-            videos_table_data and list_selected_rows
-        ):  # and n_clicks_select_all:
+            n_clicks_select_all % 2 != 0 and n_clicks_select_all > 0
+        ):  # if odd number of clicks: select all
+            list_selected_rows = list(range(len(videos_table_data)))
+        elif (
+            n_clicks_select_all % 2 == 0 and n_clicks_select_all > 0
+        ):  # if even number of clicks: unselect all
+            list_selected_rows = []
 
-            print(n_clicks_select_all)
-
-            # ### If 'select/unselect all' button is clicked
+        # If pose data is not available: set to false
+        if list_selected_rows:
             # if (
-            #     n_clicks_select_all % 2 != 0 and n_clicks_select_all > 0
-            # ):  # if odd number of clicks: select all
-            #     list_selected_rows = list(range(len(videos_table_data)))
-            # elif (
-            #     n_clicks_select_all % 2 == 0 and n_clicks_select_all > 0
-            # ):  # if even number of clicks: unselect all
-            #     list_selected_rows = []
+            #     videos_table_data and list_selected_rows
+            # ):  # and n_clicks_select_all:
 
             # Check rows with missing pose data within those selected
             list_missing_pose_data_bool = [
@@ -346,13 +349,14 @@ def get_callbacks(app):
 
                 # show popup message
                 pose_unavail_message_str = (
-                    "WARNING: Pose data unavailable for the selected video"
+                    "WARNING: Pose data unavailable"
+                    "for one or more selected videos"
                 )
                 pose_unavail_message_state = True
 
         return (
             list_selected_rows,
-            # n_clicks_select_all,
+            n_clicks_select_all,
             pose_unavail_message_str,
             pose_unavail_message_state,
         )
