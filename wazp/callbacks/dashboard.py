@@ -93,28 +93,36 @@ def create_video_data_table(app_storage: dict):
             "maxHeight": "200px",
             "width": "100%",
             "maxWidth": "100%",
-            "overflowY": "scroll",
-            "overflowX": "scroll",
+            # "overflowY": "scroll",
+            # "overflowX": "scroll",
         },
         style_cell={  # refers to all cells (the whole table)
             "textAlign": "left",
             "padding": 7,
             "fontFamily": "Helvetica",
-            "minWidth": 15,
-            "width": 55,
-            "maxWidth": 450,
+            # "minWidth": 15,
+            # "width": 45,
+            # "maxWidth": 450, #450,
         },
         style_header_conditional=[
             {
                 "if": {"column_id": "File"},
                 # TODO: consider getting file from app_storage
                 "backgroundColor": "rgb(200, 200, 400)",
-            }
+            },
+            {
+                "if": {"column_id": POSE_DATA_STR},
+                # TODO: consider getting file from app_storage
+                "textAlign": "center",
+            },
         ],
         style_data_conditional=[
             {
                 "if": {"column_id": POSE_DATA_STR},
                 "textAlign": "center",
+                "minWidth": 200,
+                "width": 200,
+                "maxWidth": 200,
             },
             {
                 "if": {
@@ -149,33 +157,40 @@ def create_time_slider(app_storage: dict):
     offset = 1  # an offset just for visualisation
     max_loc = len(app_storage["config"]["event_tags"]) + offset
 
-    return dcc.RangeSlider(
-        min=0,  # TODO: based on max number of frames to first event
-        max=max_loc,
-        # TODO: max number of frames after last event in a video?
-        step=1,
-        value=[offset, max_loc - offset],
-        marks={
-            i
-            + offset: {
-                "label": tag,
-                "style": {
-                    "color": (
-                        "#055099"
-                        if i
-                        in [
-                            0,
-                            len(app_storage["config"]["event_tags"]) - 1,
-                        ]
-                        else "#7BB2DD"
-                    ),
-                    "font-size": "16px",
-                },
-            }
-            for i, tag in enumerate(app_storage["config"]["event_tags"])
+    return html.Div(
+        dcc.RangeSlider(
+            min=0,  # TODO: based on max number of frames to first event
+            max=max_loc,
+            # TODO: max number of frames after last event in a video?
+            step=1,
+            value=[offset, max_loc - offset],
+            marks={
+                i
+                + offset: {
+                    "label": tag,
+                    "style": {
+                        "color": (
+                            "#055099"
+                            if i
+                            in [
+                                0,
+                                len(app_storage["config"]["event_tags"]) - 1,
+                            ]
+                            else "#7BB2DD"
+                        ),
+                        "font-size": "16px",
+                    },
+                }
+                for i, tag in enumerate(app_storage["config"]["event_tags"])
+            },
+            allowCross=False,
+            # tooltip={"placement": "top", "always_visible": True}
+        ),
+        style={
+            "margin-right": "10px",
+            "margin-left": "10px",
+            "margin-top": "50px",
         },
-        allowCross=False,
-        # tooltip={"placement": "top", "always_visible": True}
     )
 
 
