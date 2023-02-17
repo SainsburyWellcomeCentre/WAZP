@@ -78,8 +78,14 @@ def get_callbacks(app: dash.Dash) -> None:
                         style={"margin-right": "10px"},
                     ),
                     html.Button(
-                        children="Select/unselect all rows",
+                        children="Select all rows",
                         id="select-all-rows-button",
+                        n_clicks=0,
+                        style={"margin-right": "10px"},
+                    ),
+                    html.Button(
+                        children="Unselect all rows",
+                        id="unselect-all-rows-button",
                         n_clicks=0,
                         style={"margin-right": "10px"},
                     ),
@@ -212,10 +218,12 @@ def get_callbacks(app: dash.Dash) -> None:
     @app.callback(
         Output("metadata-table", "selected_rows"),
         Output("select-all-rows-button", "n_clicks"),
+        Output("unselect-all-rows-button", "n_clicks"),
         Output("export-selected-rows-button", "n_clicks"),
         Output("alert", "is_open"),
         Output("alert", "children"),
         Input("select-all-rows-button", "n_clicks"),
+        Input("unselect-all-rows-button", "n_clicks"),
         Input("export-selected-rows-button", "n_clicks"),
         Input("metadata-table", "data_previous"),
         State("metadata-table", "data"),
@@ -225,13 +233,14 @@ def get_callbacks(app: dash.Dash) -> None:
     )
     def modify_rows_selection(
         n_clicks_select_all: int,
+        n_clicks_unselect_all: int,
         n_clicks_export: int,
         data_previous: list[dict],
         data: list[dict],
         list_selected_rows: list[int],
         app_storage: dict,
         alert_state: bool,
-    ) -> tuple[list[int], int, int, bool, str]:
+    ) -> tuple[list[int], int, int, int, bool, str]:
         """Modify the selection status of the rows in the metadata table.
 
         A row's selection status (i.e., its checkbox) is modified if (1) the
@@ -277,6 +286,7 @@ def get_callbacks(app: dash.Dash) -> None:
             )
 
         # If the export button is clicked: export selected rows and unselect
+        # TODO: add if not list_selected_rows: message--no data to export
         if (n_clicks_export > 0) and list_selected_rows:
 
             # export yaml files
@@ -300,21 +310,22 @@ def get_callbacks(app: dash.Dash) -> None:
             list_selected_rows = []
             n_clicks_export = 0
 
-        # If 'select/unselect all' button is clicked
-        if (
-            n_clicks_select_all % 2 != 0 and n_clicks_select_all > 0
-        ):  # if odd number of clicks: select all
-            list_selected_rows = list(
-                range(len(data))
-            )  # list(range(len(data_page)))
-        elif (
-            n_clicks_select_all % 2 == 0 and n_clicks_select_all > 0
-        ):  # if even number of clicks: unselect all
+        # ---------------------------
+        # If 'select all' button is clicked
+        if n_clicks_select_all > 0:
+            list_selected_rows = list(range(len(data)))
+            n_clicks_select_all = 0
+
+        # ----------------------
+        # If unselect all button is clicked
+        if n_clicks_unselect_all > 0:
             list_selected_rows = []
+            n_clicks_unselect_all = 0
 
         return (
             list_selected_rows,
             n_clicks_select_all,
+            n_clicks_unselect_all,
             n_clicks_export,
             alert_state,
             alert_message,
