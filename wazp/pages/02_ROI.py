@@ -29,6 +29,18 @@ init_roi_table_columns = ["name", "on frame", "path"]
 # Initialize the ROI storage dictionary
 init_roi_storage: dict = {v: {"shapes": []} for v in init_videos}
 
+# Instructions for the user
+instructions = (
+    "1. Select a video from the dropdown menu.\n"
+    "2. Use the slider to change the displayed frame (if necessary).\n"
+    "3. Select an ROI from the dropdown menu on the right.\n"
+    "4. Draw the ROI on the frame.\n"
+    "5. You may also select an existing ROI "
+    "and edit it or delete it.\n"
+    "6. Repeat steps 3-5 for each ROI.\n"
+    "7. When finished, click the 'Save ROIs' button.\n"
+)
+
 
 ###############################
 # Graph showing a video frame #
@@ -198,7 +210,14 @@ frame_card = dbc.Card(
             ]
         ),
         dbc.CardBody(frame_graph),
-        dbc.CardFooter(frame_status_alert),
+        dbc.CardFooter(
+            dbc.Row(
+                [
+                    frame_status_alert,
+                    dcc.Markdown(instructions),
+                ],
+            )
+        ),
     ],
 )
 
