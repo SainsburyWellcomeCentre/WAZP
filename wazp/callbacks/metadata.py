@@ -219,9 +219,6 @@ def get_callbacks(app: dash.Dash) -> None:
         Input("export-selected-rows-button", "n_clicks"),
         Input("metadata-table", "data_previous"),
         State("metadata-table", "data"),
-        State(
-            "metadata-table", "derived_viewport_data"
-        ),  # data on the current page
         State("metadata-table", "selected_rows"),
         State("session-storage", "data"),
         State("alert", "is_open"),
@@ -231,7 +228,6 @@ def get_callbacks(app: dash.Dash) -> None:
         n_clicks_export: int,
         data_previous: list[dict],
         data: list[dict],
-        data_page: list[dict],
         list_selected_rows: list[int],
         app_storage: dict,
         alert_state: bool,
@@ -254,9 +250,6 @@ def get_callbacks(app: dash.Dash) -> None:
             (read-only)
         data : list[dict]
             a list of dictionaries holding the table data
-        data_page : list[dict]
-            a list of dictionaries holding the data of the table in
-            the current page
         list_selected_rows : list[int]
             a list of indices for the currently selected rows
         app_storage : dict
@@ -270,6 +263,7 @@ def get_callbacks(app: dash.Dash) -> None:
         tuple[list[int], int, int, bool, str]
             _description_
         """
+        # TODO: select all rows *per page*?
 
         # Initialise alert message w empty
         alert_message = ""
@@ -310,7 +304,9 @@ def get_callbacks(app: dash.Dash) -> None:
         if (
             n_clicks_select_all % 2 != 0 and n_clicks_select_all > 0
         ):  # if odd number of clicks: select all
-            list_selected_rows = list(range(len(data_page)))
+            list_selected_rows = list(
+                range(len(data))
+            )  # list(range(len(data_page)))
         elif (
             n_clicks_select_all % 2 == 0 and n_clicks_select_all > 0
         ):  # if even number of clicks: unselect all

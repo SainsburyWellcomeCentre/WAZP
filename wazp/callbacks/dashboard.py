@@ -282,9 +282,11 @@ def get_callbacks(app):
         Output("pose-data-unavailable-message", "displayed"),
         # Output("export-message", "is_open"),
         # Output("export-message", "children"),
-        Input("video-data-table", "selected_rows"),
+        Input(
+            "video-data-table", "selected_rows"
+        ),  # derived_viewport_selected_rows #"selected_rows"),
         Input("select-all-videos-button", "n_clicks"),
-        State("video-data-table", "data"),
+        State("video-data-table", "data"),  # "data"), derived_viewport_data
         State("pose-data-unavailable-message", "message"),
         State("pose-data-unavailable-message", "displayed"),
         # State(
@@ -322,14 +324,7 @@ def get_callbacks(app):
         _type_
             _description_
         """
-
-        # export_message = ''
-        # If the export button is clicked:
-        # # export selected rows and unselect all
-        # # if (n_clicks_export > 0) and list_selected_rows:
-        # if list_selected_rows and (n_clicks_select_all > 0):
-        # and list_selected_rows:
-        #     print('PATATA')
+        # TODO: select all rows *per page*
 
         # If 'select/unselect all' button is clicked
         if (
@@ -343,9 +338,6 @@ def get_callbacks(app):
 
         # If pose data is not available: set to false
         if list_selected_rows:
-            # if (
-            #     videos_table_data and list_selected_rows
-            # ):  # and n_clicks_select_all:
 
             # Check rows with missing pose data within those selected
             list_missing_pose_data_bool = [
