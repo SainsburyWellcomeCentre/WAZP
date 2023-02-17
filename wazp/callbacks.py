@@ -489,3 +489,36 @@ def get_dashboard_callbacks(app):
                 )
             ]
         return table_container_children
+
+
+def get_video_callbacks(app: dash.Dash) -> None:
+    """Return all callback functions for the video tab.
+
+
+    Parameters
+    ----------
+    app : dash.Dash
+        Dash app object for which these callbacks are defined
+
+    """
+
+    @app.callback(
+        Output("current-time-div", "children"),
+        Input("player", "currentTime"),
+    )
+    def display_currentTime(currentTime):
+        return f"Current Time: {currentTime}"
+
+    @app.callback(
+        Output("duration-div", "children"),
+        Input("player", "duration"),
+    )
+    def display_duration(duration):
+        return f"Duration: {duration}"
+
+    @app.callback(
+        Output("player", "playbackRate"),
+        Input("playback-rate-slider", "value"),
+    )
+    def set_playbackRate(value):
+        return value

@@ -11,7 +11,7 @@ dynamic = ["version"]
 
 license = {text = "BSD-3-Clause"}
 
-dependencies = ["pandas", "dash", "dash-bootstrap-components"]
+dependencies = ["pandas", "dash", "dash-bootstrap-components", "dash-player"]
 
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
