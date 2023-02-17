@@ -548,10 +548,15 @@ def get_roi_callbacks(app):
         ----------
         video_path : str
             Path to the video file.
-        num_frames_storage : dict
-            Dictionary storing the number of frames for each video.
-            The keys are the video file names and the values are the
-            number of frames (int)
+        frame_slider_storage : dict
+            Dictionary storing frame slider parameters for each video.
+            It has the following structure:
+            {  "video_name_1": {
+                    "max": 1000,
+                    "step": 100,
+                    "value": 500 }
+                "video_name_2": {   ... }
+            }
 
         Returns
         -------
@@ -560,9 +565,9 @@ def get_roi_callbacks(app):
         int
             Frame step size.
         int
-            Middle frame.
+            Frame value at the middle slider step (default).
         dict
-            Updated dictionary storing the number of frames for each video.
+            Updated dictionary storing frame slider parameters for each video.
         """
         video_name = pl.Path(video_path).name
         if video_path in frame_slider_storage.keys():
