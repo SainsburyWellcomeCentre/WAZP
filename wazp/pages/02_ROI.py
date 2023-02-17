@@ -130,7 +130,7 @@ roi_save_button = dbc.Button(
     id="save-rois-button",
     download="rois.yaml",
     n_clicks=0,
-    outline=True,
+    outline=False,
     color="dark",
 )
 roi_load_button = dbc.Button(
@@ -139,6 +139,7 @@ roi_load_button = dbc.Button(
     n_clicks=0,
     outline=True,
     color="dark",
+    active=False,
 )
 infer_rois_button = dbc.Button(
     "Infer ROIs",
@@ -146,6 +147,7 @@ infer_rois_button = dbc.Button(
     n_clicks=0,
     outline=True,
     color="dark",
+    active=False,
 )
 # Tooltips for ROI buttons
 save_rois_tooltip = dbc.Tooltip(
@@ -153,11 +155,11 @@ save_rois_tooltip = dbc.Tooltip(
     target="save-rois-button",
 )
 load_rois_tooltip = dbc.Tooltip(
-    "Load ROIs from the video's " ".metadata.yaml file",
+    "NOT IMPLEMENTED YET! " "Load ROIs from the video's metadata.yaml file",
     target="load-rois-button",
 )
 infer_rois_tooltip = dbc.Tooltip(
-    "Infer ROI positions" "based on defined ROIs",
+    "NOT IMPLEMENTED YET! " "Infer ROI positions based on defined ROIs",
     target="infer-rois-button",
 )
 
