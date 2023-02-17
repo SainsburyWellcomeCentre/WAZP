@@ -593,86 +593,49 @@ def get_roi_callbacks(app):
         Output("roi-table", "data"),
         [
             Input("video-select", "value"),
-            Input("frame-graph", "relayoutData"),
-        ],
-        [
-            State("roi-table", "data"),
-            State("roi-storage", "data"),
-            State("roi-colors-storage", "data"),
+            Input("roi-storage", "data"),
         ],
     )
-    def update_table_entries(
-        video_path: str,
-        graph_relayout: dict,
-        roi_table: list,
-        roi_storage: dict,
-        roi_color_mapping: dict,
-    ) -> list:
-        """Update the ROI table when a new video is selected
-        or when a shape is created or resized on the frame graph.
+    def update_roi_table(
+        video_path: str, roi_storage: dict
+    ) -> Optional[list[dict]]:
+        """
+        Update the ROI table with the ROI names and
+        their corresponding colors.
 
         Parameters
         ----------
         video_path : str
             Path to the video file.
-        graph_relayout : dict
-            Dictionary with the relayout data of the frame graph.
-        roi_table : list
-            List of dictionaries with the ROI table data (1 dict per row).
         roi_storage : dict
-            Dictionary with stored ROI data.
-        roi_color_mapping : dict
-            Dictionary with keys:
-                - roi2color: dict mapping ROI names to colors
-                - color2roi: dict mapping colors to ROI names
+            Dictionary storing ROI data for each video.
 
         Returns
         -------
-        list
-            Updated ROI table data.
+        list[dict]
+            List of dictionaries with ROI table data.
         """
-        # Get trigger for callback
-        trigger = [p["prop_id"] for p in dash.callback_context.triggered][0]
-
-        if trigger == "frame-graph.relayoutData":
-            if "shapes" in graph_relayout.keys():
-                # this means that a shapes has been created,
-                # so, add it as a new row in the table
+        if video_path is not None:
+            video_name = pl.Path(video_path).name
+            if video_name in roi_storage.keys():
                 roi_table = [
-                    utils.shape_to_table_row(sh, roi_color_mapping)
-                    for sh in graph_relayout["shapes"]
+                    utils.stored_shape_to_table_row(shape)
+                    for shape in roi_storage[video_name]["shapes"]
                 ]
-                return roi_table
-            elif re.match(
-                "shapes\[[0-9]+\].path", list(graph_relayout.keys())[0]
-            ):
-                # this means a shape was updated,
-                # so, update only its corresponding row in the table
-                roi_table = utils.roi_table_shape_resize(
-                    roi_table, graph_relayout
-                )
                 return roi_table
             else:
                 return dash.no_update
-
         else:
-            # this means that a new video was selected,
-            # so we load the stored shapes for that video (if any)
-            roi_table = []
-            video_name = pl.Path(video_path).name
-            if video_name in roi_storage.keys():
-                for sh in roi_storage[video_name]["shapes"]:
-                    roi_table.append(
-                        utils.shape_to_table_row(sh, roi_color_mapping)
-                    )
-            return roi_table
+            return dash.no_update
 
     @app.callback(
         Output("roi-table", "style_data_conditional"),
         Input("roi-table", "data"),
         State("roi-colors-storage", "data"),
     )
-    def set_table_roi_color(roi_table: list, roi_color_mapping: dict) -> list:
+    def set_roi_color_in_table(
+        roi_table: list, roi_color_mapping: dict
+    ) -> list:
         """
         Set the color of the ROI names in the ROI table
         based on the color assigned to that ROI shape.
@@ -682,7 +645,7 @@ def get_roi_callbacks(app):
         roi_table : list
             List of dictionaries with ROI table data.
         roi_color_mapping : dict
-            Dictionary with the folowing keys:
+            Dictionary with the following keys:
                 - roi2color: dict mapping ROI names to colors
                 - color2roi: dict mapping colors to ROI names
 
@@ -701,25 +664,110 @@ def get_roi_callbacks(app):
                 cond_format.append(
                     {
                         "if": {
-                            "column_id": "ROI",
-                            "filter_query": f"{{ROI}} = {roi}",
+                            "column_id": "name",
+                            "filter_query": f"{{name}} = {roi}",
                         },
                         "color": roi2color[roi],
                     }
                 )
             return cond_format
 
-    # TODO: refactor this monster callback into smaller ones
     @app.callback(
+        Output("roi-storage", "data"),
+        Input("frame-graph", "relayoutData"),
         [
-            Output("frame-graph", "figure"),
-            Output("frame-status-alert", "children"),
-            Output("frame-status-alert", "color"),
-            Output("frame-status-alert", "is_open"),
-            Output("roi-storage", "data"),
+            State("video-select", "value"),
+            State("frame-slider", "value"),
+            State("roi-storage", "data"),
+            State("roi-colors-storage", "data"),
         ],
+    )
+    def update_roi_storage(
+        graph_relayout: dict,
+        video_path: str,
+        frame_num: int,
+        roi_storage: dict,
+        roi_color_mapping: dict,
+    ) -> dict:
+        """
+        Update the ROI storage with the latest ROI shapes
+        drawn on the frame graph.
+
+        Parameters
+        ----------
+        graph_relayout : dict
+            Dictionary with information about the latest
+            changes to the frame graph.
+        video_path : str
+            Path to the video file.
+        frame_num : int
+            Frame number.
+        roi_storage : dict
+            Dictionary storing ROI data for each video.
+        roi_color_mapping : dict
+            Dictionary with the following keys:
+                - roi2color: dict mapping ROI names to colors
+                - color2roi: dict mapping colors to ROI names
+
+        Returns
+        -------
+        dict
+            Updated dictionary storing ROI data for each video.
+        """
+        if graph_relayout is not None:
+            video_name = pl.Path(video_path).name
+            if "shapes" in graph_relayout.keys():
+                # this means that whole shapes have been created or deleted
+
+                # Get the shapes from the graph
+                graph_shapes = graph_relayout["shapes"]
+                # Create a storage entry for the video if it doesn't exist
+                if video_name not in roi_storage.keys():
+                    roi_storage[video_name] = {"shapes": []}
+                # Get the stored shapes for the video
+                stored_shapes = roi_storage[video_name]["shapes"]
+
+                # Figure out which stored shapes are no longer in the graph
+                # (i.e. have been deleted)
+                deleted_shapes_i = [
+                    i
+                    for i, shape in enumerate(stored_shapes)
+                    if not utils.shape_in_list(graph_shapes)(shape)
+                ]
+                # remove the deleted shapes from the storage
+                for i in sorted(deleted_shapes_i, reverse=True):
+                    del roi_storage[video_name]["shapes"][i]
+
+                # Figure out which graph shapes are new (not in storage)
+                new_shapes_i = [
+                    i
+                    for i, shape in enumerate(graph_shapes)
+                    if not utils.shape_in_list(stored_shapes)(shape)
+                ]
+                new_graph_shapes = [graph_shapes[i] for i in new_shapes_i]
+                # Add the frame number and the ROI name to the new shapes
+                for shape in new_graph_shapes:
+                    shape["on_frame"] = frame_num
+                    shape["roi_name"] = roi_color_mapping["color2roi"][
+                        shape["line"]["color"]
+                    ]
+                # Pass the new shapes to the storage
+                roi_storage[video_name]["shapes"] += new_graph_shapes
+
+            elif re.match("shapes\[[0-9]+\].", list(graph_relayout.keys())[0]):
+                # this means that a single shape has been edited
+                # So update only that shape in storage
+                for key in graph_relayout.keys():
+                    shape_i = int(re.findall(r"\d+", key)[0])
+                    shape_attr = key.split(".")[-1]
+                    roi_storage[video_name]["shapes"][shape_i][
+                        shape_attr
+                    ] = graph_relayout[key]
+        return roi_storage
+
+    @app.callback(
+        Output("frame-graph", "figure"),
         [
-            Input("roi-table", "data"),
             Input("video-select", "value"),
             Input("frame-slider", "value"),
             Input("roi-select", "value"),
@@ -730,156 +778,129 @@ def get_roi_callbacks(app):
         ],
     )
     def update_frame_graph(
-        roi_table,
-        video_path,
-        frame_idx,
-        roi_value,
-        roi_storage,
-        roi_color_mapping,
-    ) -> tuple[go.Figure, str, str, bool, dict]:
-        """Update the frame graph when a new video/frama/ROI is selected
-        or when a new ROI is added to the table.
+        video_path: str,
+        frame_num: int,
+        roi_name: str,
+        roi_storage: dict,
+        roi_color_mapping: dict,
+    ) -> go.Figure:
+        """
+        Update the frame graph
 
         Parameters
         ----------
-        roi_table : list
-            List of dictionaries with ROI table data (1 dict per row).
         video_path : str
             Path to the video file.
-        frame_idx : int
-            Index of the selected frame.
-        roi_value : str
-            Name of the selected ROI.
+        frame_num : int
+            Frame number (which video frame to display).
+        roi_name : str
+            Name of the next ROI to be drawn.
         roi_storage : dict
-            Dictionary with stored ROI data.
+            Dictionary storing already drawn ROI shapes.
         roi_color_mapping : dict
-            Dictionary with keys:
+            Dictionary with the following keys:
                 - roi2color: dict mapping ROI names to colors
                 - color2roi: dict mapping colors to ROI names
 
         Returns
         -------
         go.Figure
-            Updated frame graph figure.
-        str
-            Frame status alert message.
-        str
-            Frame status alert color.
-        bool
-            Frame status alert visibility.
-        dict
-            Updated ROI storage data.
+            Updated frame graph figure
         """
 
-        # Get info from stored config
-        video_path = pl.Path(video_path)
-        video_name = video_path.name
-
-        # Cache frames in a .WAZP folder in the home directory
-        frames_dir = pl.Path.home() / ".WAZP" / "roi_frames"
-        frames_dir.mkdir(parents=True, exist_ok=True)
-        frame_path = frames_dir / f"{video_path.stem}_frame-{frame_idx}.png"
-
-        # Get trigger for callback
-        trigger = [p["prop_id"] for p in dash.callback_context.triggered][0]
-
-        # Status display under the frame graph
-        alert_msg = f"Defining ROIs on frame {frame_idx} from {video_name}"
-        alert_color = "light"
-        alert_is_open = True
-
-        # When a new video or frame is selected
-        # Extract roi frame if it doesn't exist
-        if (trigger == "video-select.value") or (
-            trigger == "frame-slider.value"
-        ):
-            if frame_idx is None:
-                alert_msg = "Please select a valid frame number"
-                alert_color = "warning"
-                alert_is_open = True
-                return (
-                    dash.no_update,
-                    alert_msg,
-                    alert_color,
-                    alert_is_open,
-                    dash.no_update,
-                )
-
-            if frame_path.exists():
-                alert_msg = (
-                    f"Showing cached frame {frame_idx} from {video_name}"
-                )
-                alert_color = "success"
-                alert_is_open = True
-            else:
-                print(f"Extracting frame {frame_idx} for {video_name}")
-                try:
-                    utils.extract_frame(
-                        video_path.as_posix(), frame_idx, frame_path.as_posix()
-                    )
-                    alert_msg = (
-                        f"Extracted frame {frame_idx} from {video_name}"
-                    )
-                    alert_color = "success"
-                    alert_is_open = True
-                except Exception as e:
-                    print(e)
-                    alert_msg = (
-                        f"Failed to extract frame "
-                        f"{frame_idx} from {video_name}"
-                    )
-                    alert_color = "danger"
-                    alert_is_open = True
-                    return (
-                        dash.no_update,
-                        alert_msg,
-                        alert_color,
-                        alert_is_open,
-                        dash.no_update,
-                    )
-
-        # Convert table rows to shapes
-        table_shapes = [
-            utils.table_row_to_shape(sh, roi_color_mapping) for sh in roi_table
-        ]
-
-        # Update ROI store with new video name if it doesn't exist
-        if video_name not in roi_storage.keys():
-            roi_storage[video_name] = {"shapes": []}
-        # Find which of the stored shapes are new
-        stored_shapes = roi_storage[video_name]["shapes"]
-        new_shapes_i, old_shapes_i = [], []
-        for i, shape in enumerate(table_shapes):
-            if utils.shape_in_list(stored_shapes)(shape):
-                old_shapes_i.append(i)
-            else:
-                new_shapes_i.append(i)
-        # Add timestamps to the new shapes
-        for i in new_shapes_i:
-            table_shapes[i]["timestamp"] = utils.time_passed(
-                roi_storage["start_time"]
-            )
-        # Copy previous timestamps to the old shapes
-        for i in old_shapes_i:
-            old_i = utils.index_of_shape(stored_shapes, table_shapes[i])
-            table_shapes[i]["timestamp"] = stored_shapes[old_i]["timestamp"]
-        # Update roi store
-        roi_storage[video_name]["shapes"] = table_shapes
+        # Get the video path and file name
+        video_path_pl = pl.Path(video_path)
+        video_name = video_path_pl.name
+        # Get the frame file path from a cache folder
+        # This will extract the frame if it doesn't exist
+        frame_filepath = utils.get_frame_filepath(video_path_pl, frame_num)
+        # Load the stored shapes for this video (if any)
+        graph_shapes = []
+        if video_name in roi_storage.keys():
+            stored_shapes = roi_storage[video_name]["shapes"]
+            # Get rid of the custom keys that we added
+            graph_shapes = [
+                utils.shape_drop_custom_keys(shape) for shape in stored_shapes
+            ]
+        # Get the color for the next ROI
+        next_shape_color = roi_color_mapping["roi2color"][roi_name]
         # load extracted frame
-        new_frame = Image.open(frame_path)
+        new_frame = Image.open(frame_filepath)
+        # Put the frame in a figure
         new_fig = px.imshow(new_frame)
+        # Add the stored shapes to the figure
+        # and set the next ROI color
         new_fig.update_layout(
-            shapes=[
-                utils.shape_data_remove_timestamp(sh) for sh in table_shapes
-            ],
-            newshape_line_color=roi_color_mapping["roi2color"][roi_value],
+            shapes=graph_shapes,
+            newshape_line_color=next_shape_color,
             dragmode="drawclosedpath",
             margin=dict(l=0, r=0, t=0, b=0),
             yaxis={"visible": False, "showticklabels": False},
             xaxis={"visible": False, "showticklabels": False},
         )
 
-        return new_fig, alert_msg, alert_color, alert_is_open, roi_storage
+        return new_fig
+
+    @app.callback(
+        [
+            Output("save-rois-button", "download"),
+            Output("rois-status-alert", "children"),
+            Output("rois-status-alert", "color"),
+        ],
+        [
+            Input("save-rois-button", "n_clicks"),
+            Input("roi-table", "data"),
+        ],
+        [
+            State("video-select", "value"),
+        ],
+    )
+    def save_rois_and_update_status_alert(
+        save_clicks: int, roi_table: dict, video_path: str
+    ) -> tuple[str, str, str]:
+        metadata_filename = pl.Path(video_path).stem + ".metadata.yaml"
+        metadata_path = pl.Path(video_path).parent / metadata_filename
+        saved_rois: dict = {}
+        rois_to_save = {row["name"]: row["path"] for row in roi_table}
+        trigger = [p["prop_id"] for p in dash.callback_context.triggered][0]
+
+        if metadata_path.exists():
+            with open(metadata_path, "r") as yaml_file:
+                metadata = yaml.safe_load(yaml_file)
+                if "ROI_coords" in metadata.keys():
+                    saved_rois = metadata["ROI_coords"]
+        else:
+            alert_message = (
+                f"Could not find {metadata_filename}."
+                " ROIs cannot be saved or loaded."
+            )
+            alert_color = "danger"
+            return dash.no_update, alert_message, alert_color
+
+        if len(rois_to_save) > 0:
+            if rois_to_save == saved_rois:
+                alert_message = f"ROIs have been saved in {metadata_filename}."
+                alert_color = "light"
+                return dash.no_update, alert_message, alert_color
+            else:
+                alert_message = "Unsaved ROI changes."
+                alert_color = "warning"
+                if (trigger == "save-rois-button.n_clicks") and (
+                    save_clicks > 0
+                ):
+                    with open(metadata_path, "w") as yaml_file:
+                        metadata["ROI_coords"] = rois_to_save
+                        yaml.safe_dump(metadata, yaml_file)
+
+                    alert_message = f"Saved ROIs to {metadata_filename}."
+                    alert_color = "success"
+                    return metadata_path.as_posix(), alert_message, alert_color
+                else:
+                    return dash.no_update, alert_message, alert_color
+        else:
+            alert_message = "No ROIs to save"
+            alert_color = "light"
+            return dash.no_update, alert_message, alert_color
 
 
 def get_dashboard_callbacks(app):
@@ -956,64 +977,3 @@ def get_dashboard_callbacks(app):
                 )
             ]
         return table_container_children
-
-    @app.callback(
-        [
-            Output("save-rois-button", "download"),
-            Output("rois-status-alert", "children"),
-            Output("rois-status-alert", "color"),
-        ],
-        [
-            Input("save-rois-button", "n_clicks"),
-            Input("roi-table", "data"),
-        ],
-        [
-            State("video-select", "value"),
-        ],
-    )
-    def save_rois_and_update_status_alert(
-        save_clicks: int, roi_table: dict, video_path: str
-    ) -> tuple[str, str, str]:
-        metadata_filename = pl.Path(video_path).stem + ".metadata.yaml"
-        metadata_path = pl.Path(video_path).parent / metadata_filename
-        saved_rois: dict = {}
-        rois_to_save = {row["ROI"]: row["path"] for row in roi_table}
-        trigger = [p["prop_id"] for p in dash.callback_context.triggered][0]
-
-        if metadata_path.exists():
-            with open(metadata_path, "r") as yaml_file:
-                metadata = yaml.safe_load(yaml_file)
-                if "ROI_coords" in metadata.keys():
-                    saved_rois = metadata["ROI_coords"]
-        else:
-            alert_message = (
-                f"Could not find {metadata_filename}."
-                " ROIs cannot be saved or loaded."
-            )
-            alert_color = "danger"
-            return dash.no_update, alert_message, alert_color
-
-        if len(rois_to_save) > 0:
-            if rois_to_save == saved_rois:
-                alert_message = f"ROIs have been saved in {metadata_filename}."
-                alert_color = "light"
-                return dash.no_update, alert_message, alert_color
-            else:
-                alert_message = "Unsaved ROI changes."
-                alert_color = "warning"
-                if (trigger == "save-rois-button.n_clicks") and (
-                    save_clicks > 0
-                ):
-                    with open(metadata_path, "w") as yaml_file:
-                        metadata["ROI_coords"] = rois_to_save
-                        yaml.safe_dump(metadata, yaml_file)
-
-                    alert_message = f"Saved ROIs to {metadata_filename}."
-                    alert_color = "success"
-                    return metadata_path.as_posix(), alert_message, alert_color
-                else:
-                    return dash.no_update, alert_message, alert_color
-        else:
-            alert_message = "No ROIs to save"
-            alert_color = "light"
-            return dash.no_update, alert_message, alert_color

@@ -4,8 +4,6 @@ import plotly.express as px
 from dash import dash_table, dcc, html
 from PIL import Image
 
-from wazp.utils import time_passed
-
 ###############################
 # Add page to registry        #
 ###############################
@@ -27,11 +25,10 @@ init_frame_slider_storage: dict = {
     v: init_frame_slider_params for v in init_videos
 }
 # Columns for ROI table
-init_roi_table_columns = ["ROI", "path"]
+init_roi_table_columns = ["name", "on frame", "path"]
 # Initialize the ROI storage dictionary
 init_roi_storage: dict = {v: {"shapes": []} for v in init_videos}
-# Also add a start_time to the ROI storage
-init_roi_storage["start_time"] = time_passed()
+
 
 ###############################
 # Graph showing a video frame #

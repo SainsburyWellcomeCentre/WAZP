@@ -1,5 +1,4 @@
 import pathlib as pl
-import time
 from typing import Callable
 
 import cv2
@@ -353,89 +352,59 @@ def extract_frame(
         print("Error extracting frame from video")
 
 
-def time_passed(start=0):
-    """Return time passed since start in seconds
+def get_frame_filepath(video_path: pl.Path, frame_num: int) -> pl.Path:
+    """Cache a frame in a .WAZP folder in the home directory.
+    This is to avoid extracting the same frame multiple times.
 
     Parameters
     ----------
-    start : int, optional
-        Start time, by default 0
+    video_path : pl.Path
+        Path to the video file
+    frame_num : int
+        Number of the frame to extract
+
+    Returns
+    -------
+    pl.Path
+        Path to the cached frame .png file
     """
-    return round(time.mktime(time.localtime())) - start
+
+    frames_cache_dir = pl.Path.home() / ".WAZP" / "roi_frames"
+    frames_cache_dir.mkdir(parents=True, exist_ok=True)
+    frame_filepath = (
+        frames_cache_dir / f"{video_path.stem}_frame-{frame_num}.png"
+    )
+    # Extract frame if it is not already cached
+    if not frame_filepath.exists():
+        extract_frame(
+            video_path.as_posix(), frame_num, frame_filepath.as_posix()
+        )
+
+    return frame_filepath
 
 
-def shape_to_table_row(shape: dict, roi_color_mapping: dict) -> dict:
-    """Converts a shape to a table row
+def stored_shape_to_table_row(shape: dict) -> dict:
+    """Converts a shape, as it is represented in
+    roi-storage, to a Dash table row
 
     Parameters
     ----------
     shape : dict
         Shape dictionary for a single ROI
-    roi_color_mapping : dict
-        Dictionary with keys:
-        - roi2color: dict mapping ROI names to colors
-        - color2roi: dict mapping colors to ROI names
 
     Returns
     -------
     dict
         Dictionary with keys:
-        - ROI: ROI name
+        - name: ROI name
+        - on frame: frame number on which the ROI was last edited
         - path: SVG path for the ROI
     """
-    color2roi = roi_color_mapping["color2roi"]
-    return {"ROI": color2roi[shape["line"]["color"]], "path": shape["path"]}
-
-
-def table_row_to_shape(row: dict, roi_color_mapping: dict) -> dict:
-    """Converts an ROI table row to an ROI shape
-
-    Parameters
-    ----------
-    row : dict
-        Dictionary with keys:
-        - ROI: ROI name
-        - path: SVG path for the ROI
-    roi_color_mapping : dict
-        Dictionary with keys:
-        - roi2color: dict mapping ROI names to colors
-        - color2roi: dict mapping colors to ROI names
-
-    Returns
-    -------
-    dict
-        Shape dictionary for a single ROI
-    """
-    roi2color = roi_color_mapping["roi2color"]
     return {
-        "editable": True,
-        "xref": "x",
-        "yref": "y",
-        "layer": "above",
-        "opacity": 0.8,
-        "line": {
-            "color": roi2color[row["ROI"]],
-            "width": 3,
-            "dash": "solid",
-        },
-        "fillcolor": "rgba(0, 0, 0, 0)",
-        "fillrule": "evenodd",
-        "type": "path",
-        "path": row["path"],
+        "name": shape["roi_name"],
+        "on frame": shape["on_frame"],
+        "path": shape["path"],
     }
-
-
-def roi_table_shape_resize(roi_table_data: list, fig_data: dict) -> list:
-    """
-    Extract index of resized shape and update its coords in the table
-    """
-    for key, _ in fig_data.items():
-        shape_n, svg_path = key.split(".")
-        # shape_n is for example 'shapes[2].path': this extracts the number
-        shape_n = int(shape_n.split(".")[0].split("[")[-1].split("]")[0])
-        # this should correspond to the same row in the data table
-        roi_table_data[shape_n][svg_path] = fig_data[key]
-    return roi_table_data
 
 
 def are_same_shape(shape0: dict, shape1: dict) -> bool:
@@ -450,20 +419,12 @@ def shape_in_list(shape_list: list) -> Callable[[dict], bool]:
     return lambda s: any(are_same_shape(s, s_) for s_ in shape_list)
 
 
-def index_of_shape(shape_list: list, shape: dict) -> int:
-    """Returns the index of a shape in a list of shapes"""
-    for i, shapes_item in enumerate(shape_list):
-        if are_same_shape(shapes_item, shape):
-            return i
-    raise ValueError("Shape not found in list")
-
-
-def shape_data_remove_timestamp(shape: dict) -> dict:
+def shape_drop_custom_keys(shape: dict) -> dict:
     """
-    go.Figure complains if we include the 'timestamp' key when updating the
-    figure
+    go.Figure complains if we include custom keys in the shape
+    dictionary, so we remove them here
     """
     new_shape = dict()
-    for k in shape.keys() - {"timestamp"}:
+    for k in shape.keys() - {"on_frame", "roi_name"}:
         new_shape[k] = shape[k]
     return new_shape
