@@ -21,8 +21,11 @@ init_videos = ["No videos found yet"]
 init_roi_names = ["No ROIs defined yet"]
 # Default color for ROI drawing
 init_roi_color = px.colors.qualitative.Dark2[0]
-# Initialize the number of frames in the video
-init_num_frames: dict = {v: 1 for v in init_videos}
+# Initialize the frame slider parameters for each video
+init_frame_slider_params: dict = {"max": 1, "step": 1, "value": 0}
+init_frame_slider_storage: dict = {
+    v: init_frame_slider_params for v in init_videos
+}
 # Columns for ROI table
 init_roi_table_columns = ["ROI", "path"]
 # Initialize the ROI storage dictionary
@@ -75,16 +78,13 @@ video_dropdown = dcc.Dropdown(
     clearable=False,
 )
 
-# Frame selection input box
-frame_input = dbc.Input(
-    id="frame-input",
-    type="number",
-    placeholder="Frame number",
+# Frame selection slider
+frame_slider = dcc.Slider(
+    id="frame-slider",
     min=0,
-    max=init_num_frames[init_videos[0]],
-    step=1,
-    value=0,
-    debounce=True,
+    max=init_frame_slider_params["max"],
+    step=init_frame_slider_params["step"],
+    value=init_frame_slider_params["value"],
 )
 
 # frame status alert
@@ -183,18 +183,18 @@ frame_card = dbc.Card(
             [
                 dbc.Row(
                     [
-                        dbc.Col(dcc.Markdown("Select video"), width=4),
-                        dbc.Col(video_dropdown, width=8),
+                        dbc.Col(dcc.Markdown("Select video"), width=3),
+                        dbc.Col(video_dropdown, width=9),
                         dcc.Store(
-                            id="num-frames-storage",
-                            data=init_num_frames,
+                            id="frame-slider-storage",
+                            data=init_frame_slider_storage,
                         ),
                     ]
                 ),
                 dbc.Row(
                     [
-                        dbc.Col(dcc.Markdown("Frame shown"), width=4),
-                        dbc.Col(frame_input, width=8),
+                        dbc.Col(dcc.Markdown("Select frame"), width=3),
+                        dbc.Col(frame_slider, width=9),
                     ]
                 ),
             ]

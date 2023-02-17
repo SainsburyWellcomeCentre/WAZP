@@ -527,20 +527,22 @@ def get_roi_callbacks(app):
 
     @app.callback(
         [
-            Output("frame-input", "max"),
-            Output("num-frames-storage", "data"),
+            Output("frame-slider", "max"),
+            Output("frame-slider", "step"),
+            Output("frame-slider", "value"),
+            Output("frame-slider-storage", "data"),
         ],
         Input("video-select", "value"),
-        State("num-frames-storage", "data"),
+        State("frame-slider-storage", "data"),
     )
-    def update_frame_input_max(
-        video_path: str, num_frames_storage: dict
-    ) -> tuple[int, dict]:
+    def update_frame_slider(
+        video_path: str, frame_slider_storage: dict
+    ) -> tuple[int, int, int, dict]:
         """
-        Update the maximum frame input value when a new video
-        is selected. Read the value from storage if available,
-        otherwise get from the video file (slower)
-        and add it to storage for reuse.
+        Update the frame slider parameters when a new video
+        is selected. Read the parameters from storage if available,
+        otherwise extract them from the video file (slower),
+        and update the storage for future use.
 
         Parameters
         ----------
@@ -548,23 +550,39 @@ def get_roi_callbacks(app):
             Path to the video file.
         num_frames_storage : dict
             Dictionary storing the number of frames for each video.
+            The keys are the video file names and the values are the
+            number of frames (int)
 
         Returns
         -------
         int
             Maximum frame input value.
+        int
+            Frame step size.
+        int
+            Middle frame.
         dict
             Updated dictionary storing the number of frames for each video.
         """
         video_name = pl.Path(video_path).name
-        if video_path in num_frames_storage.keys():
-            num_frames = num_frames_storage[video_name]
-            return num_frames, dash.no_update
+        if video_path in frame_slider_storage.keys():
+            stored_video_params = frame_slider_storage[video_name]
+            num_frames = stored_video_params["max"]
+            frame_step = stored_video_params["step"]
+            middle_frame = stored_video_params["value"]
+            return num_frames, frame_step, middle_frame, dash.no_update
         else:
             num_frames = int(utils.get_num_frames(video_path))
-            updated_num_frames_storage = num_frames_storage.copy()
-            updated_num_frames_storage[video_name] = num_frames
-        return num_frames, updated_num_frames_storage
+            # Round the frame step to the nearest 1000
+            frame_step = round(int(num_frames / 4), -3)
+            # Default to the middle step
+            middle_frame = frame_step * 2
+            frame_slider_storage[video_name] = {
+                "max": num_frames,
+                "step": frame_step,
+                "value": middle_frame,
+            }
+        return num_frames, frame_step, middle_frame, frame_slider_storage
 
     @app.callback(
         Output("roi-table", "data"),
@@ -698,7 +716,7 @@ def get_roi_callbacks(app):
         [
             Input("roi-table", "data"),
             Input("video-select", "value"),
-            Input("frame-input", "value"),
+            Input("frame-slider", "value"),
             Input("roi-select", "value"),
         ],
         [
@@ -768,7 +786,7 @@ def get_roi_callbacks(app):
         # When a new video or frame is selected
         # Extract roi frame if it doesn't exist
         if (trigger == "video-select.value") or (
-            trigger == "frame-input.value"
+            trigger == "frame-slider.value"
         ):
             if frame_idx is None:
                 alert_msg = "Please select a valid frame number"
