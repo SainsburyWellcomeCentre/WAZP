@@ -1,7 +1,7 @@
 import dash
 
 # import plotly.express as px
-from dash import dcc, html
+from dash import html
 
 # import dash_bootstrap_components as dbc
 
@@ -35,37 +35,25 @@ layout = html.Div(
         html.H5(
             "Input data", style={"margin-top": "20px", "margin-bottom": "20px"}
         ),
-        html.Div(children=[], id="videos-table-container"),
-        dcc.ConfirmDialog(
-            id="pose-data-unavailable-message",
-            message="",
-            displayed=False,
-        ),
-        # html.Hr(
-        #     style={"margin-top": "30px", "margin-bottom": "15px"}
+        html.Div(children=[], id="input-data-container"),
+        # html.Div(
+        #     children=[],
+        #     id="videos-table-container"
         # ),
-        # html.H5(
-        #     "Time range",
-        #     style={"margin-top": "20px", "margin-bottom": "25px"}
+        # dcc.ConfirmDialog(
+        #     id="pose-data-unavailable-message",
+        #     message="",
+        #     displayed=False,
         # ),
-        html.Div(
-            children=[],
-            id="slider-container",
-            style={"margin-top": "30px", "margin-bottom": "25px"},
-        ),
-        # html.Hr(
-        #     style={"margin-top": "60px", "margin-bottom": "15px"}
+        # html.Div(
+        #     children=[],
+        #     id="slider-container",
+        #     style={"margin-top": "30px", "margin-bottom": "25px"},
         # ),
-        # html.H5(
-        #     "Export", style={"margin-top": "60px", "margin-bottom": "25px"}
-        # ),
-        html.Div(
-            children=[],
-            id="export-container",
-            style={"margin-top": "30px", "margin-bottom": "25px"},
-        ),
-        # html.H5(
-        #     "Plots", style={"margin-top": "60px", "margin-bottom": "25px"}
+        # html.Div(
+        #     children=[],
+        #     id="export-container",
+        #     style={"margin-top": "30px", "margin-bottom": "25px"},
         # ),
         html.Div(children=[], id="custom-plot-container"),
         html.Div(
