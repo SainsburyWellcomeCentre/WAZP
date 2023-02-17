@@ -90,6 +90,7 @@ frame_status_alert = dbc.Alert(
     id="frame-status-alert",
     color="light",
     is_open=False,
+    dismissable=True,
 )
 
 ###############################

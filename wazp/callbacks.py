@@ -766,7 +766,12 @@ def get_roi_callbacks(app):
         return roi_storage
 
     @app.callback(
-        Output("frame-graph", "figure"),
+        [
+            Output("frame-graph", "figure"),
+            Output("frame-status-alert", "children"),
+            Output("frame-status-alert", "color"),
+            Output("frame-status-alert", "is_open"),
+        ],
         [
             Input("video-select", "value"),
             Input("frame-slider", "value"),
@@ -783,7 +788,7 @@ def get_roi_callbacks(app):
         roi_name: str,
         roi_storage: dict,
         roi_color_mapping: dict,
-    ) -> go.Figure:
+    ) -> tuple[go.Figure, str, str, bool]:
         """
         Update the frame graph
 
@@ -806,6 +811,12 @@ def get_roi_callbacks(app):
         -------
         go.Figure
             Updated frame graph figure
+        str
+            Message to display in the frame status alert.
+        str
+            Color of the frame status alert.
+        bool
+            Whether to open the frame status alert.
         """
 
         # Get the video path and file name
@@ -813,33 +824,44 @@ def get_roi_callbacks(app):
         video_name = video_path_pl.name
         # Get the frame file path from a cache folder
         # This will extract the frame if it doesn't exist
-        frame_filepath = utils.get_frame_filepath(video_path_pl, frame_num)
-        # Load the stored shapes for this video (if any)
-        graph_shapes = []
-        if video_name in roi_storage.keys():
-            stored_shapes = roi_storage[video_name]["shapes"]
-            # Get rid of the custom keys that we added
-            graph_shapes = [
-                utils.shape_drop_custom_keys(shape) for shape in stored_shapes
-            ]
-        # Get the color for the next ROI
-        next_shape_color = roi_color_mapping["roi2color"][roi_name]
-        # load extracted frame
-        new_frame = Image.open(frame_filepath)
-        # Put the frame in a figure
-        new_fig = px.imshow(new_frame)
-        # Add the stored shapes to the figure
-        # and set the next ROI color
-        new_fig.update_layout(
-            shapes=graph_shapes,
-            newshape_line_color=next_shape_color,
-            dragmode="drawclosedpath",
-            margin=dict(l=0, r=0, t=0, b=0),
-            yaxis={"visible": False, "showticklabels": False},
-            xaxis={"visible": False, "showticklabels": False},
-        )
+        try:
+            frame_filepath = utils.get_frame_filepath(video_path_pl, frame_num)
 
-        return new_fig
+            # Load the stored shapes for this video (if any)
+            graph_shapes = []
+            if video_name in roi_storage.keys():
+                stored_shapes = roi_storage[video_name]["shapes"]
+                # Get rid of the custom keys that we added
+                graph_shapes = [
+                    utils.shape_drop_custom_keys(shape)
+                    for shape in stored_shapes
+                ]
+            # Get the color for the next ROI
+            next_shape_color = roi_color_mapping["roi2color"][roi_name]
+            # load extracted frame
+            new_frame = Image.open(frame_filepath)
+            # Put the frame in a figure
+            new_fig = px.imshow(new_frame)
+            # Add the stored shapes to the figure
+            # and set the next ROI color
+            new_fig.update_layout(
+                shapes=graph_shapes,
+                newshape_line_color=next_shape_color,
+                dragmode="drawclosedpath",
+                margin=dict(l=0, r=0, t=0, b=0),
+                yaxis={"visible": False, "showticklabels": False},
+                xaxis={"visible": False, "showticklabels": False},
+            )
+            return new_fig, dash.no_update, dash.no_update, dash.no_update
+
+        except Exception as e:
+            print(e)
+            alert_msg = (
+                f"Could not extract frame {frame_num} from {video_name}"
+            )
+            alert_color = "danger"
+            alert_open = True
+            return dash.no_update, alert_msg, alert_color, alert_open
 
     @app.callback(
         [
