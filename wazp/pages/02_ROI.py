@@ -33,14 +33,14 @@ init_roi_status: dict = {"message": "No ROIs to save.", "color": "light"}
 
 # Instructions for the user
 instructions = (
-    "1. Select a video from the dropdown menu.\n"
-    "2. Use the slider to change the displayed frame (if necessary).\n"
-    "3. Select an ROI from the dropdown menu on the right.\n"
-    "4. Draw the ROI on the frame.\n"
+    "#### Instructions\n"
+    "1. Select the video from the top dropdown menu. \n"
+    "3. Select an ROI from the right dropdown menu. \n"
+    "4. Draw the ROI on the frame (adjust the shown frame if necessary). \n"
     "5. You may also select an existing ROI "
-    "and edit it or delete it.\n"
+    "to edit it or delete it.\n"
     "6. Repeat steps 3-5 for each ROI.\n"
-    "7. When finished, click the 'Save ROIs' button.\n"
+    "7. Save the ROIs and move on to the next video.\n"
 )
 
 
