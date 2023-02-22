@@ -59,7 +59,7 @@ def df_from_metadata_yaml_files(
                     )
                 )
 
-        return pd.concat(list_df_metadata, ignore_index=True)
+        return pd.concat(list_df_metadata, ignore_index=True, join="inner")
 
 
 def metadata_table_component_from_df(df: pd.DataFrame) -> dash_table.DataTable:
@@ -402,9 +402,105 @@ def stored_shape_to_table_row(shape: dict) -> dict:
     """
     return {
         "name": shape["roi_name"],
-        "on frame": shape["on_frame"],
+        "on frame": shape["drawn_on_frame"],
         "path": shape["path"],
     }
+
+
+def stored_shape_to_yaml_entry(shape: dict) -> dict:
+    """Converts a shape, as it is represented in
+    roi-storage, to a dictionary that is meant to be
+    written to a yaml file
+
+    Parameters
+    ----------
+    shape : dict
+        Shape dictionary for a single ROI
+
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+        - name: ROI name
+        - drawn_on_frame: frame number on which the ROI was last edited
+        - line_color: color of the ROI edge line
+        - path: SVG path for the ROI
+    """
+    return {
+        "name": shape["roi_name"],
+        "drawn_on_frame": shape["drawn_on_frame"],
+        "line_color": shape["line"]["color"],
+        "path": shape["path"],
+    }
+
+
+def yaml_entry_to_stored_shape(roi_entry: dict) -> dict:
+    """Converts a single ROI entry from a yaml file to a shape,
+    as it is represented in roi-storage
+
+    Parameters
+    ----------
+    roi_entry : dict
+        Dictionary with keys:
+        - name: ROI name
+        - drawn_on_frame: frame number on which the ROI was last edited
+        - line_color: color of the ROI edge line
+        - path: SVG path for the ROI
+
+    Returns
+    -------
+    dict
+        Shape dictionary for a single ROI
+    """
+    return {
+        "editable": True,
+        "xref": "x",
+        "yref": "y",
+        "layer": "above",
+        "opacity": 1,
+        "line": {
+            "color": roi_entry["line_color"],
+            "width": 4,
+            "dash": "solid",
+        },
+        "fillcolor": "rgba(0, 0, 0, 0)",
+        "fillrule": "evenodd",
+        "type": "path",
+        "path": roi_entry["path"],
+        "drawn_on_frame": roi_entry["drawn_on_frame"],
+        "roi_name": roi_entry["name"],
+    }
+
+
+def load_rois_from_yaml(yaml_path: pl.Path) -> list:
+    """
+    Load ROI data from a yaml file
+
+    Parameters
+    ----------
+    yaml_path : pl.Path
+        Path to the yaml file
+
+    Returns
+    -------
+    list
+        List of ROI shape dictionaries bound for roi-storage.
+        Empty if no ROIs are found in the yaml file.
+    """
+    shapes_to_store = []
+    if yaml_path.exists():
+        with open(yaml_path, "r") as yaml_file:
+            metadata = yaml.safe_load(yaml_file)
+            if "ROIs" in metadata.keys():
+                shapes_to_store = [
+                    yaml_entry_to_stored_shape(roi) for roi in metadata["ROIs"]
+                ]
+            else:
+                raise ValueError(f"Could not find key 'ROIs' in {yaml_path}")
+    else:
+        raise FileNotFoundError(f"Could not find {yaml_path}")
+
+    return shapes_to_store
 
 
 def are_same_shape(shape0: dict, shape1: dict) -> bool:
@@ -425,6 +521,6 @@ def shape_drop_custom_keys(shape: dict) -> dict:
     dictionary, so we remove them here
     """
     new_shape = dict()
-    for k in shape.keys() - {"on_frame", "roi_name"}:
+    for k in shape.keys() - {"drawn_on_frame", "roi_name"}:
         new_shape[k] = shape[k]
     return new_shape

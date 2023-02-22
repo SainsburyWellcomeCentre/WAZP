@@ -28,6 +28,8 @@ init_frame_slider_storage: dict = {
 init_roi_table_columns = ["name", "on frame", "path"]
 # Initialize the ROI storage dictionary
 init_roi_storage: dict = {v: {"shapes": []} for v in init_videos}
+# Initialize the ROI status alert
+init_roi_status: dict = {"message": "No ROIs to save.", "color": "light"}
 
 # Instructions for the user
 instructions = (
@@ -142,14 +144,15 @@ roi_save_button = dbc.Button(
     n_clicks=0,
     outline=False,
     color="dark",
+    active=True,
 )
 roi_load_button = dbc.Button(
     "Load ROIs",
     id="load-rois-button",
     n_clicks=0,
-    outline=True,
+    outline=False,
     color="dark",
-    active=False,
+    active=True,
 )
 infer_rois_button = dbc.Button(
     "Infer ROIs",
@@ -165,7 +168,7 @@ save_rois_tooltip = dbc.Tooltip(
     target="save-rois-button",
 )
 load_rois_tooltip = dbc.Tooltip(
-    "NOT IMPLEMENTED YET! " "Load ROIs from the video's metadata.yaml file",
+    "Load ROIs from the video's metadata.yaml file",
     target="load-rois-button",
 )
 infer_rois_tooltip = dbc.Tooltip(
@@ -175,9 +178,9 @@ infer_rois_tooltip = dbc.Tooltip(
 
 # ROI status alert
 roi_status_alert = dbc.Alert(
-    "No ROIs to save.",
+    init_roi_status["message"],
     id="rois-status-alert",
-    color="light",
+    color=init_roi_status["color"],
     is_open=True,
 )
 

@@ -674,7 +674,10 @@ def get_roi_callbacks(app):
 
     @app.callback(
         Output("roi-storage", "data"),
-        Input("frame-graph", "relayoutData"),
+        [
+            Input("frame-graph", "relayoutData"),
+            Input("load-rois-button", "n_clicks"),
+        ],
         [
             State("video-select", "value"),
             State("frame-slider", "value"),
@@ -684,6 +687,7 @@ def get_roi_callbacks(app):
     )
     def update_roi_storage(
         graph_relayout: dict,
+        load_clicks: int,
         video_path: str,
         frame_num: int,
         roi_storage: dict,
@@ -691,13 +695,16 @@ def get_roi_callbacks(app):
     ) -> dict:
         """
         Update the ROI storage with the latest ROI shapes
-        drawn on the frame graph.
+        drawn on the frame graph or with the ROI shapes
+        loaded from the video's .metadata.yaml file.
 
         Parameters
         ----------
         graph_relayout : dict
             Dictionary with information about the latest
             changes to the frame graph.
+        load_clicks : int
+            Number of times the load ROIs button has been clicked.
         video_path : str
             Path to the video file.
         frame_num : int
@@ -714,16 +721,21 @@ def get_roi_callbacks(app):
         dict
             Updated dictionary storing ROI data for each video.
         """
-        if graph_relayout is not None:
-            video_name = pl.Path(video_path).name
+
+        trigger = dash.callback_context.triggered[0]["prop_id"]
+        video_path_pl = pl.Path(video_path)
+        video_name = video_path_pl.name
+        # Create a storage entry for the video if it doesn't exist
+        if video_name not in roi_storage.keys():
+            roi_storage[video_name] = {"shapes": []}
+
+        # Stuff to do when a shape is drawn/deleted/modified on the graph
+        if trigger == "frame-graph.relayoutData":
             if "shapes" in graph_relayout.keys():
                 # this means that whole shapes have been created or deleted
 
                 # Get the shapes from the graph
                 graph_shapes = graph_relayout["shapes"]
-                # Create a storage entry for the video if it doesn't exist
-                if video_name not in roi_storage.keys():
-                    roi_storage[video_name] = {"shapes": []}
                 # Get the stored shapes for the video
                 stored_shapes = roi_storage[video_name]["shapes"]
 
@@ -747,7 +759,7 @@ def get_roi_callbacks(app):
                 new_graph_shapes = [graph_shapes[i] for i in new_shapes_i]
                 # Add the frame number and the ROI name to the new shapes
                 for shape in new_graph_shapes:
-                    shape["on_frame"] = frame_num
+                    shape["drawn_on_frame"] = frame_num
                     shape["roi_name"] = roi_color_mapping["color2roi"][
                         shape["line"]["color"]
                     ]
@@ -763,6 +775,17 @@ def get_roi_callbacks(app):
                     roi_storage[video_name]["shapes"][shape_i][
                         shape_attr
                     ] = graph_relayout[key]
+
+        # If triggered by the load ROIs button click
+        # Load the ROIs from the metadata file
+        # CAUTION! This will overwrite any ROIs is the roi-storage
+        elif trigger == "load-rois-button.n_clicks":
+            if load_clicks > 0:
+                metadata_path = video_path_pl.with_suffix(".metadata.yaml")
+                roi_storage[video_name]["shapes"] = utils.load_rois_from_yaml(
+                    yaml_path=metadata_path
+                )
+
         return roi_storage
 
     @app.callback(
@@ -776,9 +799,9 @@ def get_roi_callbacks(app):
             Input("video-select", "value"),
             Input("frame-slider", "value"),
             Input("roi-select", "value"),
+            Input("roi-storage", "data"),
         ],
         [
-            State("roi-storage", "data"),
             State("roi-colors-storage", "data"),
         ],
     )
@@ -864,66 +887,69 @@ def get_roi_callbacks(app):
             alert_open = True
             return dash.no_update, alert_msg, alert_color, alert_open
 
+    # TODO: Also update the ROI status alert accordingly
     @app.callback(
+        Output("save-rois-button", "download"),
+        Input("save-rois-button", "n_clicks"),
         [
-            Output("save-rois-button", "download"),
-            Output("rois-status-alert", "children"),
-            Output("rois-status-alert", "color"),
-        ],
-        [
-            Input("save-rois-button", "n_clicks"),
-            Input("roi-table", "data"),
-        ],
-        [
+            State("roi-storage", "data"),
             State("video-select", "value"),
         ],
     )
-    def save_rois_and_update_status_alert(
-        save_clicks: int, roi_table: dict, video_path: str
-    ) -> tuple[str, str, str]:
-        metadata_filename = pl.Path(video_path).stem + ".metadata.yaml"
-        metadata_path = pl.Path(video_path).parent / metadata_filename
-        saved_rois: dict = {}
-        rois_to_save = {row["name"]: row["path"] for row in roi_table}
-        trigger = [p["prop_id"] for p in dash.callback_context.triggered][0]
+    def save_rois_to_metadata_yaml(
+        save_clicks: int, roi_storage: dict, video_path: str
+    ) -> Optional[str]:
+        """
+        Save the ROI shapes to a metadata YAML file.
 
-        if metadata_path.exists():
-            with open(metadata_path, "r") as yaml_file:
-                metadata = yaml.safe_load(yaml_file)
-                if "ROI_coords" in metadata.keys():
-                    saved_rois = metadata["ROI_coords"]
-        else:
-            alert_message = (
-                f"Could not find {metadata_filename}."
-                " ROIs cannot be saved or loaded."
-            )
-            alert_color = "danger"
-            return dash.no_update, alert_message, alert_color
+        Parameters
+        ----------
+        save_clicks : int
+            Number of times the save ROIs button has been clicked.
+        roi_storage : dict
+            Dictionary storing already drawn ROI shapes.
+        video_path : str
+            Path to the video file.
 
-        if len(rois_to_save) > 0:
-            if rois_to_save == saved_rois:
-                alert_message = f"ROIs have been saved in {metadata_filename}."
-                alert_color = "light"
-                return dash.no_update, alert_message, alert_color
+        Returns
+        -------
+        str or no update
+            Download path to the metadata YAML file.
+        """
+
+        if save_clicks > 0:
+            # Get the video path and file name
+            video_path_pl = pl.Path(video_path)
+            video_name = video_path_pl.name
+            # Derive the metadata file name and path
+            metadata_filepath = video_path_pl.with_suffix(".metadata.yaml")
+
+            # Check if the metadata file exists
+            # and load any previously saved ROIs
+            if metadata_filepath.exists():
+                with open(metadata_filepath, "r") as yaml_file:
+                    metadata = yaml.safe_load(yaml_file)
             else:
-                alert_message = "Unsaved ROI changes."
-                alert_color = "warning"
-                if (trigger == "save-rois-button.n_clicks") and (
-                    save_clicks > 0
-                ):
-                    with open(metadata_path, "w") as yaml_file:
-                        metadata["ROI_coords"] = rois_to_save
-                        yaml.safe_dump(metadata, yaml_file)
+                print(f"Could not find {metadata_filepath}")
 
-                    alert_message = f"Saved ROIs to {metadata_filename}."
-                    alert_color = "success"
-                    return metadata_path.as_posix(), alert_message, alert_color
-                else:
-                    return dash.no_update, alert_message, alert_color
-        else:
-            alert_message = "No ROIs to save"
-            alert_color = "light"
-            return dash.no_update, alert_message, alert_color
+            # Get the stored ROI shapes for this video
+            if video_name in roi_storage.keys():
+                roi_shapes = roi_storage[video_name]["shapes"]
+                rois_to_save = [
+                    utils.stored_shape_to_yaml_entry(shape)
+                    for shape in roi_shapes
+                ]
+                # Save the ROI shapes to the metadata file
+                # This overwrites any previously saved ROIs
+                with open(metadata_filepath, "w") as yaml_file:
+                    metadata["ROIs"] = rois_to_save
+                    yaml.safe_dump(metadata, yaml_file)
+                return metadata_filepath.as_posix()
+            else:
+                print("No ROI shapes to save")
+                return dash.no_update
+
+        return dash.no_update
 
 
 def get_dashboard_callbacks(app):
