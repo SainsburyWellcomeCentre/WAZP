@@ -857,7 +857,8 @@ def get_roi_callbacks(app):
         except Exception as e:
             print(e)
             alert_msg = (
-                f"Could not extract frame {frame_num} from {video_name}"
+                f"Could not extract frames from {video_name}. "
+                f"Make sure that it is a valid video file."
             )
             alert_color = "danger"
             alert_open = True
