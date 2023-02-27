@@ -209,7 +209,7 @@ frame_card = dbc.Card(
                 dbc.Row(
                     [
                         dbc.Col(dcc.Markdown("Select frame"), width=3),
-                        dbc.Col(frame_slider, width=9),
+                        dbc.Col(dcc.Loading(frame_slider), width=9),
                     ]
                 ),
             ]
@@ -218,7 +218,7 @@ frame_card = dbc.Card(
         dbc.CardFooter(
             dbc.Row(
                 [
-                    frame_status_alert,
+                    dcc.Loading(frame_status_alert),
                     dcc.Markdown(instructions),
                 ],
             )

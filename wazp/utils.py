@@ -353,8 +353,6 @@ def extract_frame(
         print("Error extracting frame from video")
 
 
-# TODO: frame extraction may take a few secs
-#  -> show an hourglass icon to indicate that the app is busy
 def cache_frame(
     video_path: pl.Path,
     frame_num: int,
