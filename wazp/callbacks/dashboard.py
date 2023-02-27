@@ -1,7 +1,10 @@
+import datetime
+import os
 import pathlib as pl
 import re
 
 import dash_bootstrap_components as dbc
+import pandas as pd
 import utils
 from dash import Input, Output, State, dash_table, dcc, html
 
@@ -275,7 +278,7 @@ def get_callbacks(app):
         Input("input-data-container", "children"),
         State("session-storage", "data"),
     )
-    def create_video_data_table_slider_and_export(
+    def create_video_data_table_slider_and_buttons(
         input_data_container_children: list, app_storage: dict
     ):
 
@@ -288,6 +291,7 @@ def get_callbacks(app):
                 create_pose_data_unavailable_popup(),
             ]
 
+    # -----------------------
     @app.callback(
         Output("video-data-table", "selected_rows"),
         Output("select-all-videos-button", "n_clicks"),
@@ -298,21 +302,17 @@ def get_callbacks(app):
         Output("export-message", "children"),
         Output("export-message", "is_open"),
         Output("export-message", "color"),
-        Input(
-            "video-data-table", "selected_rows"
-        ),  # derived_viewport_selected_rows #"selected_rows"),
+        Input("video-data-table", "selected_rows"),
         Input("select-all-videos-button", "n_clicks"),
         Input("unselect-all-videos-button", "n_clicks"),
         Input("export-dataframe-button", "n_clicks"),
-        State("video-data-table", "data"),  # "data"), derived_viewport_data
+        State("video-data-table", "data"),
         State("pose-data-unavailable-message", "message"),
         State("pose-data-unavailable-message", "displayed"),
         State("export-message", "children"),
         State("export-message", "is_open"),
         State("export-message", "color"),
-        # State(
-        #     "video-data-table", "derived_viewport_data"
-        # ),
+        State("session-storage", "data"),
     )
     def modify_rows_selection(
         list_selected_rows: list[int],
@@ -325,6 +325,7 @@ def get_callbacks(app):
         export_message_str,
         export_message_state,
         export_message_color,
+        app_storage: dict,
     ):
         """Modify the selection status of the rows in the videos table.
 
@@ -368,13 +369,87 @@ def get_callbacks(app):
                 export_message_state = True
 
             else:
-                list_selected_rows = []
-                n_clicks_export = 0
+
                 # ----
                 # TODO: export selected dataframe as h5 file
+                # build dataframe with subset of the data:
+                # - subset of videos
+                # - subset of frames per video based on time slider
+                #
+                # TODO: make this a fn
+
+                # get list of h5 files from list of selected videos
+                # TODO: alternative to h5: pickle? csv?
+                # TODO: try to make it generic to any pose estim library?
+                # (right now DLC)
+                list_selected_videos = [
+                    videos_table_data[r][
+                        app_storage["config"]["metadata_key_field_str"]
+                    ]
+                    for r in list_selected_rows
+                ]
+
+                list_h5_file_paths = [
+                    pl.Path(
+                        app_storage["config"]["pose_estimation_results_path"]
+                    )
+                    / pl.Path(
+                        pl.Path(vd).stem
+                        + app_storage["config"]["pose_estimation_model_str"]
+                        + ".h5"
+                    )
+                    for vd in list_selected_videos
+                ]
+
+                # read h5 as dataframe and add video row
+                list_df_to_export = [
+                    pd.concat(
+                        [pd.read_hdf(f)],
+                        keys=[vid],
+                        names=[
+                            app_storage["config"]["metadata_key_field_str"]
+                        ],
+                        axis=1,
+                    )
+                    for f, vid in zip(list_h5_file_paths, list_selected_videos)
+                ]
+
+                # concatenate
+                df = pd.concat(list_df_to_export)
+
                 # ----
+                # Save df as h5
+                # get output path
+                # if not specified in config, use dir where
+                # 'start_wazp_server.sh' is at
+                output_path = pl.Path(
+                    app_storage["config"].get(
+                        "dashboard_export_data_path", "."
+                    )
+                )
+
+                # if dir does not exist create it
+                if not output_path.is_dir():
+                    os.mkdir(output_path)
+
+                # save as h5 file
+                df.to_hdf(
+                    output_path
+                    / pl.Path(
+                        "export_"
+                        + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                        + ".h5"
+                    ),
+                    key="df",
+                    mode="w",
+                )
+
+                # ----
+                # reset
+                list_selected_rows = []
+                n_clicks_export = 0
                 export_message_str = "Data exported successfully"
-                # TODO: add timestamp of message?
+                # TODO: add timestamp to message?
                 export_message_color = "success"
                 export_message_state = True
 
@@ -403,7 +478,7 @@ def get_callbacks(app):
 
             # show popup message
             pose_unavail_message_str = (
-                "WARNING: Pose data unavailable"
+                "WARNING: Pose data unavailable "
                 "for one or more selected videos"
             )
             pose_unavail_message_state = True
