@@ -181,7 +181,8 @@ roi_status_alert = dbc.Alert(
     init_roi_status["message"],
     id="rois-status-alert",
     color=init_roi_status["color"],
-    is_open=True,
+    is_open=False,
+    dismissable=True,
 )
 
 ###############################

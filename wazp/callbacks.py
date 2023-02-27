@@ -505,7 +505,7 @@ def get_roi_callbacks(app):
         str
             value of the first ROI in the list
         dict
-            dictionary with the folowing keys:
+            dictionary with the following keys:
                 - roi2color: dict mapping ROI names to colors
                 - color2roi: dict mapping colors to ROI names
         """
@@ -904,7 +904,10 @@ def get_roi_callbacks(app):
                     yaxis={"visible": False, "showticklabels": False},
                     xaxis={"visible": False, "showticklabels": False},
                 )
-                return new_fig, dash.no_update, dash.no_update, dash.no_update
+                alert_msg = f"Showing frame {frame_num} from {video_name}."
+                alert_color = "success"
+                alert_open = True
+                return new_fig, alert_msg, alert_color, alert_open
             except Exception as e:
                 print(e)
                 alert_msg = (
@@ -920,18 +923,19 @@ def get_roi_callbacks(app):
             Output("save-rois-button", "download"),
             Output("rois-status-alert", "children"),
             Output("rois-status-alert", "color"),
+            Output("rois-status-alert", "is_open"),
         ],
         [
             Input("save-rois-button", "n_clicks"),
             Input("roi-storage", "data"),
+            Input("video-select", "value"),
         ],
-        State("video-select", "value"),
     )
     def save_rois_and_update_status_alert(
         save_clicks: int,
         roi_storage: dict,
         video_path: str,
-    ) -> tuple[str, str, str]:
+    ) -> tuple[str, str, str, bool]:
         """
         Save the ROI shapes to a metadata YAML file
         and update the ROI status alert accordingly.
@@ -953,6 +957,8 @@ def get_roi_callbacks(app):
             Message to display in the ROI status alert.
         str
             Color of the ROI status alert.
+        bool
+            Whether to open the ROI status alert.
         """
         # Get what triggered the callback
         trigger = dash.callback_context.triggered[0]["prop_id"]
@@ -973,7 +979,7 @@ def get_roi_callbacks(app):
         else:
             alert_msg = f"Could not find {metadata_filepath.name}"
             alert_color = "danger"
-            return dash.no_update, alert_msg, alert_color
+            return dash.no_update, alert_msg, alert_color, True
 
         # Get the stored ROI shapes for this video
         if video_name in roi_storage.keys():
@@ -989,13 +995,13 @@ def get_roi_callbacks(app):
                 # This means that the ROIs have just been loaded
                 alert_msg = f"Loaded ROIs from {metadata_filepath.name}"
                 alert_color = "success"
-                return dash.no_update, alert_msg, alert_color
+                return dash.no_update, alert_msg, alert_color, True
             elif trigger == "roi-storage.data" and rois_to_save != saved_rois:
                 # This means that the ROIs have been modified
                 # in respect to the metadata file
                 alert_msg = "Detected unsaved changes to ROIs."
                 alert_color = "warning"
-                return dash.no_update, alert_msg, alert_color
+                return dash.no_update, alert_msg, alert_color, True
             else:
                 if save_clicks > 0:
                     # This means that the user wants to save the ROIs
@@ -1005,14 +1011,19 @@ def get_roi_callbacks(app):
                         yaml.safe_dump(metadata, yaml_file)
                     alert_msg = f"Saved ROIs to {metadata_filepath.name}"
                     alert_color = "success"
-                    return metadata_filepath.as_posix(), alert_msg, alert_color
+                    return (
+                        metadata_filepath.as_posix(),
+                        alert_msg,
+                        alert_color,
+                        True,
+                    )
                 else:
-                    return dash.no_update, dash.no_update, dash.no_update
+                    return dash.no_update, dash.no_update, dash.no_update, True
 
         else:
             alert_msg = "No ROIs to save."
             alert_color = "light"
-            return dash.no_update, alert_msg, alert_color
+            return dash.no_update, alert_msg, alert_color, True
 
 
 def get_dashboard_callbacks(app):
