@@ -3,9 +3,9 @@ include README.md
 
 recursive-include wazp/*.py
 recursive-include wazp/pages *.py
-recursive-include sample_project *.avi
-recursive-include sample_project *.h5
 
+recursive-exclude sample_project *.avi
+recursive-exclude sample_project *.h5
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 
