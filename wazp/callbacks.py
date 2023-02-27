@@ -887,9 +887,7 @@ def get_roi_callbacks(app):
         # Load the frame into a new figure
         else:
             try:
-                frame_filepath = utils.get_frame_filepath(
-                    video_path_pl, frame_num
-                )
+                frame_filepath = utils.cache_frame(video_path_pl, frame_num)
                 new_frame = Image.open(frame_filepath)
                 # Put the frame in a figure
                 new_fig = px.imshow(new_frame)

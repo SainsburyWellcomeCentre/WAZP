@@ -1,4 +1,5 @@
 import pathlib as pl
+from datetime import datetime, timedelta
 from typing import Callable
 
 import cv2
@@ -352,7 +353,14 @@ def extract_frame(
         print("Error extracting frame from video")
 
 
-def get_frame_filepath(video_path: pl.Path, frame_num: int) -> pl.Path:
+# TODO: frame extraction may take a few secs
+#  -> show an hourglass icon to indicate that the app is busy
+def cache_frame(
+    video_path: pl.Path,
+    frame_num: int,
+    cache_dir: pl.Path = pl.Path.home() / ".WAZP" / "roi_frames",
+    frame_suffix: str = "png",
+) -> pl.Path:
     """Cache a frame in a .WAZP folder in the home directory.
     This is to avoid extracting the same frame multiple times.
 
@@ -362,6 +370,10 @@ def get_frame_filepath(video_path: pl.Path, frame_num: int) -> pl.Path:
         Path to the video file
     frame_num : int
         Number of the frame to extract
+    cache_dir : pl.Path
+        Path to the cache directory
+    frame_suffix : str, optional
+        Suffix for the frame file, by default ".png"
 
     Returns
     -------
@@ -369,18 +381,51 @@ def get_frame_filepath(video_path: pl.Path, frame_num: int) -> pl.Path:
         Path to the cached frame .png file
     """
 
-    frames_cache_dir = pl.Path.home() / ".WAZP" / "roi_frames"
-    frames_cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_dir.mkdir(parents=True, exist_ok=True)
     frame_filepath = (
-        frames_cache_dir / f"{video_path.stem}_frame-{frame_num}.png"
+        cache_dir / f"{video_path.stem}_frame-{frame_num}.{frame_suffix}"
     )
     # Extract frame if it is not already cached
     if not frame_filepath.exists():
         extract_frame(
             video_path.as_posix(), frame_num, frame_filepath.as_posix()
         )
+    # Remove old frames from cache
+    remove_old_frames_from_cache(
+        cache_dir, frame_suffix=frame_suffix, keep_last_days=1
+    )
 
     return frame_filepath
+
+
+def remove_old_frames_from_cache(
+    cache_dir: pl.Path, frame_suffix: str = "png", keep_last_days: int = 1
+) -> None:
+    """Remove all frames from the cache directory that are older
+    than keep_last_days days.
+
+    Parameters
+    ----------
+    cache_dir : pathlib Path
+        Path to the cache directory
+    frame_suffix : str, optional
+        Suffix of the frame files, by default ".png"
+    keep_last_days : int, optional
+        Number of days to keep, by default 1
+    """
+    # Get all frame file paths in the cache directory
+    cached_frame_paths = [
+        cache_dir / file
+        for file in cache_dir.iterdir()
+        if file.suffix == frame_suffix
+    ]
+    # Get the time of the oldest frame to keep
+    oldest_frame_time = datetime.now() - timedelta(days=keep_last_days)
+    # Delete all frames older than the oldest frame to keep
+    for frame_path in cached_frame_paths:
+        if frame_path.stat().st_mtime < oldest_frame_time.timestamp():
+            frame_path.unlink()
+    return
 
 
 def stored_shape_to_table_row(shape: dict) -> dict:
