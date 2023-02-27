@@ -617,14 +617,13 @@ def get_roi_callbacks(app):
         """
         if video_path is not None:
             video_name = pl.Path(video_path).name
-            if video_name in roi_storage.keys():
-                roi_table = [
-                    utils.stored_shape_to_table_row(shape)
-                    for shape in roi_storage[video_name]["shapes"]
-                ]
-                return roi_table
-            else:
-                return dash.no_update
+            if video_name not in roi_storage.keys():
+                roi_storage[video_name] = {"shapes": []}
+            roi_table = [
+                utils.stored_shape_to_table_row(shape)
+                for shape in roi_storage[video_name]["shapes"]
+            ]
+            return roi_table
         else:
             return dash.no_update
 
