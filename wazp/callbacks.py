@@ -570,12 +570,12 @@ def get_roi_callbacks(app):
             Updated dictionary storing frame slider parameters for each video.
         """
         video_name = pl.Path(video_path).name
-        if video_path in frame_slider_storage.keys():
+        if video_name in frame_slider_storage.keys():
             stored_video_params = frame_slider_storage[video_name]
             num_frames = stored_video_params["max"]
             frame_step = stored_video_params["step"]
             middle_frame = stored_video_params["value"]
-            return num_frames, frame_step, middle_frame, dash.no_update
+            return num_frames - 1, frame_step, middle_frame, dash.no_update
         else:
             num_frames = int(utils.get_num_frames(video_path))
             # Round the frame step to the nearest 1000
@@ -583,11 +583,16 @@ def get_roi_callbacks(app):
             # Default to the middle step
             middle_frame = frame_step * 2
             frame_slider_storage[video_name] = {
-                "max": num_frames,
+                "max": num_frames - 1,
                 "step": frame_step,
                 "value": middle_frame,
             }
-        return num_frames, frame_step, middle_frame, frame_slider_storage
+            return (
+                num_frames - 1,
+                frame_step,
+                middle_frame,
+                frame_slider_storage,
+            )
 
     @app.callback(
         Output("roi-table", "data"),

@@ -201,6 +201,7 @@ frame_card = dbc.Card(
                         dcc.Store(
                             id="frame-slider-storage",
                             data=init_frame_slider_storage,
+                            storage_type="session",
                         ),
                     ]
                 ),
