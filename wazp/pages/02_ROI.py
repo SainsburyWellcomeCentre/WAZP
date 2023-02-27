@@ -256,7 +256,11 @@ table_card = dbc.Card(
                     )
                 ),
                 dcc.Store(data={}, id="roi-colors-storage"),
-                dcc.Store(id="roi-storage", data=init_roi_storage),
+                dcc.Store(
+                    id="roi-storage",
+                    data=init_roi_storage,
+                    storage_type="session",
+                ),
             ]
         ),
         dbc.CardFooter(roi_status_alert),
