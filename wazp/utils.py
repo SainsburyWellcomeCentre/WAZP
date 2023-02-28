@@ -3,10 +3,12 @@ from datetime import datetime, timedelta
 from typing import Callable
 
 import cv2
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import yaml
 from dash import dash_table
+from shapely.affinity import affine_transform
 from shapely.geometry import Point, Polygon
 
 
@@ -587,16 +589,6 @@ def svg_path_to_polygon(svg_path: str) -> Polygon:
     into a shapey.geometry.Polygon object.
     Each row of the array is a point in the polygon.
 
-    Parameters
-    ----------
-    svg_path : str
-        Path stored as an SVG Path object
-
-    Returns
-    -------
-    geometry.Polygon
-        Polygon object
-
     References
     ----------
     .. [1] "SVG Path",
@@ -611,3 +603,198 @@ def svg_path_to_polygon(svg_path: str) -> Polygon:
     # Convert to a list of geometry.Point objects
     coords = [Point(p) for p in coords]
     return Polygon(coords)
+
+
+def polygon_to_svg_path(polygon: Polygon) -> str:
+    """Converts a polygon into an SVG Path object string.
+    Dash-plotly stores closed-path shapes as SVG Paths.
+    This function converts a shapey.geometry.Polygon object
+    into an SVG Path string.
+
+    References
+    ----------
+    .. [1] "SVG Path",
+        https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
+    """
+    # Get the coordinates of the polygon
+    coords = np.array(polygon.exterior.coords)
+    # Convert to a list of strings of the form "0,0"
+    coords = [",".join(map(str, p)) for p in coords]
+    # Convert to a single string of the form "M0,0L1,1L2,2Z"
+    svg_path = "M" + "L".join(coords) + "Z"
+    return svg_path
+
+
+def get_angle(vec_1, vec_2):
+    """
+    Get the angle, in degrees, between two vectors
+    """
+
+    dot = np.dot(vec_1, vec_2)
+    det = np.cross(vec_1, vec_2)
+    angle_in_rad = np.arctan2(det, dot)
+    return np.degrees(angle_in_rad)
+
+
+def simplify_polygon_by_angles(poly, degree_tol=10):
+    """
+    Try to remove persistent coordinate points that remain after
+    shapely simplify, using some trigonometry. If angle between
+    two edges is less than `degree_tol`, the vertex in-between is removed.
+
+    Parameters
+    ----------
+    poly : shapely.Geometry.Polygon
+        input polygon
+    degree_tol : int
+        degree tolerance for comparison between successive edges
+
+    Returns
+    -------
+    shapely.Geometry.Polygon
+        simplified polygon
+
+    References
+    ----------
+    .. [1] "Implementation based on shapely issue #1046",
+        https://github.com/shapely/shapely/issues/1046
+    """
+    ext_poly_coords = poly.exterior.coords[:]
+    vector_rep = np.diff(ext_poly_coords, axis=0)
+    num_vectors = len(vector_rep)
+    angles_list = []
+    for i in range(0, num_vectors):
+        angles_list.append(
+            np.abs(get_angle(vector_rep[i], vector_rep[i + 1] % num_vectors))
+        )
+    keep_angles_idx = np.where(np.array(angles_list) > degree_tol)
+    keep_coords_idx = list(keep_angles_idx[0] + 1)
+    keep_coords = [ext_poly_coords[idx] for idx in keep_coords_idx]
+    return Polygon(keep_coords)
+
+
+def polygon_to_rect(
+    poly: Polygon, distance_tol=0.1, degree_tol: int = 10
+) -> Polygon:
+    """Simplify a polygon to a rectangle (4 vertices)
+    First use shapely simplify to reduce the number of vertices.
+    Then remove additional vertices based on edge angles.
+    If the input polygon approximates a rectangle, the output
+    polygon should have 4 vertices.
+
+    Parameters
+    ----------
+    poly : shapely.Geometry.Polygon
+        Polygon to be simplified
+    distance_tol : float
+        This is passed as the `tolerance` argument into the
+        shapely simplify function.
+    degree_tol : int
+        Degree tolerance for comparison between successive edges
+        Default is 10 degrees
+
+    Returns
+    -------
+    rect: shapely.Geometry.Polygon
+        Simplified polygon with 4 vertices
+    """
+
+    simple_poly = poly.simplify(0.1, preserve_topology=False)
+    rect = simplify_polygon_by_angles(simple_poly, degree_tol=degree_tol)
+
+    # Check that the simplified shape is still a valid polygon
+    if not rect.is_valid:
+        raise ValueError("Polygon simplification produced an invalid polygon")
+    # Check that the polygons have exactly 4 remaining vertices
+    if len(poly.exterior.coords) != 4:
+        raise ValueError("Simplified polygon must have 4 vertices")
+
+    return rect
+
+
+def register_polygon(mov_poly: Polygon, ref_poly: Polygon) -> np.ndarray:
+    """Register a moving polygon to a reference polygon,
+    using homography based registration
+
+    Parameters
+    ----------
+    mov_poly : shapely.Geometry.Polygon
+        Polygon to be registered
+    ref_poly : shapely.Geometry.Polygon
+        Reference polygon
+
+    Returns
+    -------
+    Homography matrix
+    """
+
+    # Simplify the polygons to rectangles
+    mov_rect = polygon_to_rect(mov_poly, distance_tol=0.1, degree_tol=10)
+    ref_rect = polygon_to_rect(ref_poly, distance_tol=0.1, degree_tol=10)
+
+    # Compute the homography matrix using the rectangles
+    homography_mat, _ = cv2.findHomography(
+        mov_rect.exterior.coords, ref_rect.exterior.coords
+    )
+
+    return homography_mat
+
+
+def infer_missing_rois(
+    video_shapes: list,
+    reference_shapes: list,
+    use_roi: str = "enclosure",
+) -> list:
+    """Infer the missing ROIs from a set of reference ROIs
+
+    Parameters
+    ----------
+    video_shapes : list
+        Shapes already defined for the video
+    reference_shapes : list
+        Shapes to use for inference
+    use_roi : str
+        Name of present ROI to use for inference
+
+    Returns
+    -------
+    list
+        A complete list of shapes for the video
+    """
+
+    video_roi_names = [shape["roi_name"] for shape in video_shapes]
+    ref_roi_names = [shape["roi_name"] for shape in reference_shapes]
+    missing_roi_names = list(set(ref_roi_names) - set(video_roi_names))
+
+    # verify that the use_roi is present in both video and reference shapes
+    if use_roi in video_roi_names:
+        raise ValueError(f"ROI {use_roi} must be defined for the video")
+    if use_roi not in ref_roi_names:
+        raise ValueError(
+            f"ROI {use_roi} cannot be found among the reference shapes"
+        )
+
+    # If there are missing ROIs, infer them
+    if missing_roi_names:
+        print(f"Inferring missing ROIs: {missing_roi_names}")
+        # Compute the homography matrix based on the use_roi
+        moving_shape = reference_shapes[ref_roi_names.index(use_roi)]
+        target_shape = video_shapes[video_roi_names.index(use_roi)]
+        moving_poly = svg_path_to_polygon(moving_shape["path"])
+        target_poly = svg_path_to_polygon(target_shape["path"])
+        homography_mat = register_polygon(moving_poly, target_poly)
+
+        # Apply the homography matrix to the missing ROIs
+        # This transforms them from reference space to video space
+        for roi_name in missing_roi_names:
+            reference_shape = reference_shapes[ref_roi_names.index(roi_name)]
+            reference_poly = svg_path_to_polygon(reference_shape["path"])
+            inferred_poly = affine_transform(reference_poly, homography_mat)
+            inferred_shape = reference_shape.copy()
+            inferred_shape["path"] = polygon_to_svg_path(inferred_poly)
+            video_shapes.append(inferred_shape)
+
+    else:
+        print("No missing ROIs to infer")
+
+    return video_shapes

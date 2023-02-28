@@ -684,6 +684,7 @@ def get_roi_callbacks(app):
         [
             Input("frame-graph", "relayoutData"),
             Input("load-rois-button", "n_clicks"),
+            Input("infer-rois-button", "n_clicks"),
         ],
         [
             State("video-select", "value"),
@@ -695,6 +696,7 @@ def get_roi_callbacks(app):
     def update_roi_storage(
         graph_relayout: dict,
         load_clicks: int,
+        infer_clicks: int,
         video_path: str,
         frame_num: int,
         roi_storage: dict,
@@ -712,6 +714,8 @@ def get_roi_callbacks(app):
             changes to the frame graph.
         load_clicks : int
             Number of times the load ROIs button has been clicked.
+        infer_clicks : int
+            Number of times the infer ROIs button has been clicked.
         video_path : str
             Path to the video file.
         frame_num : int
@@ -798,6 +802,16 @@ def get_roi_callbacks(app):
                 metadata_path = video_path_pl.with_suffix(".metadata.yaml")
                 roi_storage[video_name]["shapes"] = utils.load_rois_from_yaml(
                     yaml_path=metadata_path
+                )
+
+        # If triggered by the infer ROIs button click
+        # Infer the missing ROIs
+        elif trigger == "infer-rois-button.n_clicks":
+            if infer_clicks > 0:
+                roi_storage[video_name]["shapes"] = utils.infer_missing_rois(
+                    video_shapes=roi_storage[video_name]["shapes"],
+                    reference_shapes=roi_storage[video_name]["shapes"],
+                    use_roi="enclosure",
                 )
 
         return roi_storage
