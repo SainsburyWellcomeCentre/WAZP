@@ -21,3 +21,8 @@ Further_description: 'Wasps spending time on the data logger (possibly lose trac
   if halfway (same height as light readings but away from usual route of wasp?). This
   was rectified by moving the iButton outside the enclosure for trials after jwasp
   H. '
+Events:
+  experiment_start: 0
+  box_1_open: 23174
+  box_1_closed: 46348
+  experiment_end: 69522

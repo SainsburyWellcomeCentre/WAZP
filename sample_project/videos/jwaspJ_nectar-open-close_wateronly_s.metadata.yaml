@@ -17,3 +17,8 @@ Software_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\Lon
   or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
 Further_description: Jwasp J did not exit her transport tube upon introduction to
   the enclosure so she started her trial in her transport tube in the centre.
+Events:
+  experiment_start: 0
+  box_1_open: 24088
+  box_1_closed: 48177
+  experiment_end: 72265

@@ -22,3 +22,8 @@ Further_description: Jwasp H was transferred to the arena by manual restraint in
   Celsius for one reading (26.547C) and then returned to inside enclosure temperatures
   (26.047C) while humidity stayed in its natural range of 50-67.5% (with regular fluctuations).
   For subsequent trials the iButton is set up outside the enclosure.
+Events:
+  experiment_start: 0
+  box_1_open: 25784
+  box_1_closed: 51569
+  experiment_end: 77353

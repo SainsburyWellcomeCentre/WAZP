@@ -410,9 +410,17 @@ def get_callbacks(app):
                             app_storage["config"]["metadata_key_field_str"]
                         ],
                         axis=1,
-                    )
+                    )  # this pd.concat adds a File level
                     for f, vid in zip(list_h5_file_paths, list_selected_videos)
                 ]
+
+                # ------------------------------
+                # select subset of frames if required based on range slider
+                # frame_start_end_per_video = {
+                #     vid:[1, 10]
+                #     for vid in list_selected_videos
+                # }
+                # ------------------------------
 
                 # concatenate
                 df = pd.concat(list_df_to_export)

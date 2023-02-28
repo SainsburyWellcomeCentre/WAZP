@@ -18,3 +18,8 @@ Software_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\Lon
 Further_description: 'Jwasp O sourced from on-show display (all others sourced from
   upstairs BUGS holding room bestides jwaspM). Poster boards moved slightly during
   the control box closing with the servo motor. '
+Events:
+  experiment_start: 0
+  box_1_open: 18009
+  box_1_closed: 36019
+  experiment_end: 54028

@@ -16,3 +16,8 @@ Hardware_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\Lon
 Software_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
   or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
 Further_description: '-'
+Events:
+  experiment_start: 0
+  box_1_open: 24645
+  box_1_closed: 49290
+  experiment_end: 73934
