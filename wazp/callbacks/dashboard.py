@@ -1,11 +1,15 @@
 import datetime
+import math
 import os
 import pathlib as pl
+
+# import pdb
 import re
 
 import dash_bootstrap_components as dbc
 import pandas as pd
 import utils
+import yaml
 from dash import Input, Output, State, dash_table, dcc, html
 
 POSE_DATA_STR = "Pose data available?"  # is this ok here?
@@ -162,6 +166,7 @@ def create_time_slider(app_storage: dict):
 
     return html.Div(
         dcc.RangeSlider(
+            id="time-slider",
             min=0,  # TODO: based on max number of frames to first event
             max=max_loc,
             # TODO: max number of frames after last event in a video?
@@ -307,6 +312,8 @@ def get_callbacks(app):
         Input("unselect-all-videos-button", "n_clicks"),
         Input("export-dataframe-button", "n_clicks"),
         State("video-data-table", "data"),
+        State("time-slider", "value"),
+        State("time-slider", "marks"),
         State("pose-data-unavailable-message", "message"),
         State("pose-data-unavailable-message", "displayed"),
         State("export-message", "children"),
@@ -320,6 +327,8 @@ def get_callbacks(app):
         n_clicks_unselect_all: int,
         n_clicks_export: int,
         videos_table_data: list[dict],
+        slider_start_end_idcs: list,
+        slider_marks: dict,
         pose_unavail_message_str: str,
         pose_unavail_message_state: bool,
         export_message_str,
@@ -356,7 +365,25 @@ def get_callbacks(app):
             videos_table_data[r][POSE_DATA_STR] == FALSE_EMOJI
             for r in range(len(videos_table_data))
         ]
-        # print(list_missing_pose_data_bool)
+
+        # -------------------------
+        # If pose data is not available: set row to false
+        if any([list_missing_pose_data_bool[r] for r in list_selected_rows]):
+
+            # ammend list of selected rows
+            list_selected_rows = [
+                r
+                for r in list_selected_rows
+                if not list_missing_pose_data_bool[r]
+            ]
+
+            # show popup message
+            pose_unavail_message_str = (
+                "WARNING: Pose data unavailable "
+                "for one or more selected videos"
+            )
+            pose_unavail_message_state = True
+
         # ---------------------------
         # If export button is clicked and there is data selected
         if n_clicks_export > 0:
@@ -389,6 +416,7 @@ def get_callbacks(app):
                     for r in list_selected_rows
                 ]
 
+                # build list of corresponding h5 files
                 list_h5_file_paths = [
                     pl.Path(
                         app_storage["config"]["pose_estimation_results_path"]
@@ -402,28 +430,92 @@ def get_callbacks(app):
                 ]
 
                 # read h5 as dataframe and add video row
-                list_df_to_export = [
-                    pd.concat(
-                        [pd.read_hdf(f)],
-                        keys=[vid],
+                # list_df_to_export = [
+                #     pd.concat(
+                #         [pd.read_hdf(f)],
+                #         keys=[vid],
+                #         names=[
+                #             app_storage["config"]["metadata_key_field_str"]
+                #         ],
+                #         axis=1,
+                #     )  # this pd.concat adds a File level
+                #     for f, vid in zip(list_h5_file_paths,
+                # list_selected_videos)
+                # ]
+
+                # ------------------
+                # # filter based on slider
+                slider_start_end_labels = [
+                    slider_marks[str(x)]["label"]
+                    for x in slider_start_end_idcs
+                ]
+                list_df_to_export = []
+                for h5, video in zip(list_h5_file_paths, list_selected_videos):
+
+                    # read h5 as dataframe and add File row
+                    df = pd.concat(
+                        [pd.read_hdf(h5)],
+                        keys=[video],
                         names=[
                             app_storage["config"]["metadata_key_field_str"]
                         ],
                         axis=1,
-                    )  # this pd.concat adds a File level
-                    for f, vid in zip(list_h5_file_paths, list_selected_videos)
-                ]
+                    )
 
-                # ------------------------------
-                # select subset of frames if required based on range slider
-                # frame_start_end_per_video = {
-                #     vid:[1, 10]
-                #     for vid in list_selected_videos
-                # }
-                # ------------------------------
+                    # get the corresponding metadata file
+                    # (built from video filename)
+                    yaml_filename = pl.Path(
+                        app_storage["config"]["videos_dir_path"]
+                    ) / pl.Path(pl.Path(video).stem + ".metadata.yaml")
 
-                # concatenate
+                    # extract the frame numbers
+                    # from the slider position
+                    with open(yaml_filename, "r") as yf:
+                        metadata = yaml.safe_load(yf)
+                        frame_start_end = [
+                            metadata["Events"][x]
+                            for x in slider_start_end_labels
+                        ]
+
+                    # add event tags to dataframe
+                    metadata["Events"] = dict(
+                        sorted(
+                            metadata["Events"].items(),
+                            key=lambda item: item[1],
+                        )
+                    )  # ensure keys are sorted by value
+                    list_keys = list(metadata["Events"].keys())
+                    list_next_keys = list_keys[1:]
+                    list_next_keys.append("NAN")
+
+                    # df['event_tag'] = ''
+                    # df.set_index([df.index, 'event_tag'])
+                    for ky, next_ky in zip(list_keys, list_next_keys):
+                        df.loc[
+                            (df.index >= metadata["Events"][ky])
+                            & (
+                                df.index
+                                < metadata["Events"].get(next_ky, math.inf)
+                            ),
+                            "event_tag",
+                        ] = ky
+
+                    # select subset of rows based on
+                    # frame numbers from slider (both inclusive)
+                    list_df_to_export.append(
+                        df[
+                            (df.index >= frame_start_end[0])
+                            & (df.index <= frame_start_end[1])
+                        ]
+                    )
+
+                    df = df.set_index([df.index, "event_tag"])
+                    # pdb.set_trace()
+                # ----
+                # concatenate all dataframes
+                # pdb.set_trace()
                 df = pd.concat(list_df_to_export)
+                # pdb.set_trace()
 
                 # ----
                 # Save df as h5
@@ -441,13 +533,13 @@ def get_callbacks(app):
                     os.mkdir(output_path)
 
                 # save as h5 file
+                h5_file_path = output_path / pl.Path(
+                    "df_export_"
+                    + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    + ".h5"
+                )
                 df.to_hdf(
-                    output_path
-                    / pl.Path(
-                        "export_"
-                        + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                        + ".h5"
-                    ),
+                    h5_file_path,
                     key="df",
                     mode="w",
                 )
@@ -456,7 +548,10 @@ def get_callbacks(app):
                 # reset
                 list_selected_rows = []
                 n_clicks_export = 0
-                export_message_str = "Data exported successfully"
+                export_message_str = (
+                    "Combined dataframe ",
+                    f"exported successfully at: '{h5_file_path}'",
+                )
                 # TODO: add timestamp to message?
                 export_message_color = "success"
                 export_message_state = True
@@ -473,23 +568,23 @@ def get_callbacks(app):
             list_selected_rows = []
             n_clicks_unselect_all = 0
 
-        # -------------------------
-        # If pose data is not available: set row to false
-        if any([list_missing_pose_data_bool[r] for r in list_selected_rows]):
+        # # -------------------------
+        # # If pose data is not available: set row to false
+        # if any([list_missing_pose_data_bool[r] for r in list_selected_rows]):
 
-            # ammend list of selected rows
-            list_selected_rows = [
-                r
-                for r in list_selected_rows
-                if not list_missing_pose_data_bool[r]
-            ]
+        #     # ammend list of selected rows
+        #     list_selected_rows = [
+        #         r
+        #         for r in list_selected_rows
+        #         if not list_missing_pose_data_bool[r]
+        #     ]
 
-            # show popup message
-            pose_unavail_message_str = (
-                "WARNING: Pose data unavailable "
-                "for one or more selected videos"
-            )
-            pose_unavail_message_state = True
+        #     # show popup message
+        #     pose_unavail_message_str = (
+        #         "WARNING: Pose data unavailable "
+        #         "for one or more selected videos"
+        #     )
+        #     pose_unavail_message_state = True
 
         return (
             list_selected_rows,
@@ -573,3 +668,38 @@ def get_callbacks(app):
             )
 
         return custom_plot_container_children
+
+        # for df in list_df_to_export:
+        #     # get video filename from df
+        #     # TODO: not sure this is the best way to check?
+        #     if len(df.columns.get_level_values(
+        #             app_storage["config"]["metadata_key_field_str"]
+        #             ).unique()) != 1:
+        #         print('ERROR: dataframe contains data
+        # for more than one file.')
+        #         break
+        #     video_filename = df.columns.get_level_values('File')[0]
+
+        #     # get corresponding metadata file
+        #     yaml_filename = pl.Path(
+        #         app_storage["config"]["videos_dir_path"]
+        #     ) / pl.Path(
+        #             pl.Path(video_filename).stem +
+        #             ".metadata.yaml"
+        #     )
+
+        #     # extract frame numbers for the tags
+        #     # selected in slider
+        #     with open(yaml_filename, "r") as yf:
+        #         metadata = yaml.safe_load(yf)
+        #         frame_start_end = [
+        #             metadata['Events'][x]
+        #             for x in slider_start_end_labels
+        #         ]
+
+        #     pdb.set_trace()
+        #     # filter rows based on those frame numbers (both inclusive)
+        #     df = df[
+        #         (df.index <= frame_start_end[0]) &
+        #         (df.index >= frame_start_end[1])
+        #     ]
