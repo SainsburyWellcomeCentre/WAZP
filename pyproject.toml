@@ -14,14 +14,15 @@ dynamic = ["version"]
 license = {text = "BSD-3-Clause"}
 
 dependencies = [
-  "numpy",
-  "pillow",
-  "pandas",
-  "dash",
-  "dash-bootstrap-components",
-  "dash-player",
-  "dash-daq",
-  "opencv-python",
+    "numpy",
+    "pillow",
+    "pandas",
+    "dash",
+    "dash-bootstrap-components",
+    "dash-player",
+    "dash-daq",
+    "opencv-python",
+    "shapely",
 ]
 
 classifiers = [
