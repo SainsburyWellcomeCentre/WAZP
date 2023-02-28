@@ -366,6 +366,18 @@ def get_callbacks(app):
             for r in range(len(videos_table_data))
         ]
 
+        # ---------------------------
+        # If 'select all' button is clicked
+        if n_clicks_select_all > 0:
+            list_selected_rows = list(range(len(videos_table_data)))
+            n_clicks_select_all = 0
+
+        # ----------------------
+        # If unselect all button is clicked
+        if n_clicks_unselect_all > 0:
+            list_selected_rows = []
+            n_clicks_unselect_all = 0
+
         # -------------------------
         # If pose data is not available: set row to false
         if any([list_missing_pose_data_bool[r] for r in list_selected_rows]):
@@ -555,18 +567,6 @@ def get_callbacks(app):
                 # TODO: add timestamp to message?
                 export_message_color = "success"
                 export_message_state = True
-
-        # ---------------------------
-        # If 'select all' button is clicked
-        if n_clicks_select_all > 0:
-            list_selected_rows = list(range(len(videos_table_data)))
-            n_clicks_select_all = 0
-
-        # ----------------------
-        # If unselect all button is clicked
-        if n_clicks_unselect_all > 0:
-            list_selected_rows = []
-            n_clicks_unselect_all = 0
 
         # # -------------------------
         # # If pose data is not available: set row to false
