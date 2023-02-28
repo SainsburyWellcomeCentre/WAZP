@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.express as px
 import yaml
 from dash import dash_table
+from shapely.geometry import Point, Polygon
 
 
 def df_from_metadata_yaml_files(
@@ -426,6 +427,11 @@ def remove_old_frames_from_cache(
     return
 
 
+def format_float_for_table(value: float) -> str:
+    """Format a float to a string for display in a Dash table"""
+    return f"{int(value)}"
+
+
 def stored_shape_to_table_row(shape: dict) -> dict:
     """Converts a shape, as it is represented in
     roi-storage, to a Dash table row
@@ -443,11 +449,16 @@ def stored_shape_to_table_row(shape: dict) -> dict:
         - on frame: frame number on which the ROI was last edited
         - path: SVG path for the ROI
     """
-    return {
+    poly = svg_path_to_polygon(shape["path"])
+    xmin, ymin, xmax, ymax = [format_float_for_table(p) for p in poly.bounds]
+    row = {
         "name": shape["roi_name"],
-        "on frame": shape["drawn_on_frame"],
-        "path": shape["path"],
+        "xmin": xmin,
+        "xmax": xmax,
+        "ymin": ymin,
+        "ymax": ymax,
     }
+    return row
 
 
 def stored_shape_to_yaml_entry(shape: dict) -> dict:
@@ -567,3 +578,36 @@ def shape_drop_custom_keys(shape: dict) -> dict:
     for k in shape.keys() - {"drawn_on_frame", "roi_name"}:
         new_shape[k] = shape[k]
     return new_shape
+
+
+def svg_path_to_polygon(svg_path: str) -> Polygon:
+    """Converts an SVG Path object string into a polygon.
+    Dash-plotly stores closed-path shapes as SVG Paths.
+    This function converts the SVG Path string
+    into a shapey.geometry.Polygon object.
+    Each row of the array is a point in the polygon.
+
+    Parameters
+    ----------
+    svg_path : str
+        Path stored as an SVG Path object
+
+    Returns
+    -------
+    geometry.Polygon
+        Polygon object
+
+    References
+    ----------
+    .. [1] "SVG Path",
+        https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
+    """
+    # The svg_path has the form "M0,0L1,1L2,2Z"
+    # First split into a list of points of the form "0,0"
+    lines_string = "".join(svg_path.split("M")[1:]).split("Z")[0]
+    points = "".join(lines_string).split("L")
+    # Convert the points into a list of tuples (0, 0)
+    coords = [tuple(map(float, p.split(","))) for p in points]
+    # Convert to a list of geometry.Point objects
+    coords = [Point(p) for p in coords]
+    return Polygon(coords)

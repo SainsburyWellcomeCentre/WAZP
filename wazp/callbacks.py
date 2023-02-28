@@ -659,10 +659,13 @@ def get_roi_callbacks(app):
             List of dictionaries with conditional formatting
             rules for the ROI table.
         """
-        if len(roi_table) == 0:
-            return dash.no_update
-        else:
-            cond_format = []
+        cond_format = [
+            {
+                "if": {"column_id": "name"},
+                "width": "30%",
+            },
+        ]
+        if len(roi_table) > 0:
             roi2color = roi_color_mapping["roi2color"]
             for roi in roi2color.keys():
                 cond_format.append(
@@ -674,7 +677,7 @@ def get_roi_callbacks(app):
                         "color": roi2color[roi],
                     }
                 )
-            return cond_format
+        return cond_format
 
     @app.callback(
         Output("roi-storage", "data"),

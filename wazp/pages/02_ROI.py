@@ -25,7 +25,7 @@ init_frame_slider_storage: dict = {
     v: init_frame_slider_params for v in init_videos
 }
 # Columns for ROI table
-init_roi_table_columns = ["name", "on frame", "path"]
+init_roi_table_columns = ["name", "xmin", "xmax", "ymin", "ymax"]
 # Initialize the ROI storage dictionary
 init_roi_storage: dict = {v: {"shapes": []} for v in init_videos}
 # Initialize the ROI status alert
