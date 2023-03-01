@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import callbacks
 import dash
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
+
+from . import callbacks
 
 # Initialise app
 app = Dash(
