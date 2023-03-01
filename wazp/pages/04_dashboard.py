@@ -11,18 +11,6 @@ from dash import html
 dash.register_page(__name__)
 
 
-# ##########################
-# # Read dataframe for one h5 file
-# # TODO: this will be part of the figs' callbacks
-# h5_file_path = (
-#     "sample_project/pose_estimation_results/"
-#     "jwaspE_nectar-open-close_controlDLC_"
-#     "resnet50_jwasp_femaleandmaleSep12shuffle1_1000000.h5"
-# )
-# df_trajectories = pd.read_hdf(h5_file_path.replace("\n", ""))
-# df_trajectories.columns = df_trajectories.columns.droplevel()
-
-
 ######################
 # Layout
 ####################
@@ -36,25 +24,6 @@ layout = html.Div(
             "Input data", style={"margin-top": "20px", "margin-bottom": "20px"}
         ),
         html.Div(children=[], id="input-data-container"),
-        # html.Div(
-        #     children=[],
-        #     id="videos-table-container"
-        # ),
-        # dcc.ConfirmDialog(
-        #     id="pose-data-unavailable-message",
-        #     message="",
-        #     displayed=False,
-        # ),
-        # html.Div(
-        #     children=[],
-        #     id="slider-container",
-        #     style={"margin-top": "30px", "margin-bottom": "25px"},
-        # ),
-        # html.Div(
-        #     children=[],
-        #     id="export-container",
-        #     style={"margin-top": "30px", "margin-bottom": "25px"},
-        # ),
         html.Div(children=[], id="custom-plot-container"),
         html.Div(
             [

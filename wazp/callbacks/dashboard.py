@@ -3,12 +3,14 @@ import os
 import pathlib as pl
 import re
 
+import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
 import utils
 from dash import Input, Output, State, dash_table, dcc, html
 
-POSE_DATA_STR = "Pose data available?"  # is this ok here?
+# TODO: is this ok here?
+POSE_DATA_STR = "Pose data available?"
 TRUE_EMOJI = "✔️"
 FALSE_EMOJI = "❌"
 
@@ -16,28 +18,23 @@ FALSE_EMOJI = "❌"
 ##########################
 # Fns to create components
 ###########################
-
-
-def create_video_data_table(app_storage: dict):
+def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
     """Create table to select videos to include in plots.
 
     Only videos with a matching YAML file are shown.
-    If a video has a metadata YAML file, but no pose estimation results:
-    they appear grayed out and cannot be selected.
+    The availability of pose estimation data is also shown.
 
 
     Parameters
     ----------
-    table_container_children : list
-        list of html elements to pass to the table container
     app_storage : dict
         data held in temporary memory storage,
         accessible to all tabs in the app
 
     Returns
     -------
-    table_container_children
-        list of html elements to pass to the table container
+    html.Div
+        dash DataTable component to pass to the table container
     """
 
     # video metadata as dataframe with File column only
@@ -151,11 +148,21 @@ def create_video_data_table(app_storage: dict):
         ],
     )
 
-    # return videos_table_component
 
+def create_time_slider(app_storage: dict) -> html.Div:
+    """Create time slider component
 
-def create_time_slider(app_storage: dict):
+    Parameters
+    ----------
+    app_storage : dict
+        data held in temporary memory storage,
+        accessible to all tabs in the app
 
+    Returns
+    -------
+    html.Div
+        html Div component wrapping the slider component
+    """
     # For now, a slider between events
     offset = 1  # an offset just for visualisation
     max_loc = len(app_storage["config"]["event_tags"]) + offset
@@ -188,7 +195,6 @@ def create_time_slider(app_storage: dict):
                 for i, tag in enumerate(app_storage["config"]["event_tags"])
             },
             allowCross=False,
-            # tooltip={"placement": "top", "always_visible": True}
         ),
         style={
             "margin-right": "10px",
@@ -198,8 +204,14 @@ def create_time_slider(app_storage: dict):
     )
 
 
-def create_buttons_and_message():
+def create_buttons_and_message() -> html.Div:
+    """Create buttons for videos table and export functions
 
+    Returns
+    -------
+    html.Div
+        html Div component wrapping the table and export buttons
+    """
     select_all_videos_button = html.Button(
         children="Select all rows",
         id="select-all-videos-button",
@@ -253,7 +265,17 @@ def create_buttons_and_message():
     )
 
 
-def create_pose_data_unavailable_popup():
+def create_pose_data_unavailable_popup() -> dcc.ConfirmDialog:
+    """Create pop-up message for unavailable pose data
+
+    A message will pop up when a row in the videos table
+    is selected but has no pose data available
+
+    Returns
+    -------
+    dcc.ConfirmDialog
+        A confirm dialog component
+    """
 
     return dcc.ConfirmDialog(
         id="pose-data-unavailable-message",
@@ -265,7 +287,7 @@ def create_pose_data_unavailable_popup():
 #############################
 # Callbacks
 ###########################
-def get_callbacks(app):
+def get_callbacks(app: dash.Dash) -> None:
     """Return all callback functions for the dashboard tab.
 
     Parameters
@@ -281,16 +303,38 @@ def get_callbacks(app):
     )
     def create_video_data_table_slider_and_buttons(
         input_data_container_children: list, app_storage: dict
-    ):
+    ) -> list:
+        """Create list of components for the inpud data container
+
+        Returns a list with the following components:
+        - video data table
+        - time slider for event tags
+        - buttons and export message
+        - popup message for when pose data is unavailable
+
+        Parameters
+        ----------
+        input_data_container_children : list
+            children of the input data container
+        app_storage : dict
+            data held in temporary memory storage,
+            accessible to all tabs in the app
+
+        Returns
+        -------
+        list
+            components to pass as children of the input data container
+        """
 
         if not input_data_container_children:
-
             return [
                 create_video_data_table(app_storage),
                 create_time_slider(app_storage),
                 create_buttons_and_message(),
                 create_pose_data_unavailable_popup(),
             ]
+
+        return []
 
     # -----------------------
     @app.callback(
@@ -331,31 +375,68 @@ def get_callbacks(app):
         export_message_state,
         export_message_color,
         app_storage: dict,
-    ):
+    ) -> tuple[list, int, int, int, str, bool, str, bool, str]:
         """Modify the selection status of the rows in the videos table.
 
         A row's selection status (i.e., its checkbox) is modified if (1) the
-        user selects a row for which there is no pose data (then its checkbox
-        is set to False), (2) the export button is clicked (then the selected
-        rows are reset to False), or (3) the 'select/unselect' all button is
-        clicked
+        user selects the row but there is no pose data available for that video
+        (then its checkbox is set to False), (2) the export button is clicked
+        (then the selected rows are reset to False), or (3) the 'select/
+        unselect' all button is clicked.
 
         Parameters
         ----------
-        n_clicks_export : int
-            _description_
         list_selected_rows : list[int]
-            _description_
+            a list of indices for the currently selected rows
+        n_clicks_select_all : int
+            number of clicks on the 'select all' button
+        n_clicks_unselect_all : int
+            number of clicks on the 'unselect all' button
+        n_clicks_export : int
+            number of clicks on the 'export' button
+        videos_table_data : list[dict]
+            a list of dictionaries holding the data of each
+            row in the videos table
+        slider_start_end_idcs : list
+            indices for the start and end position of the slider
+        slider_marks : dict
+            dictionary holding the data of each of the slider marks
+        pose_unavail_message_str : str
+            text content of the 'pose data unavailable' message
+        pose_unavail_message_state : bool
+            visibility state of the 'pose data unavailable' message
+        export_message_str : _type_
+            text content of the export message
+        export_message_state : _type_
+            visibility state of the export message
+        export_message_color : _type_
+            color of the export message
         app_storage : dict
-            _description_
-        export_message_state : bool
-            _description_
+            data held in temporary memory storage,
+            accessible to all tabs in the app
 
         Returns
         -------
-        _type_
-            _description_
+        list_selected_rows : list
+            a list of indices for the currently selected rows
+        n_clicks_select_all : int
+            number of clicks on the 'select all' button
+        n_clicks_unselect_all : int
+             number of clicks on the 'unselect all' button
+        n_clicks_export : int
+            number of clicks on the 'export' button
+        pose_unavail_message_str : str
+            text content of the 'pose data unavailable' message
+        pose_unavail_message_state : bool
+            visibility state of the 'pose data unavailable' message
+        export_message_str : str
+            text content of the export message
+        export_message_state : bool
+            visibility state of the export message
+        export_message_color : str
+            color of the export message
         """
+
         # TODO: select all rows *per page*
         list_missing_pose_data_bool = [
             videos_table_data[r][POSE_DATA_STR] == FALSE_EMOJI
@@ -407,12 +488,6 @@ def get_callbacks(app):
             # if rows are selected: export combined df
             else:
 
-                # ----
-                # TODO: export selected dataframe as h5 file
-                # build dataframe with subset of the data:
-                # - subset of videos
-                # - subset of frames per video based on time slider
-
                 # get list of selected videos
                 list_selected_videos = [
                     videos_table_data[r][
@@ -432,7 +507,6 @@ def get_callbacks(app):
                 # - we add 'File', 'event_tag' and 'ROI' data to each dataframe
                 # - we select only the frames within the interval
                 #   set by the slider
-
                 list_df_to_export = utils.get_dataframes_to_combine(
                     list_selected_videos,
                     slider_start_end_labels,
@@ -442,7 +516,7 @@ def get_callbacks(app):
                 # concatenate all dataframes
                 df = pd.concat(list_df_to_export)
 
-                # ----
+                # ---------
                 # Save df as h5
                 # get output path
                 # if not specified in config, use dir where
@@ -469,6 +543,7 @@ def get_callbacks(app):
                     mode="w",
                 )
 
+                # ---------
                 # reset triggers and states
                 list_selected_rows = []
                 n_clicks_export = 0
@@ -497,7 +572,26 @@ def get_callbacks(app):
         Input("custom-plot-container", "children"),
         State("session-storage", "data"),
     )
-    def create_custom_plots(custom_plot_container_children, app_storage):
+    def create_custom_plots(
+        custom_plot_container_children: list, app_storage: dict
+    ) -> dcc.Textarea:
+
+        """Create custom plots
+
+        Parameters
+        ----------
+        custom_plot_container_children : list
+            children of the custom plots container
+        app_storage : dict
+            data held in temporary memory storage,
+            accessible to all tabs in the app
+
+        Returns
+        -------
+        dcc.Textarea
+            an editable text area holding a block of code
+        """
+
         if not custom_plot_container_children:
 
             code_block = """
@@ -562,38 +656,3 @@ def get_callbacks(app):
             )
 
         return custom_plot_container_children
-
-        # for df in list_df_to_export:
-        #     # get video filename from df
-        #     # TODO: not sure this is the best way to check?
-        #     if len(df.columns.get_level_values(
-        #             app_storage["config"]["metadata_key_field_str"]
-        #             ).unique()) != 1:
-        #         print('ERROR: dataframe contains data
-        # for more than one file.')
-        #         break
-        #     video_filename = df.columns.get_level_values('File')[0]
-
-        #     # get corresponding metadata file
-        #     yaml_filename = pl.Path(
-        #         app_storage["config"]["videos_dir_path"]
-        #     ) / pl.Path(
-        #             pl.Path(video_filename).stem +
-        #             ".metadata.yaml"
-        #     )
-
-        #     # extract frame numbers for the tags
-        #     # selected in slider
-        #     with open(yaml_filename, "r") as yf:
-        #         metadata = yaml.safe_load(yf)
-        #         frame_start_end = [
-        #             metadata['Events'][x]
-        #             for x in slider_start_end_labels
-        #         ]
-
-        #     pdb.set_trace()
-        #     # filter rows based on those frame numbers (both inclusive)
-        #     df = df[
-        #         (df.index <= frame_start_end[0]) &
-        #         (df.index >= frame_start_end[1])
-        #     ]
