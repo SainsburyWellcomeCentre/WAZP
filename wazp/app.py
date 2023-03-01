@@ -4,7 +4,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
 
-from . import callbacks
+from wazp import callbacks
 
 #################
 # Initialise app
