@@ -2,7 +2,6 @@ import pathlib as pl
 
 import pandas as pd
 import yaml
-from dash import dash_table
 
 
 def df_from_metadata_yaml_files(
