@@ -1,3 +1,4 @@
+import math
 import pathlib as pl
 
 import pandas as pd
@@ -261,3 +262,107 @@ def export_selected_rows_as_yaml(
             yaml.dump(row, yamlf, sort_keys=False)
 
     return
+
+
+def get_dataframes_to_combine(
+    list_selected_videos: list,
+    slider_start_end_labels: list,
+    app_storage: dict,
+):
+    # build list of h5 files for the selected videos
+    # TODO: alternative to h5: pickle? csv?
+    # TODO: try to make it generic to any pose estim library?
+    # (right now DLC)
+    list_h5_file_paths = [
+        pl.Path(app_storage["config"]["pose_estimation_results_path"])
+        / pl.Path(
+            pl.Path(vd).stem
+            + app_storage["config"]["pose_estimation_model_str"]
+            + ".h5"
+        )
+        for vd in list_selected_videos
+    ]
+
+    # loop thru videos and h5 files to read dataframe and
+    # extract subset of rows
+    list_df_to_export = []
+    for h5, video in zip(list_h5_file_paths, list_selected_videos):
+
+        # get the metadata file for this video
+        # (built from video filename)
+        yaml_filename = pl.Path(
+            app_storage["config"]["videos_dir_path"]
+        ) / pl.Path(pl.Path(video).stem + ".metadata.yaml")
+
+        # extract the frame numbers
+        # from the slider position
+        with open(yaml_filename, "r") as yf:
+            metadata = yaml.safe_load(yf)
+            # extract frame start/end
+            frame_start_end = [
+                metadata["Events"][x] for x in slider_start_end_labels
+            ]
+            # extract ROI paths
+            # TODO
+            # ...
+
+        # read h5 as dataframe and add 'File' row
+        df = pd.concat(
+            [pd.read_hdf(h5)],
+            keys=[video],
+            names=[app_storage["config"]["metadata_key_field_str"]],
+            axis=1,
+        )
+
+        # add ROI and event tag per bodypart
+        # TODO: is there a nicer way using pandas?
+        # right now levels are hardcoded....
+        # TODO: ideally event_tags are not repeated per bodypart
+        # alternative; set as index? add frame from index?
+        # # df = df.set_index([df.index, "event_tag"])
+        metadata["Events"] = dict(
+            sorted(
+                metadata["Events"].items(),
+                key=lambda item: item[1],
+            )
+        )  # ensure keys are sorted by value
+        list_keys = list(metadata["Events"].keys())
+        list_next_keys = list_keys[1:]
+        list_next_keys.append("NAN")
+        for vd in df.columns.get_level_values(0).unique().to_list():
+            for scorer in df.columns.get_level_values(1).unique().to_list():
+                for bdprt in df.columns.get_level_values(2).unique().to_list():
+                    # assign ROI (placeholder for now)
+                    # TODO: read from yaml and assign
+                    df[vd, scorer, bdprt, "ROI"] = ""
+
+                    # assign event_tag per bodypart
+                    for ky, next_ky in zip(list_keys, list_next_keys):
+                        df.loc[
+                            (df.index >= metadata["Events"][ky])
+                            & (
+                                df.index
+                                < metadata["Events"].get(next_ky, math.inf)
+                            ),
+                            (vd, scorer, bdprt, "event_tag"),
+                        ] = ky
+
+        # sort to ensure best performance
+        # when accessing data
+        # TODO: keep original bodyparts order?
+        # rn: sorting alphabetically by bodypart
+        df.sort_index(
+            axis=1, level=["bodyparts"], ascending=[True], inplace=True
+        )
+
+        # select subset of rows based on
+        # frame numbers from slider (both inclusive)
+        # (index as frame number)
+        list_df_to_export.append(
+            df[
+                (df.index >= frame_start_end[0])
+                & (df.index <= frame_start_end[1])
+            ]
+        )
+
+    return list_df_to_export
