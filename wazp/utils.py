@@ -560,8 +560,8 @@ def shape_in_list(shape_list: list) -> Callable[[dict], bool]:
 
 def shape_drop_custom_keys(shape: dict) -> dict:
     """
-    go.Figure complains if we include custom keys in the shape
-    dictionary, so we remove them here
+    plotly.graph_objects.Figure complains if we include custom
+    keys in the shape dictionary, so we remove them here
     """
     new_shape = dict()
     for k in shape.keys() - {"drawn_on_frame", "roi_name"}:

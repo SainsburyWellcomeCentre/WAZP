@@ -8,7 +8,7 @@ from typing import Any, Optional
 import dash
 import dash_bootstrap_components as dbc
 import plotly.express as px
-import plotly.graph_objs as go
+import plotly.graph_objects as go
 import utils
 import yaml
 from dash import Input, Output, State, dash_table, html
@@ -838,7 +838,7 @@ def get_roi_callbacks(app):
             Name of the next ROI to be drawn.
         roi_storage : dict
             Dictionary storing already drawn ROI shapes.
-        current_fig : go.Figure
+        current_fig : plotly.graph_objects.Figure
             Current frame graph figure.
         roi_color_mapping : dict
             Dictionary with the following keys:
@@ -847,7 +847,7 @@ def get_roi_callbacks(app):
 
         Returns
         -------
-        go.Figure
+        plotly.graph_objects.Figure.Figure
             Updated frame graph figure
         str
             Message to display in the frame status alert.
