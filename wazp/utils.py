@@ -52,7 +52,10 @@ def df_from_metadata_yaml_files(
             with open(yl) as ylf:
                 list_df_metadata.append(
                     pd.DataFrame.from_dict(
-                        {k: [v] for k, v in yaml.safe_load(ylf).items()},
+                        {
+                            k: [v if not isinstance(v, dict) else str(v)]
+                            for k, v in yaml.safe_load(ylf).items()
+                        },
                         orient="columns",
                     )
                 )
