@@ -57,7 +57,10 @@ def create_metadata_table_component_from_df(
                 "id": c,
                 "name": c,
                 "hideable": (True if c != "File" else False),
-                "editable": True,
+                "editable": True,  # TODO: make ROI and Events columns
+                # not editable!
+                # check type in dict from metadata_fields yaml.
+                # If dict, then make it not editable?
                 "presentation": "input",
             }
             for c in df.columns
