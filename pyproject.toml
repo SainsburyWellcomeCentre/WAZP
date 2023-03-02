@@ -1,9 +1,11 @@
 [project]
 name = "WAZP"
-authors = [{name = "Sofia Miñano", email= "s.minano@ucl.ac.uk"},
-           {name = "Nikoloz Sirmpilatze", email= "niko.sirbiladze@gmail.com"},
-           {name = "Sam Cunliffe", email= "s.cunliffe@ucl.ac.uk"},
-           {name = "Adam Tyson", email= "code@adamltyson.com"}]
+authors = [
+  {name = "Sofia Miñano", email = "s.minano@ucl.ac.uk"},
+  {name = "Nikoloz Sirmpilatze", email = "niko.sirbiladze@gmail.com"},
+  {name = "Sam Cunliffe", email = "s.cunliffe@ucl.ac.uk"},
+  {name = "Adam Tyson", email = "code@adamltyson.com"}
+]
 description = "Wasp Animal-tracking Zoo project with Pose estimation"
 readme = "README.md"
 requires-python = ">=3.9.0"
@@ -11,7 +13,16 @@ dynamic = ["version"]
 
 license = {text = "BSD-3-Clause"}
 
-dependencies = ["pandas", "dash", "dash-bootstrap-components"]
+dependencies = [
+  "numpy",
+  "pillow",
+  "pandas",
+  "dash",
+  "dash-bootstrap-components",
+  "dash-player",
+  "dash-daq",
+  "opencv-python",
+]
 
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
@@ -32,18 +43,19 @@ user_support = "https://github.com/SainsburyWellcomeCentre/WAZP/issues"
 
 [project.optional-dependencies]
 dev = [
-	"pytest",
-	"pytest-cov",
-	"coverage",
-	"tox",
-	"black",
-  "isort",
-  "mypy",
-	"pre-commit",
-	"flake8",
- 	"setuptools_scm",
-  "types-PyYAML",
-  "pandas-stubs",
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "tox",
+    "black",
+    "isort",
+    "mypy",
+    "pre-commit",
+    "flake8",
+    "setuptools_scm",
+    "types-PyYAML",
+    "pandas-stubs",
+    "types-Pillow",
 ]
 
 
@@ -109,10 +121,9 @@ ignore = [
 module = [
   "dash.*",
   "dash_bootstrap_components.*",
-  "callbacks.*",
-  "utils.*",
   "h5py.*",
   "matplotlib.*",
-  "plotly.*"
+  "plotly.*",
+  "cv2.*",
 ]
 ignore_missing_imports = true
