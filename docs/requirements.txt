@@ -1,0 +1,7 @@
+linkify-it-py
+myst-parser
+nbsphinx
+pydata-sphinx-theme
+setuptools_scm
+sphinx>=5.0,<6.0
+sphinx-autodoc-typehints
