@@ -18,13 +18,13 @@ autodoc_mock_imports = []
 # Add the module path to sys.path here.
 # If the directory is relative to the documentation root,
 # use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath("../../.."))
+sys.path.insert(0, os.path.abspath("../.."))
 
 project = "wazp"
 copyright = "2022, UCL"
 author = "UCL"
 try:
-    release = setuptools_scm.get_version(root="../..", relative_to=__file__)
+    release = setuptools_scm.get_version(root="../..", relative_to=__name__)
 except LookupError:
     # if git not initialised, still allow local build with a dummy version
     release = "0.0.0"
