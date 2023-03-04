@@ -11,12 +11,10 @@ Welcome to wazp's documentation!
    :caption: Contents:
 
    getting_started
-   api_index
 
 By default the documentation includes the following sections:
 
 * Getting started. Here you could describe the basic functionalities of your package. To modify this page, edit the file ``docs/source/getting_started.md``.
-* API: here you can find the auto-generated documentation of your package, which is based on the docstrings in your code. To modify which modules/classes/functions are included in the API documentation, edit the file ``docs/source/api_index.rst``.
 
 You can create additional sections with narrative documentation,
 by adding new ``.md`` or ``.rst`` files to the ``docs/source`` folder.
@@ -38,9 +36,3 @@ and add it to the ``toctree`` like this:
 
       getting_started
       installation
-      api_index
-
-Index & Search
---------------
-* :ref:`genindex`
-* :ref:`search`

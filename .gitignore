@@ -63,7 +63,6 @@ instance/
 # Sphinx documentation
 docs/_build/
 docs/build/
-docs/source/api_generated/
 
 # MkDocs documentation
 /site/
