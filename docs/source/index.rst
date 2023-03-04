@@ -11,28 +11,4 @@ Welcome to wazp's documentation!
    :caption: Contents:
 
    getting_started
-
-By default the documentation includes the following sections:
-
-* Getting started. Here you could describe the basic functionalities of your package. To modify this page, edit the file ``docs/source/getting_started.md``.
-
-You can create additional sections with narrative documentation,
-by adding new ``.md`` or ``.rst`` files to the ``docs/source`` folder.
-These files shoult start with a level-1 (H1) header,
-which will be used as the section title. Sub-sections can be created
-with lower-level headers (H2, H3, etc.) within the same file.
-
-To include a section in the rendered documentation,
-add it to the ``toctree`` directive in this (``docs/source/index.rst``) file.
-
-For example, you could create a ``docs/source/installation.md`` file
-and add it to the ``toctree`` like this:
-
-.. code-block:: rst
-
-   .. toctree::
-      :maxdepth: 2
-      :caption: Contents:
-
-      getting_started
-      installation
+   contributing_link

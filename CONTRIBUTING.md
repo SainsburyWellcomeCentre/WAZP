@@ -15,7 +15,7 @@ will create and activate a `conda` environment with the requirements needed
 for a development environment:
 
 ```sh
-conda create -n wazp-dev -c conda-forge python=3.10 pytables
+conda create -n wazp-dev -c conda-forge python=3 pytables
 conda activate wazp-dev
 ```
 
