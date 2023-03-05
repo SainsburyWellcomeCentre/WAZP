@@ -107,7 +107,7 @@ The documentation is hosted via [GitHub pages](https://pages.github.com/) at [sa
 They are written in either [reStructuredText](https://docutils.sourceforge.io/rst.html) or [markdown](https://myst-parser.readthedocs.io/en/stable/syntax/typography.html).
 The `index.rst` file corresponds to the main page of the documentation website. Other `.rst`  or `.md` files are included in the main page via the `toctree` directive.
 
-We use [Sphinx](https://www.sphinx-doc.org/en/master/) and the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html) to build the source files into html output. This is handled by a GitHub actions workflow (`.github/workflows/publish_docs.yml`) which is triggerred whenever changes are pushed to the `main` branch. The workflow builds the html output files and sends them to the `gh-pages`.
+We use [Sphinx](https://www.sphinx-doc.org/en/master/) and the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html) to build the source files into html output. This is handled by a GitHub actions workflow (`.github/workflows/publish_docs.yml`) which is triggerred whenever changes are pushed to the `main` branch. The workflow builds the html output files and sends them to a `gh-pages` branch.
 
 ### Editing the documentation
 
