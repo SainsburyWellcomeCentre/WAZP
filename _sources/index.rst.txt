@@ -10,4 +10,4 @@
    :maxdepth: 2
    :hidden:
 
-   contributing_link
+   contributing

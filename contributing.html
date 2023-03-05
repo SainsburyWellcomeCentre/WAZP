@@ -39,8 +39,8 @@
     <script src="_static/doctools.js"></script>
     <script src="_static/sphinx_highlight.js"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'contributing_link';</script>
-    <link rel="canonical" href="https://SainsburyWellcomeCentre.github.io/wazp/contributing_link.html" />
+    <script>DOCUMENTATION_OPTIONS.pagename = 'contributing';</script>
+    <link rel="canonical" href="https://SainsburyWellcomeCentre.github.io/wazp/contributing.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="WAZP 🐝" href="index.html" />
@@ -423,7 +423,7 @@ git<span class="w"> </span>push<span class="w"> </span>--follow-tags
 <p>The documentation is hosted via <a class="reference external" href="https://pages.github.com/">GitHub pages</a> at <a class="reference external" href="https://sainsburywellcomecentre.github.io/WAZP/">sainsburywellcomecentre.github.io/WAZP/</a>. Its source files are located in the <code class="docutils literal notranslate"><span class="pre">docs</span></code> folder of this repository.</p>
 <p>They are written in either <a class="reference external" href="https://docutils.sourceforge.io/rst.html">reStructuredText</a> or <a class="reference external" href="https://myst-parser.readthedocs.io/en/stable/syntax/typography.html">markdown</a>.
 The <code class="docutils literal notranslate"><span class="pre">index.rst</span></code> file corresponds to the main page of the documentation website. Other <code class="docutils literal notranslate"><span class="pre">.rst</span></code>  or <code class="docutils literal notranslate"><span class="pre">.md</span></code> files are included in the main page via the <code class="docutils literal notranslate"><span class="pre">toctree</span></code> directive.</p>
-<p>We use <a class="reference external" href="https://www.sphinx-doc.org/en/master/">Sphinx</a> and the <a class="reference external" href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> to build the source files into html output. This is handled by a GitHub actions workflow (<code class="docutils literal notranslate"><span class="pre">.github/workflows/publish_docs.yml</span></code>) which is triggerred whenever changes are pushed to the <code class="docutils literal notranslate"><span class="pre">main</span></code> branch. The workflow builds the html output files and sends them to the <code class="docutils literal notranslate"><span class="pre">gh-pages</span></code>.</p>
+<p>We use <a class="reference external" href="https://www.sphinx-doc.org/en/master/">Sphinx</a> and the <a class="reference external" href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> to build the source files into html output. This is handled by a GitHub actions workflow (<code class="docutils literal notranslate"><span class="pre">.github/workflows/publish_docs.yml</span></code>) which is triggerred whenever changes are pushed to the <code class="docutils literal notranslate"><span class="pre">main</span></code> branch. The workflow builds the html output files and sends them to a <code class="docutils literal notranslate"><span class="pre">gh-pages</span></code> branch.</p>
 <section id="editing-the-documentation">
 <h3>Editing the documentation<a class="headerlink" href="#editing-the-documentation" title="Permalink to this heading">#</a></h3>
 <p>To edit the documentation, first clone the repository, and install <code class="docutils literal notranslate"><span class="pre">WAZP</span></code> in a development environment (see <a class="reference internal" href="#creating-a-development-environment">instructions above</a>).</p>
@@ -513,7 +513,7 @@ sphinx-build<span class="w"> </span>docs/source<span class="w"> </span>docs/buil
 
   <div class="sidebar-secondary-item">
   <div class="tocsection sourcelink">
-    <a href="_sources/contributing_link.md.txt">
+    <a href="_sources/contributing.md.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>
