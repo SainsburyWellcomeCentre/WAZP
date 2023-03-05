@@ -113,7 +113,7 @@ ignore = [
     "tests/*",
     "tests/test_unit/*",
     "tests/test_integration/*",
-    "docse/",
+    "docs/",
     "docs/source/",
     ".flake8"
 ]
