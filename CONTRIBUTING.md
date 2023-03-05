@@ -9,7 +9,7 @@ If you're unsure about any part of the contributing process, please get in touch
 
 ### Creating a development environment
 
-It is recommended to use `conda` to install a development environment for
+It is recommended to use [conda](https://docs.conda.io/en/latest/) to install a development environment for
 WAZP. Once you have `conda` installed, the following commands
 will create and activate a `conda` environment with the requirements needed
 for a development environment:
@@ -31,23 +31,15 @@ pip install -e '.[dev]'
 This will install the package, its dependencies,
 and its development dependencies.
 
-Initialize the pre-commit hooks:
-
-```bash
-pre-commit install
-```
-
 ### Pull requests
 
-In all cases, please submit code to the main repository via a pull request. The developers recommend, and adhere, to the following conventions:
+In all cases, please submit code to the main repository via a pull request. We recommend, and adhere, to the following conventions:
 
-- Please submit _draft_ pull requests as early as possible (you can still push to the branch once submitted) to
-  allow for discussion.
+- Please submit _draft_ pull requests as early as possible to allow for discussion.
 - One approval of a PR (by a repo owner) is enough for it to be merged.
 - Unless someone approves the PR with optional comments, the PR is immediately merged by the approving reviewer.
-- Please merge via "Squash and Merge" on GitHub to maintain a clean commit history.
-- Ask for a review from someone specific if you think they would be a particularly suited reviewer (possibly noting
-  why they are suited on the PR description)
+- We typically merge via "Squash and Merge" on GitHub to maintain a clean commit history.
+- Ask for a review from someone specific if you think they would be a particularly suited reviewer
 
 ## Development guidelines
 
@@ -60,7 +52,7 @@ Running `pre-commit install` will set up [pre-commit hooks](https://pre-commit.c
 * [mypy](https://mypy.readthedocs.io/en/stable/index.html) as a static type checker
 
 These will prevent code from being committed if any of these hooks fail. To run them individually (from the root of the repository), you can use:
-```bash
+```sh
 isort .
 flake8
 black ./
@@ -69,7 +61,7 @@ mypy -p wazp
 
 To run all the hooks before committing:
 
-```python
+```sh
 pre-commit run  # for staged files
 pre-commit run -a  # for all files in the repository
 ```
@@ -99,7 +91,7 @@ We use [semantic versioning](https://semver.org/), which includes `MAJOR`.`MINOR
 
 We use [`setuptools_scm`](https://github.com/pypa/setuptools_scm) to automatically version WAZP. It has been pre-configured in the `pyproject.toml` file. [`setuptools_scm` will automatically infer the version using git](https://github.com/pypa/setuptools_scm#default-versioning-scheme). To manually set a new semantic version, create a tag and make sure the tag is pushed to GitHub. Make sure you commit any changes you wish to be included in this version. E.g. to bump the version to `1.0.0`:
 
-```bash
+```sh
 git add .
 git commit -m "Add new changes"
 git tag -a v1.0.0 -m "Bump to version 1.0.0"
@@ -138,19 +130,19 @@ If you create a new documentation source file (e.g. `my_new_file.md` or `my_new_
 ### Building the documentation locally
 We recommend that you build and view the documentation website locally, before you push it.
 To do so, first install the requirements for building the documentation:
-```bash
+```sh
 pip install -r docs/requirements.txt
 ```
 
 Then, from the root of the repository, run:
-```bash
+```sh
 sphinx-build docs/source docs/build
 ```
 
 You can view the local build by opening `docs/build/index.html` in a browser.
 To refresh the documentation, after making changes, remove the `docs/build` folder and re-run the above command:
 
-```bash
+```sh
 rm -rf docs/build
 sphinx-build docs/source docs/build
 ```
