@@ -25,6 +25,9 @@ copyright = "2022, UCL"
 author = "UCL"
 try:
     release = setuptools_scm.get_version(root="../..", relative_to=__name__)
+    # If it's a dev version, remove the git hash (for display purposes)
+    if "+" in release:
+        release = release[: release.index("+")]
 except LookupError:
     # if git not initialised, still allow local build with a dummy version
     release = "0.0.0"
