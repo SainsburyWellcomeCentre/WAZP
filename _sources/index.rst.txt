@@ -3,11 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to the WAZP 🐝 docs!
-=========================================================
+.. include:: readme_link.md
+   :parser: myst_parser.sphinx_
 
 .. toctree::
    :maxdepth: 2
+   :hidden:
 
-   getting_started
    contributing_link
