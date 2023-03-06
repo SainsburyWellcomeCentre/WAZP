@@ -17,8 +17,8 @@ The package is currently in early development 🏗️ and is not yet ready for u
 
 ## Installation
 
-It is recommended to install WAZP inside a [conda](https://docs.conda.io/en/latest/) environment.
-Once you have `conda` installed, the following commands will create and activate a suitable environment, named `wazp-env`.
+We recommend you install WAZP inside a [conda](https://docs.conda.io/en/latest/) environment.
+Once you have `conda` installed, the following will create and activate an environment. You can call your environment whatever you like, we've used `wazp-env`.
 
 ```sh
 conda create -n wazp-env -c conda-forge python=3 pytables
@@ -35,13 +35,13 @@ pip install .
 
 ## Launching the dashboard
 
-You can launch the dashboard by opening a terminal and running the following command from the root of the repository:
+Once installed, launch the dashboard by running the following command from the root of the repository:
 
 ```sh
 python wazp/app.py
 ```
 
-Alternatively, on Linux and MacOS, you can also run the following command:
+If you're on Linux or MacOS, you can instead run:
 
 ```sh
 sh start_wazp_server.sh
