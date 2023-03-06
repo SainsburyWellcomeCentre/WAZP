@@ -32,3 +32,4 @@ repos:
                 - types-setuptools
                 - types-PyYaML
                 - pandas-stubs
+                - types-Pillow
