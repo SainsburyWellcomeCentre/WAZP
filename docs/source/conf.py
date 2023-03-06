@@ -21,8 +21,8 @@ autodoc_mock_imports = []
 sys.path.insert(0, os.path.abspath("../.."))
 
 project = "wazp"
-copyright = "2022, UCL"
-author = "UCL"
+copyright = "2022, University College London (UCL)"
+author = "The Sainsbury Wellcome Centre and The Centre for Advanced Research Computing, UCL"
 try:
     release = setuptools_scm.get_version(root="../..", relative_to=__name__)
     # If it's a dev version, remove the git hash (for display purposes)
