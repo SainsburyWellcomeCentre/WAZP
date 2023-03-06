@@ -25,12 +25,10 @@ conda create -n wazp-env -c conda-forge python=3 pytables
 conda activate wazp-env
 ```
 
-Next clone the GitHub repository, navigate to the local repository folder, and install WAZP.
+Next install the latest version of WAZP from pip:
 
 ```sh
-git clone https://github.com/SainsburyWellcomeCentre/WAZP
-cd WAZP
-pip install .
+pip install wazp
 ```
 
 ## Launching the dashboard
