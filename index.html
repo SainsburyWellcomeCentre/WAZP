@@ -310,8 +310,8 @@ document.write(`
 </section>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h2>
-<p>It is recommended to install WAZP inside a <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a> environment.
-Once you have <code class="docutils literal notranslate"><span class="pre">conda</span></code> installed, the following commands will create and activate a suitable environment, named <code class="docutils literal notranslate"><span class="pre">wazp-env</span></code>.</p>
+<p>We recommend you install WAZP inside a <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a> environment.
+Once you have <code class="docutils literal notranslate"><span class="pre">conda</span></code> installed, the following will create and activate an environment. You can call your environment whatever you like, we’ve used <code class="docutils literal notranslate"><span class="pre">wazp-env</span></code>.</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>wazp-env<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span><span class="w"> </span>pytables
 conda<span class="w"> </span>activate<span class="w"> </span>wazp-env
 </pre></div>
@@ -325,11 +325,11 @@ pip<span class="w"> </span>install<span class="w"> </span>.
 </section>
 <section id="launching-the-dashboard">
 <h2>Launching the dashboard<a class="headerlink" href="#launching-the-dashboard" title="Permalink to this heading">#</a></h2>
-<p>You can launch the dashboard by opening a terminal and running the following command from the root of the repository:</p>
+<p>Once installed, launch the dashboard by running the following command from the root of the repository:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>wazp/app.py
 </pre></div>
 </div>
-<p>Alternatively, on Linux and MacOS, you can also run the following command:</p>
+<p>If you’re on Linux or MacOS, you can instead run:</p>
 <div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>sh<span class="w"> </span>start_wazp_server.sh
 </pre></div>
 </div>
