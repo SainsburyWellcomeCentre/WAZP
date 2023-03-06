@@ -11,7 +11,7 @@
 
 ## Overview
 
-WAZP is a dashboard built with [Dash-Plotly](https://dash.plotly.com/) for analysing animal tracking data. It is designed to work with pose estimation output from [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut).
+WAZP is a dashboard built with [Dash-Plotly](https://dash.plotly.com/) for analysing animal tracking data. It can display pose estimation output from [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut).
 
 The package is currently in early development 🏗️ and is not yet ready for use. Stay tuned ⌛
 
