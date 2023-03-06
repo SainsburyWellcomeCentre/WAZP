@@ -52,6 +52,3 @@ Both commands will launch a local web server. If the dashboard does not automati
 ## License
 
 ⚖️ [BSD 3-Clause](https://opensource.org/licenses/BSD-3-Clause)
-
-## Template
-This package layout and configuration (including pre-commit hooks and GitHub actions) have been copied from the [python-cookiecutter](https://github.com/SainsburyWellcomeCentre/python-cookiecutter) template.

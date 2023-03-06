@@ -145,3 +145,6 @@ To refresh the documentation, after making changes, remove the `docs/build` fold
 rm -rf docs/build
 sphinx-build docs/source docs/build
 ```
+
+## Template
+This package layout and configuration (including pre-commit hooks and GitHub actions) have been copied from the [python-cookiecutter](https://github.com/SainsburyWellcomeCentre/python-cookiecutter) template.
