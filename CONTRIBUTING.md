@@ -38,7 +38,6 @@ In all cases, please submit code to the main repository via a pull request. We r
 - Please submit _draft_ pull requests as early as possible to allow for discussion.
 - One approval of a PR (by a repo owner) is enough for it to be merged.
 - Unless someone approves the PR with optional comments, the PR is immediately merged by the approving reviewer.
-- We typically merge via "Squash and Merge" on GitHub to maintain a clean commit history.
 - Ask for a review from someone specific if you think they would be a particularly suited reviewer
 
 ## Development guidelines
