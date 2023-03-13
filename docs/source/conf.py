@@ -18,13 +18,16 @@ autodoc_mock_imports = []
 # Add the module path to sys.path here.
 # If the directory is relative to the documentation root,
 # use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath("../../.."))
+sys.path.insert(0, os.path.abspath("../.."))
 
 project = "wazp"
-copyright = "2022, UCL"
-author = "UCL"
+copyright = "2022, University College London (UCL)"
+author = "The Sainsbury Wellcome Centre and The Centre for Advanced Research Computing, UCL"
 try:
-    release = setuptools_scm.get_version(root="../..", relative_to=__file__)
+    release = setuptools_scm.get_version(root="../..", relative_to=__name__)
+    # If it's a dev version, remove the git hash (for display purposes)
+    if "+" in release:
+        release = release[: release.index("+")]
 except LookupError:
     # if git not initialised, still allow local build with a dummy version
     release = "0.0.0"
@@ -60,8 +63,8 @@ myst_enable_extensions = [
     "substitution",
     "tasklist",
 ]
-# Automatically add anchors to markdown headings
-myst_heading_anchors = 2
+# Automatically add anchors to markdown headings up to a certain level
+myst_heading_anchors = 3
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -92,7 +95,7 @@ html_theme_options = {
             # Label for this link
             "name": "GitHub",
             # URL where the link will redirect
-            "url": "provide later",  # required
+            "url": "https://github.com/SainsburyWellcomeCentre/WAZP",  # required
             # Icon class (if "type": "fontawesome"),
             # or path to local image (if "type": "local")
             "icon": "fa-brands fa-github",

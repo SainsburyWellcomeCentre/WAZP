@@ -52,7 +52,7 @@ dev = [
     "mypy",
     "pre-commit",
     "flake8",
-    "setuptools_scm",
+    "setuptools-scm",
     "types-PyYAML",
     "pandas-stubs",
     "types-Pillow",
@@ -113,7 +113,7 @@ ignore = [
     "tests/*",
     "tests/test_unit/*",
     "tests/test_integration/*",
-    "docse/",
+    "docs/",
     "docs/source/",
     ".flake8"
 ]

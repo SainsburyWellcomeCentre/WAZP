@@ -1,10 +1,11 @@
 name: 'publish docs'
 
-# Publish when a git tag is pushed to main
+# Publish when upon push to main or add-docs branches
 on:
   push:
     branches:
       - main
+      - add-docs
     tags:
       - '*'
 
