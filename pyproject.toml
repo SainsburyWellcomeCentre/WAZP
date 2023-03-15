@@ -19,9 +19,8 @@ dependencies = [
   "pandas",
   "dash",
   "dash-bootstrap-components",
-  "dash-player",
-  "dash-daq",
   "opencv-python",
+  "PyYAML"
 ]
 
 classifiers = [
