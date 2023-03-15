@@ -54,6 +54,8 @@ def df_from_metadata_yaml_files(
                     pd.DataFrame.from_dict(
                         {
                             k: [v if not isinstance(v, dict) else str(v)]
+                            # in the df we pass to the dash table component,
+                            # values need to be either str, number or bool
                             for k, v in yaml.safe_load(ylf).items()
                         },
                         orient="columns",
