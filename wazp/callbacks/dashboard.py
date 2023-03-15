@@ -14,9 +14,9 @@ TRUE_EMOJI = "✔️"
 FALSE_EMOJI = "❌"
 
 
-##########################
-# Fns to create components
-###########################
+################################
+# Functions to create components
+################################
 def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
     """Create table to select videos to include in plots.
 
@@ -93,16 +93,11 @@ def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
             "maxHeight": "200px",
             "width": "100%",
             "maxWidth": "100%",
-            # "overflowY": "scroll",
-            # "overflowX": "scroll",
         },
         style_cell={  # refers to all cells (the whole table)
             "textAlign": "left",
             "padding": 7,
             "fontFamily": "Helvetica",
-            # "minWidth": 15,
-            # "width": 45,
-            # "maxWidth": 450, #450,
         },
         style_header_conditional=[
             {
