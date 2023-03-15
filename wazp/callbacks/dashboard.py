@@ -9,7 +9,6 @@ import pandas as pd
 import utils
 from dash import Input, Output, State, dash_table, dcc, html
 
-# TODO: is this ok here?
 POSE_DATA_STR = "Pose data available?"
 TRUE_EMOJI = "✔️"
 FALSE_EMOJI = "❌"
@@ -55,7 +54,7 @@ def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
     ]
 
     # list of videos w/ h5 files
-    # TODO: this in utils?
+    # TODO for refactoring: have this in utils?
     list_videos_w_pose_results = []
     for f in pl.Path(
         app_storage["config"]["pose_estimation_results_path"]
@@ -70,6 +69,7 @@ def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
     ]
 
     # table component
+    # TODO for refactoring: factor out css style?
     return dash_table.DataTable(
         id="video-data-table",
         data=df_metadata.to_dict("records"),
@@ -566,93 +566,3 @@ def get_callbacks(app: dash.Dash) -> None:
             export_message_state,
             export_message_color,
         )
-
-    @app.callback(
-        Output("custom-plot-container", "children"),
-        Input("custom-plot-container", "children"),
-        State("session-storage", "data"),
-    )
-    def create_custom_plots(
-        custom_plot_container_children: list, app_storage: dict
-    ) -> dcc.Textarea:
-
-        """Create custom plots
-
-        Parameters
-        ----------
-        custom_plot_container_children : list
-            children of the custom plots container
-        app_storage : dict
-            data held in temporary memory storage,
-            accessible to all tabs in the app
-
-        Returns
-        -------
-        dcc.Textarea
-            an editable text area holding a block of code
-        """
-
-        if not custom_plot_container_children:
-
-            code_block = """
-                import dash
-                import pandas as pd
-                import plotly.express as px
-                from dash import dcc, html
-
-                ######################
-                # Add page to registry
-                #########################
-                dash.register_page(__name__)
-
-
-                ##########################
-                # Read dataframe for one h5 file
-                # TODO: this will be part of the figs' callbacks
-                h5_file_path = (
-                    "sample_project/pose_estimation_results/"
-                    "jwaspE_nectar-open-close_controlDLC_"
-                    "resnet50_jwasp_femaleandmaleSep12shuffle1_1000000.h5"
-                )
-                df_trajectories = pd.read_hdf(h5_file_path.replace("\n", ""))
-                df_trajectories.columns = df_trajectories.columns.droplevel()
-
-
-                ########################
-                # Prepare figures --- TODO: this will be updated with callbacks
-                # Trajectories
-                fig_trajectories = px.scatter(
-                    df_trajectories["head"],
-                    x="x",
-                    y="y",
-                    labels={
-                        "x": "x-axis (px)",
-                        "y": "y-axis (px)",
-                        "likelihood": "likelihood",
-                    },
-                    color="likelihood",
-                    custom_data=df_trajectories["head"].columns,
-                    title="Raw trajectories",
-                )
-                fig_trajectories.update_layout(
-                    clickmode="event+select",
-                    # xaxis_range=[0,1300],
-                    # yaxis_range=[0,1100]
-                )
-                fig_trajectories.update_yaxes(
-                    scaleanchor="x",
-                    scaleratio=1,
-                )
-                fig_trajectories.update_traces(marker_size=5)
-            """
-
-            custom_plot_container_children = dcc.Textarea(  # html.Script(
-                value=code_block,
-                lang="en",
-                contentEditable="true",
-                # lang='Python',
-                spellCheck="true",
-                style={"width": "50%", "height": 400},
-            )
-
-        return custom_plot_container_children

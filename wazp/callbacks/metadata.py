@@ -30,10 +30,7 @@ def create_metadata_table_component_from_df(
     -------
     dash_table.DataTable
         dash table component built from input dataframe
-    Returns
-    -------
-    dash_table.DataTable
-        dash table component built from input dataframe
+
     """
 
     # Change format of columns with string 'date' in their name from string to

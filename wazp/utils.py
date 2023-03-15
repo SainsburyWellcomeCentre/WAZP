@@ -274,12 +274,13 @@ def get_dataframes_to_combine(
     app_storage: dict,
 ):
     # build list of h5 files for the selected videos
-    # TODO: alternative to h5: pickle? csv?
+    # TODO: provide an option to export as h5 or csv
     # TODO: try to make it generic to any pose estim library?
+    # TODO: what is several pose_estimation_model_str are provided?
     # (right now DLC)
     list_h5_file_paths = [
         pl.Path(app_storage["config"]["pose_estimation_results_path"])
-        / pl.Path(
+        / (
             pl.Path(vd).stem
             + app_storage["config"]["pose_estimation_model_str"]
             + ".h5"
@@ -294,9 +295,9 @@ def get_dataframes_to_combine(
 
         # get the metadata file for this video
         # (built from video filename)
-        yaml_filename = pl.Path(
-            app_storage["config"]["videos_dir_path"]
-        ) / pl.Path(pl.Path(video).stem + ".metadata.yaml")
+        yaml_filename = pl.Path(app_storage["config"]["videos_dir_path"]) / (
+            pl.Path(video).stem + ".metadata.yaml"
+        )
 
         # extract the frame numbers
         # from the slider position
@@ -310,7 +311,8 @@ def get_dataframes_to_combine(
             # TODO
             # ...
 
-        # read h5 as dataframe and add 'File' row
+        # read h5 as dataframe and add 'File'
+        # as the outermost level of the (multi) index
         df = pd.concat(
             [pd.read_hdf(h5)],
             keys=[video],
