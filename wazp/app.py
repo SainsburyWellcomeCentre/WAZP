@@ -3,11 +3,10 @@
 import callbacks.dashboard
 import callbacks.home
 import callbacks.metadata
+import callbacks.roi
 import dash
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
-
-from wazp import callbacks
 
 #################
 # Initialise app
@@ -105,9 +104,7 @@ app.layout = html.Div(
 ################
 callbacks.home.get_callbacks(app)
 callbacks.metadata.get_callbacks(app)
-callbacks.get_roi_callbacks(
-    app
-)  # TODO refactor callbacks in a separate module
+callbacks.roi.get_callbacks(app)
 callbacks.dashboard.get_callbacks(app)
 
 
