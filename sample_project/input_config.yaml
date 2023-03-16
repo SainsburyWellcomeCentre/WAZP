@@ -5,12 +5,12 @@ pose_estimation_results_path: ./sample_project/pose_estimation_results
 pose_estimation_model_str: DLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000
 dashboard_export_data_path: ./sample_project/output
 roi_names:
-  - enclosure
-  - left_box
-  - top_box
-  - right_box
-  - bottom_box
-  - tube
+  - "enclosure"
+  - "nectar1_box"
+  - "control_box"
+  - "water-only_box"
+  - "nectar2_box"
+  - "tube"
 event_tags:
   - experiment_start
   - box_1_open
