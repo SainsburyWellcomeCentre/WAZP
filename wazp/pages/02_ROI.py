@@ -35,12 +35,12 @@ init_roi_status: dict = {"message": "No ROIs to save.", "color": "light"}
 instructions = (
     "#### Instructions\n"
     "1. Select the video from the top dropdown menu. \n"
-    "3. Select an ROI from the right dropdown menu. \n"
-    "4. Draw the ROI on the frame (adjust the shown frame if necessary). \n"
-    "5. You may also select an existing ROI "
+    "2. Use the slider to change the shown frame (if necessary). \n"
+    "3. Select an ROI and draw it on the frame. \n"
+    "4. You may also select an existing ROI "
     "to edit it or delete it.\n"
-    "6. Repeat steps 3-5 for each ROI.\n"
-    "7. Save the ROIs and move on to the next video.\n"
+    "5. When satisfied with the drawn ROIs, "
+    "save them and move on to the next video.\n"
 )
 
 
@@ -212,6 +212,12 @@ frame_card = dbc.Card(
                         dbc.Col(dcc.Loading(frame_slider), width=9),
                     ]
                 ),
+                dbc.Row(
+                    [
+                        dbc.Col(dcc.Markdown("Draw ROI for"), width=3),
+                        dbc.Col(dcc.Loading(roi_dropdown), width=9),
+                    ]
+                ),
             ]
         ),
         dbc.CardBody(frame_graph),
@@ -229,32 +235,10 @@ frame_card = dbc.Card(
 # ROI table card
 table_card = dbc.Card(
     [
-        dbc.CardHeader(
-            dbc.Row(
-                [
-                    dbc.Col(roi_save_button, width=4),
-                    dbc.Col(roi_load_button, width=4),
-                    dbc.Col(infer_rois_button, width=4),
-                    save_rois_tooltip,
-                    load_rois_tooltip,
-                    infer_rois_tooltip,
-                ],
-            ),
-        ),
+        dbc.CardHeader(html.H3("Defined ROIs")),
         dbc.CardBody(
             [
-                dbc.Row(dbc.Col(html.H4("Defined ROIs"))),
                 dbc.Row(dbc.Col(roi_table)),
-                dbc.Row(
-                    dbc.Col(
-                        [
-                            html.Br(),
-                            html.H4("Create new ROI for"),
-                            roi_dropdown,
-                        ],
-                        align="center",
-                    )
-                ),
                 dcc.Store(data={}, id="roi-colors-storage"),
                 dcc.Store(
                     id="roi-storage",
@@ -263,7 +247,22 @@ table_card = dbc.Card(
                 ),
             ]
         ),
-        dbc.CardFooter(roi_status_alert),
+        dbc.CardFooter(
+            [
+                dbc.Row(
+                    [
+                        dbc.Col(roi_save_button, width=4),
+                        dbc.Col(roi_load_button, width=4),
+                        dbc.Col(infer_rois_button, width=4),
+                        save_rois_tooltip,
+                        load_rois_tooltip,
+                        infer_rois_tooltip,
+                    ],
+                ),
+                html.Br(),
+                dbc.Row(roi_status_alert),
+            ]
+        ),
     ]
 )
 
