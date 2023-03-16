@@ -1,3 +1,4 @@
+exclude: 'conf.py'
 repos:
     - repo: https://github.com/pycqa/isort
       rev: 5.12.0
@@ -32,3 +33,4 @@ repos:
                 - types-setuptools
                 - types-PyYaML
                 - pandas-stubs
+                - types-Pillow

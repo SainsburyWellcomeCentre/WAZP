@@ -7,9 +7,11 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
 
+from wazp import callbacks
+
 #################
 # Initialise app
-##############
+#################
 app = Dash(
     __name__,
     use_pages=True,
@@ -20,7 +22,7 @@ app = Dash(
 
 ###############
 # Components
-################
+###############
 # Sidebar style
 SIDEBAR_STYLE = {
     "position": "fixed",
@@ -103,6 +105,9 @@ app.layout = html.Div(
 ################
 callbacks.home.get_callbacks(app)
 callbacks.metadata.get_callbacks(app)
+callbacks.get_roi_callbacks(
+    app
+)  # TODO refactor callbacks in a separate module
 callbacks.dashboard.get_callbacks(app)
 
 
