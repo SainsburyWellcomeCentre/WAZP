@@ -154,6 +154,14 @@ roi_load_button = dbc.Button(
     color="dark",
     active=True,
 )
+roi_clear_button = dbc.Button(
+    "Clear",
+    id="clear-rois-button",
+    n_clicks=0,
+    outline=False,
+    color="dark",
+    active=True,
+)
 infer_rois_button = dbc.Button(
     "Infer",
     id="infer-rois-button",
@@ -170,6 +178,10 @@ save_rois_tooltip = dbc.Tooltip(
 load_rois_tooltip = dbc.Tooltip(
     "Load ROIs from the video's metadata.yaml file",
     target="load-rois-button",
+)
+clear_rois_tooltip = dbc.Tooltip(
+    "Clear ROIs for this video and start over",
+    target="clear-rois-button",
 )
 infer_rois_tooltip = dbc.Tooltip(
     "NOT IMPLEMENTED YET! " "Infer ROI positions based on defined ROIs",
@@ -251,11 +263,13 @@ table_card = dbc.Card(
             [
                 dbc.Row(
                     [
-                        dbc.Col(roi_save_button, width=4),
-                        dbc.Col(roi_load_button, width=4),
-                        dbc.Col(infer_rois_button, width=4),
+                        dbc.Col(roi_save_button, width=3),
+                        dbc.Col(roi_load_button, width=3),
+                        dbc.Col(roi_clear_button, width=3),
+                        dbc.Col(infer_rois_button, width=3),
                         save_rois_tooltip,
                         load_rois_tooltip,
+                        clear_rois_tooltip,
                         infer_rois_tooltip,
                     ],
                 ),
