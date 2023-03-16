@@ -42,6 +42,9 @@ classifiers = [
 "Source code" = "https://github.com/SainsburyWellcomeCentre/WAZP"
 "User support" = "https://github.com/SainsburyWellcomeCentre/WAZP/issues"
 
+[project.scripts]
+startwazp = "wazp.app:run"
+
 [project.optional-dependencies]
 dev = [
     "pytest",
