@@ -272,6 +272,7 @@ def get_callbacks(app: dash.Dash) -> None:
         [
             Input("frame-graph", "relayoutData"),
             Input("load-rois-button", "n_clicks"),
+            Input("clear-rois-button", "n_clicks"),
         ],
         [
             State("video-select", "value"),
@@ -283,6 +284,7 @@ def get_callbacks(app: dash.Dash) -> None:
     def update_roi_storage(
         graph_relayout: dict,
         load_clicks: int,
+        clear_clicks: int,
         video_path: str,
         frame_num: int,
         roi_storage: dict,
@@ -292,6 +294,9 @@ def get_callbacks(app: dash.Dash) -> None:
         Update the ROI storage with the latest ROI shapes
         drawn on the frame graph or with the ROI shapes
         loaded from the video's .metadata.yaml file.
+        Clear the ROI storage if the clear ROIs button
+        has been clicked.
+
         Parameters
         ----------
         graph_relayout : dict
@@ -299,6 +304,8 @@ def get_callbacks(app: dash.Dash) -> None:
             changes to the frame graph.
         load_clicks : int
             Number of times the load ROIs button has been clicked.
+        clear_clicks : int
+            Number of times the clear ROIs button has been clicked.
         video_path : str
             Path to the video file.
         frame_num : int
@@ -385,6 +392,12 @@ def get_callbacks(app: dash.Dash) -> None:
                 roi_storage[video_name]["shapes"] = utils.load_rois_from_yaml(
                     yaml_path=metadata_path
                 )
+
+        # If triggered by the clear ROIs button click
+        # Clear the ROIs from the roi-storage
+        elif trigger == "clear-rois-button.n_clicks":
+            if clear_clicks > 0:
+                roi_storage[video_name]["shapes"] = []
 
         return roi_storage
 
