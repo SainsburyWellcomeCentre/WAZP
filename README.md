@@ -36,7 +36,7 @@ pip install wazp
 Once installed, launch the dashboard by running the following command from the root of the repository:
 
 ```sh
-python wazp/app.py
+python -m wazp.app
 ```
 
 If you're on Linux or MacOS, you can instead run:

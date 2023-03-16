@@ -7,10 +7,11 @@ from typing import Optional
 import dash
 import plotly.express as px
 import plotly.graph_objects as go
-import utils
 import yaml
 from dash import Input, Output, State
 from PIL import Image
+
+from wazp import utils
 
 # TODO: other video extensions? have this in project config file instead?
 VIDEO_TYPES = [".avi", ".mp4"]

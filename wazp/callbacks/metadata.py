@@ -6,8 +6,9 @@ import re
 import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
-import utils
 from dash import Input, Output, State, dash_table, html
+
+from wazp import utils
 
 # TODO: other video extensions? have this in project config file instead?
 VIDEO_TYPES = [".avi", ".mp4"]

@@ -6,8 +6,9 @@ import re
 import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
-import utils
 from dash import Input, Output, State, dash_table, dcc, html
+
+from wazp import utils
 
 POSE_DATA_STR = "Pose data available?"
 TRUE_EMOJI = "✔️"
