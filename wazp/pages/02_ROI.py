@@ -137,38 +137,29 @@ roi_dropdown = dcc.Dropdown(
 )
 
 # Buttons for saving/loading ROIs
+active_button_style = {
+    "n_clicks": 0,
+    "outline": False,
+    "color": "dark",
+    "active": True,
+}
+inactive_button_style = {
+    "n_clicks": 0,
+    "outline": True,
+    "color": "dark",
+    "active": False,
+}
 roi_save_button = dbc.Button(
-    "Save",
-    id="save-rois-button",
-    download="rois.yaml",
-    n_clicks=0,
-    outline=False,
-    color="dark",
-    active=True,
+    "Save", id="save-rois-button", download="rois.yaml", **active_button_style
 )
 roi_load_button = dbc.Button(
-    "Load",
-    id="load-rois-button",
-    n_clicks=0,
-    outline=False,
-    color="dark",
-    active=True,
+    "Load", id="load-rois-button", **active_button_style
 )
 roi_clear_button = dbc.Button(
-    "Clear",
-    id="clear-rois-button",
-    n_clicks=0,
-    outline=False,
-    color="dark",
-    active=True,
+    "Clear", id="clear-rois-button", **active_button_style
 )
 infer_rois_button = dbc.Button(
-    "Infer",
-    id="infer-rois-button",
-    n_clicks=0,
-    outline=True,
-    color="dark",
-    active=False,
+    "Infer", id="infer-rois-button", **inactive_button_style
 )
 # Tooltips for ROI buttons
 save_rois_tooltip = dbc.Tooltip(
