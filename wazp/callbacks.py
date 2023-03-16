@@ -9,10 +9,11 @@ import dash
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
-import utils
 import yaml
 from dash import Input, Output, State, dash_table, html
 from PIL import Image
+
+from . import utils
 
 VIDEO_TYPES = [".avi", ".mp4"]
 # TODO: other video extensions? have this in project config file instead?
@@ -382,7 +383,6 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
 
         # If the export button is clicked: export selected rows and unselect
         if (n_clicks_export > 0) and list_selected_rows:
-
             # export yaml files
             utils.export_selected_rows_as_yaml(
                 data, list_selected_rows, app_storage["config"]
