@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import callbacks.dashboard
-import callbacks.home
-import callbacks.metadata
-import callbacks.roi
 import dash
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
+
+import wazp.callbacks.dashboard as dashboard
+import wazp.callbacks.home as home
+import wazp.callbacks.metadata as metadata
+import wazp.callbacks.roi as roi
 
 #################
 # Initialise app
@@ -102,10 +103,10 @@ app.layout = html.Div(
 ###############
 # Callbacks
 ################
-callbacks.home.get_callbacks(app)
-callbacks.metadata.get_callbacks(app)
-callbacks.roi.get_callbacks(app)
-callbacks.dashboard.get_callbacks(app)
+home.get_callbacks(app)
+metadata.get_callbacks(app)
+roi.get_callbacks(app)
+dashboard.get_callbacks(app)
 
 
 ###############
