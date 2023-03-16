@@ -18,6 +18,7 @@ FALSE_EMOJI = "❌"
 ################################
 # Functions to create components
 ################################
+# TODO: this could be in a layout/custom_components module?
 def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
     """Create table to select videos to include in plots.
 
@@ -245,10 +246,30 @@ def create_buttons_and_message() -> html.Div:
         is_open=False,
         color="success",  # warning or danger
         style={
-            "margin-right": "10px",
+            "margin-right": "150px",
             "margin-left": "10px",
             "margin-top": "5px",
         },
+    )
+
+    clipboard = dcc.Clipboard(
+        id="clipboard",
+        title="Copy full path to clipboard",  # tooltip text
+        n_clicks=0,
+        style={
+            "display": "inline",  # visible
+            "fontSize": 20,
+            "margin-right": "10px",
+            "margin-left": "10px",
+        },
+    )
+
+    clipboard_wrapper = html.Div(
+        id="clipboard-wrapper",
+        children=[
+            clipboard,
+        ],
+        style={"display": "none"},  # hidden
     )
 
     return html.Div(
@@ -257,6 +278,7 @@ def create_buttons_and_message() -> html.Div:
             unselect_all_videos_button,
             export_button,
             export_message,
+            clipboard_wrapper,
         ]
     )
 
@@ -297,10 +319,10 @@ def get_callbacks(app: dash.Dash) -> None:
         Input("input-data-container", "children"),
         State("session-storage", "data"),
     )
-    def create_video_data_table_slider_and_buttons(
+    def create_dashboard_and_data_export_components(
         input_data_container_children: list, app_storage: dict
     ) -> list:
-        """Create list of components for the inpud data container
+        """Create list of components for the input data container
 
         Returns a list with the following components:
         - video data table
@@ -342,6 +364,7 @@ def get_callbacks(app: dash.Dash) -> None:
         Output("pose-data-unavailable-message", "displayed"),
         Output("export-message", "children"),
         Output("export-message", "is_open"),
+        Output("clipboard-wrapper", "style"),  #
         Output("export-message", "color"),
         Input("video-data-table", "selected_rows"),
         Input("select-all-videos-button", "n_clicks"),
@@ -354,6 +377,7 @@ def get_callbacks(app: dash.Dash) -> None:
         State("pose-data-unavailable-message", "displayed"),
         State("export-message", "children"),
         State("export-message", "is_open"),
+        State("clipboard-wrapper", "style"),  #
         State("export-message", "color"),
         State("session-storage", "data"),
     )
@@ -369,9 +393,10 @@ def get_callbacks(app: dash.Dash) -> None:
         pose_unavail_message_state: bool,
         export_message_str,
         export_message_state,
+        clipboard_wrapper_style: dict,
         export_message_color,
         app_storage: dict,
-    ) -> tuple[list, int, int, int, str, bool, str, bool, str]:
+    ) -> tuple[list, int, int, int, str, bool, str, bool, dict, str]:
         """Modify the selection status of the rows in the videos table.
 
         A row's selection status (i.e., its checkbox) is modified if (1) the
@@ -434,6 +459,7 @@ def get_callbacks(app: dash.Dash) -> None:
         """
 
         # TODO: select all rows *per page*
+        # TODO: split into smaller functions
         list_missing_pose_data_bool = [
             videos_table_data[r][POSE_DATA_STR] == FALSE_EMOJI
             for r in range(len(videos_table_data))
@@ -480,8 +506,9 @@ def get_callbacks(app: dash.Dash) -> None:
                 # TODO: add timestamp of message?
                 export_message_color = "warning"
                 export_message_state = True
+                # clipboard_wrapper_style = {'display':'inline-block'}
 
-            # if rows are selected: export combined df
+            # if rows are selected: export combined dataframe
             else:
 
                 # get list of selected videos
@@ -543,13 +570,16 @@ def get_callbacks(app: dash.Dash) -> None:
                 # reset triggers and states
                 list_selected_rows = []
                 n_clicks_export = 0
-                export_message_str = (
-                    "Combined dataframe ",
-                    f"exported successfully at: '{h5_file_path}'",
-                )
+                export_message_str = "".join(
+                    (
+                        "Combined dataframe ",
+                        f"exported successfully at: '{h5_file_path}'",
+                    )
+                )  # this is because max line length in linter
                 # TODO: add timestamp to message?
                 export_message_color = "success"
                 export_message_state = True
+                clipboard_wrapper_style = {"display": "inline-block"}
 
         return (
             list_selected_rows,
@@ -560,5 +590,27 @@ def get_callbacks(app: dash.Dash) -> None:
             pose_unavail_message_state,
             export_message_str,
             export_message_state,
+            clipboard_wrapper_style,
             export_message_color,
         )
+
+    @app.callback(
+        Output("clipboard", "content"),
+        Output("clipboard", "n_clicks"),
+        Input("clipboard", "n_clicks"),
+        State("export-message", "children"),
+        State("clipboard", "content"),
+    )
+    def copy_path_from_export_message(
+        n_clicks_clipboard,
+        export_message_str,
+        clipboard_content,
+    ):
+        if n_clicks_clipboard > 0:
+            # extract strings between single quotes (first match)
+            # TODO: is single quotes requirement limiting?
+            relative_path = re.findall(r"\'([^]]*)\'", export_message_str)[0]
+            clipboard_content = str(pl.Path(relative_path).resolve())
+            n_clicks_clipboard = 0
+
+        return (clipboard_content, n_clicks_clipboard)
