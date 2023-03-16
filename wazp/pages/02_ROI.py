@@ -138,7 +138,7 @@ roi_dropdown = dcc.Dropdown(
 
 # Buttons for saving/loading ROIs
 roi_save_button = dbc.Button(
-    "Save ROIs",
+    "Save",
     id="save-rois-button",
     download="rois.yaml",
     n_clicks=0,
@@ -147,7 +147,7 @@ roi_save_button = dbc.Button(
     active=True,
 )
 roi_load_button = dbc.Button(
-    "Load ROIs",
+    "Load",
     id="load-rois-button",
     n_clicks=0,
     outline=False,
@@ -155,7 +155,7 @@ roi_load_button = dbc.Button(
     active=True,
 )
 infer_rois_button = dbc.Button(
-    "Infer ROIs",
+    "Infer",
     id="infer-rois-button",
     n_clicks=0,
     outline=True,
