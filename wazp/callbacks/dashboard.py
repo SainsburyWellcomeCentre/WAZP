@@ -364,7 +364,6 @@ def get_callbacks(app: dash.Dash) -> None:
         Output("pose-data-unavailable-message", "displayed"),
         Output("export-message", "children"),
         Output("export-message", "is_open"),
-        Output("clipboard-wrapper", "style"),  #
         Output("export-message", "color"),
         Input("video-data-table", "selected_rows"),
         Input("select-all-videos-button", "n_clicks"),
@@ -377,7 +376,6 @@ def get_callbacks(app: dash.Dash) -> None:
         State("pose-data-unavailable-message", "displayed"),
         State("export-message", "children"),
         State("export-message", "is_open"),
-        State("clipboard-wrapper", "style"),  #
         State("export-message", "color"),
         State("session-storage", "data"),
     )
@@ -391,12 +389,11 @@ def get_callbacks(app: dash.Dash) -> None:
         slider_marks: dict,
         pose_unavail_message_str: str,
         pose_unavail_message_state: bool,
-        export_message_str,
-        export_message_state,
-        clipboard_wrapper_style: dict,
+        export_message_str: str,
+        export_message_state: bool,
         export_message_color,
         app_storage: dict,
-    ) -> tuple[list, int, int, int, str, bool, str, bool, dict, str]:
+    ) -> tuple[list, int, int, int, str, bool, str, bool, str]:
         """Modify the selection status of the rows in the videos table.
 
         A row's selection status (i.e., its checkbox) is modified if (1) the
@@ -506,7 +503,6 @@ def get_callbacks(app: dash.Dash) -> None:
                 # TODO: add timestamp of message?
                 export_message_color = "warning"
                 export_message_state = True
-                # clipboard_wrapper_style = {'display':'inline-block'}
 
             # if rows are selected: export combined dataframe
             else:
@@ -579,7 +575,6 @@ def get_callbacks(app: dash.Dash) -> None:
                 # TODO: add timestamp to message?
                 export_message_color = "success"
                 export_message_state = True
-                clipboard_wrapper_style = {"display": "inline-block"}
 
         return (
             list_selected_rows,
@@ -590,7 +585,6 @@ def get_callbacks(app: dash.Dash) -> None:
             pose_unavail_message_state,
             export_message_str,
             export_message_state,
-            clipboard_wrapper_style,
             export_message_color,
         )
 
@@ -614,3 +608,23 @@ def get_callbacks(app: dash.Dash) -> None:
             n_clicks_clipboard = 0
 
         return (clipboard_content, n_clicks_clipboard)
+
+    @app.callback(
+        Output("clipboard-wrapper", "style"),  #
+        Input("export-message", "is_open"),
+        State("export-message", "color"),
+        State("clipboard-wrapper", "style"),  #
+    )
+    def toggle_clipboard_icon(
+        export_message_state: bool,
+        export_message_color: str,
+        clipboard_wrapper_style: dict,
+    ):
+        # if export message is visible
+        if export_message_state and (export_message_color == "success"):
+            clipboard_wrapper_style = {"display": "inline-block"}
+        # if alert is dismissed: hide icon
+        else:
+            clipboard_wrapper_style = {"display": "none"}
+
+        return clipboard_wrapper_style
