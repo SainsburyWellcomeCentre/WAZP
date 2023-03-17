@@ -36,16 +36,9 @@ pip install wazp
 Once installed, launch the dashboard by running the following command from the root of the repository:
 
 ```sh
-python -m wazp.app
+startwazp
 ```
-
-If you're on Linux or MacOS, you can instead run:
-
-```sh
-sh start_wazp_server.sh
-```
-
-Both commands will launch a local web server. If the dashboard does not automatically open in your default browser, click the link in the terminal to open it (the link will be of the form `http://localhost:8050/`).
+This will launch a local web server. If the dashboard does not automatically open in your default browser, click the link in the terminal to open it (the link will be of the form `http://localhost:8050/`).
 
 ## License
 
