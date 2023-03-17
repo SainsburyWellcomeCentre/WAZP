@@ -23,3 +23,8 @@ Further_description: 'Jwasp O sourced from on-show display (all others sourced f
   the full condition. I was watching the jwasp during this time and she did not visit
   any ROIs. We''re not really missing anything from that 20-second gap - however this
   explains the wasps movement 31 minutes in. '
+Events:
+  experiment_start: 0
+  box_1_open: 72396
+  box_1_closed: 144792
+  experiment_end: 217187

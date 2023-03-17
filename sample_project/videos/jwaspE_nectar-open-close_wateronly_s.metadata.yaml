@@ -1,0 +1,28 @@
+File: jwaspE_nectar-open-close_wateronly_s.avi
+Species_name: Ampulex_compressa
+Common_name: jewel_wasp
+Subject: E_male
+Treatment: nectar-open-close_wateronly
+Treatment_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Date_start: 5/8/22
+Time_start: '11:15:09'
+Date_end: 5/8/22
+Time_end: '11:47:53'
+Time_recorded: 00:32:44
+Video_length: 00:32:44
+Hardware_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Software_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Further_description: 'Wasps spending time on the data logger (possibly lose track
+  on video) - colouartion provides a preferred point for the wasp - a resource in
+  itself? Could try sticking the unit (or new BlueMaestro one) on wall of arena even
+  if halfway (same height as light readings but away from usual route of wasp?). This
+  was rectified by moving the iButton outside the enclosure for trials after jwasp
+  H. '
+Events:
+  experiment_start: 0
+  box_1_open: 23174
+  box_1_closed: 46348
+  experiment_end: 69522
