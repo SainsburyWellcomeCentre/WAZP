@@ -20,7 +20,8 @@ FALSE_EMOJI = "❌"
 ################################
 # TODO: this could be in a layout/custom_components module?
 def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
-    """Create table to select videos to include in plots.
+    """Create table to select videos to include in exports and
+    in plots.
 
     Only videos with a matching YAML file are shown.
     The availability of pose estimation data is also shown.
@@ -34,7 +35,7 @@ def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
 
     Returns
     -------
-    html.Div
+    dash_table.DataTable
         dash DataTable component to pass to the table container
     """
 
@@ -147,7 +148,10 @@ def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
 
 
 def create_time_slider(app_storage: dict) -> html.Div:
-    """Create time slider component
+    """Create a time slider component
+
+    The time slider is a dash RangeSlider component
+    that allows to define the two sides of an interval
 
     Parameters
     ----------
@@ -202,12 +206,15 @@ def create_time_slider(app_storage: dict) -> html.Div:
 
 
 def create_buttons_and_message() -> html.Div:
-    """Create buttons for videos table and export functions
+    """Create buttons and messages related to
+    selecting/unselecting videos in the table
+    and for exporting the data.
 
     Returns
     -------
     html.Div
-        html Div component wrapping the table and export buttons
+        html Div component wrapping the buttons
+        and messages
     """
     select_all_videos_button = html.Button(
         children="Select all rows",
@@ -284,10 +291,11 @@ def create_buttons_and_message() -> html.Div:
 
 
 def create_pose_data_unavailable_popup() -> dcc.ConfirmDialog:
-    """Create pop-up message for unavailable pose data
+    """Create pop-up message when pose data is
+    unavailable for a selected video.
 
-    A message will pop up when a row in the videos table
-    is selected but has no pose data available
+    A message will pop up when a video in the table
+    is selected but has no pose data available.
 
     Returns
     -------
@@ -322,13 +330,16 @@ def get_callbacks(app: dash.Dash) -> None:
     def create_dashboard_and_data_export_components(
         input_data_container_children: list, app_storage: dict
     ) -> list:
-        """Create list of components for the input data container
+        """Create components for the main data container
+        in the dashboard tab layout
 
         Returns a list with the following components:
         - video data table
         - time slider for event tags
-        - buttons and export message
-        - popup message for when pose data is unavailable
+        - buttons and messages for (un)selecting and exporting
+          data
+        - popup message for when pose data is unavailable for
+          a selected video
 
         Parameters
         ----------
@@ -341,18 +352,19 @@ def get_callbacks(app: dash.Dash) -> None:
         Returns
         -------
         list
-            components to pass as children of the input data container
+            components to pass as children of the main data container
+            in the dashboard tab layout
         """
 
         if not input_data_container_children:
-            return [
+            input_data_container_children = [
                 create_video_data_table(app_storage),
                 create_time_slider(app_storage),
                 create_buttons_and_message(),
                 create_pose_data_unavailable_popup(),
             ]
 
-        return []
+        return input_data_container_children
 
     # -----------------------
     @app.callback(
@@ -394,13 +406,15 @@ def get_callbacks(app: dash.Dash) -> None:
         export_message_color,
         app_storage: dict,
     ) -> tuple[list, int, int, int, str, bool, str, bool, str]:
-        """Modify the selection status of the rows in the videos table.
+        """Modify the selection status of the rows in the videos' table.
 
-        A row's selection status (i.e., its checkbox) is modified if (1) the
-        user selects the row but there is no pose data available for that video
-        (then its checkbox is set to False), (2) the export button is clicked
-        (then the selected rows are reset to False), or (3) the 'select/
-        unselect' all button is clicked.
+        A row's selection status (i.e., its checkbox) is modified if:
+        (1) the 'select/unselect' all button is clicked,
+        (2) the user selects a row whiose video has no pose data
+            available. In that case, its checkbox is set to False,
+        (3) the export button is clicked. In that case the selected rows
+            are reset to False.
+
 
         Parameters
         ----------
@@ -423,11 +437,11 @@ def get_callbacks(app: dash.Dash) -> None:
             text content of the 'pose data unavailable' message
         pose_unavail_message_state : bool
             visibility state of the 'pose data unavailable' message
-        export_message_str : _type_
+        export_message_str : str
             text content of the export message
-        export_message_state : _type_
+        export_message_state : bool
             visibility state of the export message
-        export_message_color : _type_
+        export_message_color : str
             color of the export message
         app_storage : dict
             data held in temporary memory storage,
@@ -455,7 +469,7 @@ def get_callbacks(app: dash.Dash) -> None:
             color of the export message
         """
 
-        # TODO: select all rows *per page*
+        # TODO: select all rows per page?
         # TODO: split into smaller functions
         list_missing_pose_data_bool = [
             videos_table_data[r][POSE_DATA_STR] == FALSE_EMOJI
@@ -596,10 +610,30 @@ def get_callbacks(app: dash.Dash) -> None:
         State("clipboard", "content"),
     )
     def copy_path_from_export_message(
-        n_clicks_clipboard,
-        export_message_str,
-        clipboard_content,
-    ):
+        n_clicks_clipboard: int,
+        export_message_str: str,
+        clipboard_content: str,
+    ) -> tuple[str, int]:
+        """Copy fullpath from export message
+        to clipboard
+
+        Parameters
+        ----------
+        n_clicks_clipboard : int
+            number of clicks on the clipboard icon
+        export_message_str : str
+            text content of the export message
+        clipboard_content : str
+            text content in the clipboard
+
+        Returns
+        -------
+        clipboard_content : str
+            text content in the clipboard
+        n_clicks_clipboard : int
+            number of clicks on the clipboard icon
+        """
+
         if n_clicks_clipboard > 0:
             # extract strings between single quotes (first match)
             # TODO: is single quotes requirement limiting?
@@ -615,11 +649,31 @@ def get_callbacks(app: dash.Dash) -> None:
         State("export-message", "color"),
         State("clipboard-wrapper", "style"),  #
     )
-    def toggle_clipboard_icon(
+    def toggle_clipboard_icon_visibility(
         export_message_state: bool,
         export_message_color: str,
         clipboard_wrapper_style: dict,
-    ):
+    ) -> dict:
+        """Toggle clipboard icon visibility
+
+        Parameters
+        ----------
+        export_message_state : bool
+            visibility state of the export message
+        export_message_color : str
+            color of the export message
+        clipboard_wrapper_style : dict
+            dictionary holding the css style of the
+            clipboard html wrapper. It contains only
+            a 'display' key.
+
+        Returns
+        -------
+        clipboard_wrapper_style : dict
+            dictionary holding the css style of the
+            clipboard html wrapper. It contains only
+            a 'display' key.
+        """
         # if export message is visible
         if export_message_state and (export_message_color == "success"):
             clipboard_wrapper_style = {"display": "inline-block"}
