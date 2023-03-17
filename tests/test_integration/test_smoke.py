@@ -1,5 +1,6 @@
-"""Smoke tests which start the server and check we can navigate without error."""
+"""Smoke tests which start the server and check we can navigate pages."""
 import os
+
 import pytest
 from dash.testing.composite import DashComposite
 
@@ -28,7 +29,6 @@ def test_start_server_open_page_no_errors(
     if errors:
         screenshots_dirname = ".test_fail_screenshots/smoke"
         os.makedirs(screenshots_dirname, exist_ok=True)  # mkdir -p
-        dash_duo.driver.save_screenshot(
-            f"./{screenshots_dirname}/test-{dash_duo.session_id}{page.replace('/', '-')}.png"
-        )
+        filename = f"test-{dash_duo.session_id}{page.replace('/', '-')}.png"
+        dash_duo.driver.save_screenshot(f"./{screenshots_dirname}/{filename}")
         assert False, f"There are {len(errors)} errors in the browser console!"
