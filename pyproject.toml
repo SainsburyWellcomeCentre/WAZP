@@ -43,7 +43,7 @@ classifiers = [
 "User support" = "https://github.com/SainsburyWellcomeCentre/WAZP/issues"
 
 [project.scripts]
-startwazp = "wazp.app:run"
+startwazp = "wazp.app:startwazp"
 
 [project.optional-dependencies]
 dev = [
