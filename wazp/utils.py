@@ -35,9 +35,7 @@ def df_from_metadata_yaml_files(
 
     # List of metadata files in parent directory
     list_metadata_files = [
-        str(f)
-        for f in pl.Path(parent_dir).iterdir()
-        if str(f).endswith("metadata.yaml")
+        str(f) for f in pl.Path(parent_dir).iterdir() if str(f).endswith("metadata.yaml")
     ]
 
     # If there are no metadata (yaml) files:
@@ -81,9 +79,7 @@ def metadata_table_component_from_df(df: pd.DataFrame) -> dash_table.DataTable:
     # datetime
     # (this is to allow sorting in the Dash table)
     # TODO: review this, is there a more failsafe way?
-    list_date_columns = [
-        col for col in df.columns.tolist() if "date" in col.lower()
-    ]
+    list_date_columns = [col for col in df.columns.tolist() if "date" in col.lower()]
     for col in list_date_columns:
         df[col] = pd.to_datetime(df[col]).dt.strftime("%Y-%m-%d")
 
@@ -259,9 +255,7 @@ def export_selected_rows_as_yaml(
 
         # write each row to yaml
         yaml_filename = key + ".metadata.yaml"
-        with open(
-            pl.Path(app_storage["videos_dir_path"]) / yaml_filename, "w"
-        ) as yamlf:
+        with open(pl.Path(app_storage["videos_dir_path"]) / yaml_filename, "w") as yamlf:
             yaml.dump(row, yamlf, sort_keys=False)
 
     return
@@ -292,9 +286,7 @@ def assign_roi_colors(
     """
 
     # Prepare roi-to-color mapping
-    roi_color_pairs = [
-        (roi, cmap[i % len(cmap)]) for i, roi in enumerate(roi_names)
-    ]
+    roi_color_pairs = [(roi, cmap[i % len(cmap)]) for i, roi in enumerate(roi_names)]
 
     # roi-to-color and color-to-roi dicts
     roi2color = {}
@@ -327,9 +319,7 @@ def get_num_frames(video_path):
     return int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
 
 
-def extract_frame(
-    video_path: str, frame_number: int, output_path: str
-) -> None:
+def extract_frame(video_path: str, frame_number: int, output_path: str) -> None:
     """
     Extract a single frame from a video and save it.
 
@@ -380,18 +370,12 @@ def cache_frame(
     """
 
     cache_dir.mkdir(parents=True, exist_ok=True)
-    frame_filepath = (
-        cache_dir / f"{video_path.stem}_frame-{frame_num}.{frame_suffix}"
-    )
+    frame_filepath = cache_dir / f"{video_path.stem}_frame-{frame_num}.{frame_suffix}"
     # Extract frame if it is not already cached
     if not frame_filepath.exists():
-        extract_frame(
-            video_path.as_posix(), frame_num, frame_filepath.as_posix()
-        )
+        extract_frame(video_path.as_posix(), frame_num, frame_filepath.as_posix())
     # Remove old frames from cache
-    remove_old_frames_from_cache(
-        cache_dir, frame_suffix=frame_suffix, keep_last_days=1
-    )
+    remove_old_frames_from_cache(cache_dir, frame_suffix=frame_suffix, keep_last_days=1)
 
     return frame_filepath
 
@@ -413,9 +397,7 @@ def remove_old_frames_from_cache(
     """
     # Get all frame file paths in the cache directory
     cached_frame_paths = [
-        cache_dir / file
-        for file in cache_dir.iterdir()
-        if file.suffix == frame_suffix
+        cache_dir / file for file in cache_dir.iterdir() if file.suffix == frame_suffix
     ]
     # Get the time of the oldest frame to keep
     oldest_frame_time = datetime.now() - timedelta(days=keep_last_days)

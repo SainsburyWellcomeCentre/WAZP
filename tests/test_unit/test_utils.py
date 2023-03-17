@@ -17,9 +17,7 @@ def get_sample_project_metadata_fields() -> dict:
 def test_columns_names_and_nrows_in_df_from_metadata() -> None:
     """Normal operation: test we can read the sample project metadata."""
     metadata_fields = get_sample_project_metadata_fields()
-    df_output = df_from_metadata_yaml_files(
-        "sample_project/videos", metadata_fields
-    )
+    df_output = df_from_metadata_yaml_files("sample_project/videos", metadata_fields)
 
     fields_from_yaml = set(metadata_fields)
     df_columns = set(df_output.columns)
@@ -40,9 +38,7 @@ def test_df_from_metadata_yaml_no_metadata() -> None:
     """
     metadata_fields = get_sample_project_metadata_fields()
     with tempfile.TemporaryDirectory() as empty_existing_directory:
-        df_output = df_from_metadata_yaml_files(
-            empty_existing_directory, metadata_fields
-        )
+        df_output = df_from_metadata_yaml_files(empty_existing_directory, metadata_fields)
 
     assert df_output.shape == (1, len(metadata_fields))
 
@@ -53,7 +49,5 @@ def test_df_from_metadata_garbage() -> None:
         df_from_metadata_yaml_files("DIRECTORY_DOESNT_EXIST", dict())
 
     with tempfile.TemporaryDirectory() as empty_existing_directory:
-        df_output = df_from_metadata_yaml_files(
-            empty_existing_directory, dict()
-        )
+        df_output = df_from_metadata_yaml_files(empty_existing_directory, dict())
     assert df_output.empty, "There shouldn't be any data in the df."

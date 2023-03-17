@@ -13,9 +13,7 @@ dash.register_page(__name__, path="/")
 # Upload component for project config
 upload_component = dcc.Upload(
     id="upload-data",
-    children=html.Div(
-        ["Drag and Drop or ", html.A("Select project config file")]
-    ),
+    children=html.Div(["Drag and Drop or ", html.A("Select project config file")]),
     contents=None,
     style={
         "width": "100%",

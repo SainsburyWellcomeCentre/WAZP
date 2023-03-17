@@ -109,9 +109,7 @@ fig_entries_exits = px.imshow(
     title="Entries/exits matrix",
 )
 
-fig_entries_exits.update_layout(
-    clickmode="event+select", height=500, width=500
-)
+fig_entries_exits.update_layout(clickmode="event+select", height=500, width=500)
 fig_entries_exits.update_xaxes(side="top")
 
 
@@ -198,9 +196,7 @@ layout = html.Div(
     children=[
         html.H1("Dashboard"),
         html.Br(),
-        html.H5(
-            "Input data", style={"margin-top": "20px", "margin-bottom": "10px"}
-        ),
+        html.H5("Input data", style={"margin-top": "20px", "margin-bottom": "10px"}),
         html.Div(children=[], id="table-container"),
         html.Div(
             [

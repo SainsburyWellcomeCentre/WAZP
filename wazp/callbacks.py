@@ -26,8 +26,7 @@ def get_home_callbacks(app: dash.Dash) -> None:
 
     Parameters
     ----------
-    app : dash.Dash
-        Dash app object for which these callbacks are defined
+    app : dash.Dash Dash app object for which these callbacks are defined
     """
 
     @app.callback(
@@ -42,33 +41,27 @@ def get_home_callbacks(app: dash.Dash) -> None:
     def save_input_config_to_storage(
         up_content: str, up_filename: str, up_message_state: bool
     ) -> tuple[dict[Any, Any], bool, str, str]:
-        """Save project configuration file to temporary memory storage for the current session.
+        """Save project configuration file to temporary memory storage for the current
+        session.
 
         See https://community.plotly.com/t/dash-plotly-share-callback-input-in-another-page-with-dcc-store/44190/2
 
         Parameters
         ----------
-        up_content : str
-            data from the project config file upload
-        up_filename : str
-            name of the uploaded file (project config file)
-        up_message_state : bool
-            visibility of the upload message
+        up_content : str data from the project config file upload
+        up_filename : str name of the uploaded file (project config file)
+        up_message_state : bool visibility of the upload message
 
         Returns
         -------
-        data_to_store : dict
-            dictionary with the following keys and values:
+        data_to_store : dict dictionary with the following keys and values:
             - 'config': a dict with the project configuration parameters
             - 'metadata_fields': a dict with a set of attributes (description, type...)
             for each metadata field
-        up_message_state : bool
-            visibility of the upload message
-        output_message : str
-            content of the upload message
-        output_color : str
-            color of the upload message
-        """  # noqa
+        up_message_state : bool visibility of the upload message
+        output_message : str content of the upload message
+        output_color : str color of the upload message
+        """  # noqa (don't force URL to 90 chars)
 
         data_to_store = dict()
 
@@ -106,9 +99,7 @@ def get_home_callbacks(app: dash.Dash) -> None:
                 print(e)  # TODO: check this, it prints something odd
                 if not up_message_state:
                     up_message_state = not up_message_state
-                output_message = (
-                    "There was an error processing the config file."
-                )
+                output_message = "There was an error processing the config file."
                 output_color = "danger"
 
         return (data_to_store, up_message_state, output_message, output_color)
@@ -120,8 +111,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
 
     Parameters
     ----------
-    app : dash.Dash
-        Dash app object for which these callbacks are defined
+    app : dash.Dash Dash app object for which these callbacks are defined
 
     """
 
@@ -269,8 +259,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
 
             # List of files currently shown in table
             list_files_in_table = [
-                d[app_storage["config"]["metadata_key_field_str"]]
-                for d in table_rows
+                d[app_storage["config"]["metadata_key_field_str"]] for d in table_rows
             ]
 
             # List of videos w/o metadata and not in table
@@ -278,9 +267,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
             list_metadata_files = []
             for f in pl.Path(video_dir).iterdir():
                 if str(f).endswith("metadata.yaml"):
-                    list_metadata_files.append(
-                        re.sub(".metadata$", "", f.stem)
-                    )
+                    list_metadata_files.append(re.sub(".metadata$", "", f.stem))
                 elif any(v in str(f) for v in VIDEO_TYPES):
                     list_video_files.append(f)  # list of PosixPaths
             list_videos_wo_metadata = [
@@ -293,10 +280,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
             # Add a row for every video w/o metadata
             for vid in list_videos_wo_metadata:
                 table_rows.append(
-                    {
-                        c["id"]: vid if c["id"] == "File" else ""
-                        for c in table_columns
-                    }
+                    {c["id"]: vid if c["id"] == "File" else "" for c in table_columns}
                 )
                 n_clicks_add_rows_missing = 0  # reset clicks
 
@@ -318,9 +302,7 @@ def get_metadata_callbacks(app: dash.Dash) -> None:
         Input("export-selected-rows-button", "n_clicks"),
         Input("metadata-table", "data_previous"),
         State("metadata-table", "data"),
-        State(
-            "metadata-table", "derived_viewport_data"
-        ),  # data on the current page
+        State("metadata-table", "derived_viewport_data"),  # data on the current page
         State("metadata-table", "selected_rows"),
         State("session-storage", "data"),
         State("alert", "is_open"),
@@ -462,17 +444,14 @@ def get_roi_callbacks(app):
             # get all videos in the videos directory
             video_paths = []
             for video_type in VIDEO_TYPES:
-                video_paths += [
-                    p for p in pl.Path(videos_dir).glob(f"*{video_type}")
-                ]
+                video_paths += [p for p in pl.Path(videos_dir).glob(f"*{video_type}")]
             video_paths.sort()
             video_names = [p.name for p in video_paths]
             video_paths_str = [p.absolute().as_posix() for p in video_paths]
             # Video names become the labels and video paths the values
             # of the video select dropdown
             options = [
-                {"label": v, "value": p}
-                for v, p in zip(video_names, video_paths_str)
+                {"label": v, "value": p} for v, p in zip(video_names, video_paths_str)
             ]
             value = video_paths_str[0]
             return options, value
@@ -517,9 +496,7 @@ def get_roi_callbacks(app):
             value = roi_names[0]
 
             # Get ROI-to-color mapping
-            roi_color_mapping = utils.assign_roi_colors(
-                roi_names, cmap=ROI_CMAP
-            )
+            roi_color_mapping = utils.assign_roi_colors(roi_names, cmap=ROI_CMAP)
 
             return options, value, roi_color_mapping
         else:
@@ -601,9 +578,7 @@ def get_roi_callbacks(app):
             Input("roi-storage", "data"),
         ],
     )
-    def update_roi_table(
-        video_path: str, roi_storage: dict
-    ) -> Optional[list[dict]]:
+    def update_roi_table(video_path: str, roi_storage: dict) -> Optional[list[dict]]:
         """
         Update the ROI table with the ROI names and
         their corresponding colors.
@@ -637,9 +612,7 @@ def get_roi_callbacks(app):
         Input("roi-table", "data"),
         State("roi-colors-storage", "data"),
     )
-    def set_roi_color_in_table(
-        roi_table: list, roi_color_mapping: dict
-    ) -> list:
+    def set_roi_color_in_table(roi_table: list, roi_color_mapping: dict) -> list:
         """
         Set the color of the ROI names in the ROI table
         based on the color assigned to that ROI shape.
@@ -882,9 +855,7 @@ def get_roi_callbacks(app):
         # If triggered by a change in the ROI dropdown
         # maintain the current figure and only update the new shape color
         elif trigger == "roi-select.value":
-            current_fig["layout"]["newshape"]["line"][
-                "color"
-            ] = next_shape_color
+            current_fig["layout"]["newshape"]["line"]["color"] = next_shape_color
             return current_fig, dash.no_update, dash.no_update, dash.no_update
 
         # If triggered by a change in the video or frame
@@ -1068,9 +1039,7 @@ def get_dashboard_callbacks(app):
                 app_storage["config"]["videos_dir_path"],
                 app_storage["metadata_fields"],
             )
-            df_metadata = df_metadata[
-                [app_storage["config"]["metadata_key_field_str"]]
-            ]
+            df_metadata = df_metadata[[app_storage["config"]["metadata_key_field_str"]]]
 
             # table component
             table_container_children = [
