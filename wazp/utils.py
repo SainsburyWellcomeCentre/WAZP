@@ -1,4 +1,3 @@
-import math
 import pathlib as pl
 from datetime import datetime, timedelta
 from typing import Callable
@@ -71,7 +70,8 @@ def df_from_metadata_yaml_files(
 def set_edited_row_checkbox_to_true(
     data_previous: list[dict], data: list[dict], list_selected_rows: list[int]
 ) -> list[int]:
-    """Set a row's checkbox to True when its data is edited.
+    """Set a metadata table row's checkbox to True
+    when its data is edited.
 
     Parameters
     ----------
@@ -113,7 +113,7 @@ def set_edited_row_checkbox_to_true(
 def export_selected_rows_as_yaml(
     data: list[dict], list_selected_rows: list[int], app_storage: dict
 ) -> None:
-    """Export selected rows as yaml files.
+    """Export selected metadata rows as yaml files.
 
     Parameters
     ----------
@@ -122,7 +122,8 @@ def export_selected_rows_as_yaml(
     list_selected_rows : list[int]
         a list of indices for the currently selected rows
     app_storage : dict
-        _description_
+        data held in temporary memory storage,
+        accessible to all tabs in the app
     """
 
     # Export selected rows
@@ -142,106 +143,172 @@ def export_selected_rows_as_yaml(
     return
 
 
+def restructure_columns_in_DLC_dataframe(
+    h5_file: str, video_file: str
+) -> pd.DataFrame:
+    """Reorganise columns in DLC dataframe
+    The columns in the DLC dataframe as read from the h5 file are
+    reorganised to more closely match a long format.
+
+    The original columns in the DLC dataframe are multi-level, with
+    the following levels:
+    - scorer: if using the output from a model, this would be the model_str
+      (e.g. 'DLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000').
+    - bodyparts: the keypoints tracked in the animal (e.g., head, thorax)
+    - coords: x, y, likelihood
+    # TODO: is this different in multianimal? (maybe an extra ID column?)
+
+    We reshape the dataframe to have a single level along the columns,
+    and the following columns:
+    - model_str: string that characterises the model used
+      (e.g. 'DLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000')
+    - frame: the (zero-indexed) frame number the data was tracked at.
+      This is inherited from the index of the DLC dataframe.
+    - bodypart: the keypoints tracked in the animal (e.g., head, thorax).
+      Note we use the singular, rather than the plural as in DLC.
+    - x: x-coordinate of the bodypart tracked.
+    - y: y-coordinate of the bodypart tracked.
+    - likelihood: likelihood of the estimation provided by the model
+    The data is sorted by bodypart, and then by frame.
+
+    Parameters
+    ----------
+    h5_file : str
+        path to the input h5 file
+    video_file : str
+        name of the video file associated to the input h5 file
+
+    Returns
+    -------
+    pd.DataFrame
+        a dataframe with the h5 file data, and the columns as specified above
+    """
+    # TODO: can this be less hardcoded?
+    # TODO: should I check fields exist in input h5 file firts?
+
+    # read h5 file as a dataframe
+    df = pd.read_hdf(h5_file)
+
+    # assuming the DLC index corresponds to frame number!!!
+    # TODO: can I check this?
+    # frames are zero-indexed
+    df.index.name = "frame"
+
+    # stack scorer and bodyparts levels from columns to index
+    df = df.stack(level=["scorer", "bodyparts"])
+
+    # reset index to remove 'frame','scorer' and 'bodyparts'
+    df = df.reset_index(level=["frame", "scorer", "bodyparts"])  # type: ignore
+
+    # reset columns name (to remove columns name = 'coords')
+    df.columns.name = ""
+    df.index.name = ""
+
+    # rename columns
+    df.rename(
+        columns={
+            "scorer": "model_str",
+            "bodyparts": "bodypart",
+        },
+        inplace=True,
+    )
+
+    # reorder columns
+    df = df[["model_str", "frame", "bodypart", "x", "y", "likelihood"]]
+
+    # sort rows by bodypart and frame
+    df.sort_values(by=["bodypart", "frame"], inplace=True)  # type: ignore
+    df = df.reset_index(drop=True)
+
+    # add video file
+    df["video_file"] = video_file
+
+    return df  # type: ignore
+
+
 def get_dataframes_to_combine(
     list_selected_videos: list,
     slider_start_end_labels: list,
     app_storage: dict,
-):
-    # build list of h5 files for the selected videos
-    # TODO: provide an option to export as h5 or csv
-    # TODO: try to make it generic to any pose estim library?
-    # TODO: what is several pose_estimation_model_str are provided?
-    # (right now DLC)
+) -> list:
+    """Create list of dataframes to export as one
+
+    Parameters
+    ----------
+    list_selected_videos : list
+        list of videos selected in the table
+    slider_start_end_labels : list
+        labels for the slider start and end positions
+    app_storage : dict
+        data held in temporary memory storage,
+        accessible to all tabs in the app
+
+    Returns
+    -------
+    list_df_to_export : list
+        list of dataframes to concatenate
+        before exporting
+    """
+    # TODO: provide an option to export as h5 or csv?
+    # TODO: allow model_str to be a list?
+
+    # List of h5 files for the selected videos
     list_h5_file_paths = [
         pl.Path(app_storage["config"]["pose_estimation_results_path"])
-        / (
-            pl.Path(vd).stem
-            + app_storage["config"]["pose_estimation_model_str"]
-            + ".h5"
-        )
+        / (pl.Path(vd).stem + app_storage["config"]["model_str"] + ".h5")
         for vd in list_selected_videos
     ]
 
-    # loop thru videos and h5 files to read dataframe and
-    # extract subset of rows
+    # Loop thru videos and h5 files to read each dataframe and
+    # extract the relevant subset of frames
     list_df_to_export = []
     for h5, video in zip(list_h5_file_paths, list_selected_videos):
 
-        # get the metadata file for this video
+        # Get the metadata file for this video
         # (built from video filename)
         yaml_filename = pl.Path(app_storage["config"]["videos_dir_path"]) / (
             pl.Path(video).stem + ".metadata.yaml"
         )
 
-        # extract the frame numbers
-        # from the slider position
+        # Extract the frame limits for this video,
+        # from the slider and the metadata
         with open(yaml_filename, "r") as yf:
             metadata = yaml.safe_load(yf)
             # extract frame start/end
             frame_start_end = [
                 metadata["Events"][x] for x in slider_start_end_labels
             ]
-            # extract ROI paths
+            # ---------------------------
+            # extract ROI paths for this video
             # TODO
             # ...
+            # ---------------------------
 
-        # read h5 as dataframe and add 'File'
-        # as the outermost level of the (multi) index
-        df = pd.concat(
-            [pd.read_hdf(h5)],
-            keys=[video],
-            names=[app_storage["config"]["metadata_key_field_str"]],
-            axis=1,
-        )
+        # Read h5 file and reorganise columns
+        # TODO should I already extract subset of frames here?
+        # (less data moving around...)
+        df = restructure_columns_in_DLC_dataframe(h5, video)
 
-        # add ROI and event tag per bodypart
-        # TODO: is there a nicer way using pandas?
-        # right now levels are hardcoded....
-        # TODO: ideally event_tags are not repeated per bodypart
-        # alternative; set as index? add frame from index?
-        # # df = df.set_index([df.index, "event_tag"])
-        metadata["Events"] = dict(
-            sorted(
-                metadata["Events"].items(),
-                key=lambda item: item[1],
-            )
-        )  # ensure keys are sorted by value
-        list_keys = list(metadata["Events"].keys())
-        list_next_keys = list_keys[1:]
-        list_next_keys.append("NAN")
-        for vd in df.columns.get_level_values(0).unique().to_list():
-            for scorer in df.columns.get_level_values(1).unique().to_list():
-                for bdprt in df.columns.get_level_values(2).unique().to_list():
-                    # assign ROI (placeholder for now)
-                    # TODO: read from yaml and assign
-                    df[vd, scorer, bdprt, "ROI"] = ""
+        # =======================================
+        # Add ROI per frame and bodypart
+        # =======================================
+        # TODO
 
-                    # assign event_tag per bodypart
-                    for ky, next_ky in zip(list_keys, list_next_keys):
-                        df.loc[
-                            (df.index >= metadata["Events"][ky])
-                            & (
-                                df.index
-                                < metadata["Events"].get(next_ky, math.inf)
-                            ),
-                            (vd, scorer, bdprt, "event_tag"),
-                        ] = ky
+        # Add Events columns
+        # - empty string if no event defined for that frame
+        # - event_tag, if an event is defined for that frame
 
-        # sort to ensure best performance
-        # when accessing data
-        # TODO: keep original bodyparts order?
-        # rn: sorting alphabetically by bodypart
-        df.sort_index(
-            axis=1, level=["bodyparts"], ascending=[True], inplace=True
-        )
+        df["event"] = ""
+        for event_str in metadata["Events"].keys():
+            event_frame = metadata["Events"][event_str]
+            df.event[df.frame == event_frame] = event_str
 
-        # select subset of rows based on
-        # frame numbers from slider (both inclusive)
-        # (index as frame number)
+        # Extract subset of rows based on events slider
+        # (frame numbers from slider, both inclusive)
         list_df_to_export.append(
             df[
-                (df.index >= frame_start_end[0])
-                & (df.index <= frame_start_end[1])
+                (df.frame >= frame_start_end[0])
+                & (df.frame <= frame_start_end[1])
             ]
         )
 
