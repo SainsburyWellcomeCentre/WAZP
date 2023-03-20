@@ -433,7 +433,7 @@ def get_callbacks(app: dash.Dash) -> None:
             color of the export message
         """
 
-        # TODO: select all rows *per page*
+        # TODO: select all rows per page?
         list_missing_pose_data_bool = [
             videos_table_data[r][POSE_DATA_STR] == FALSE_EMOJI
             for r in range(len(videos_table_data))
@@ -472,16 +472,17 @@ def get_callbacks(app: dash.Dash) -> None:
         # ---------------------------
         # If export button is clicked
         if n_clicks_export > 0:
-            # if no rows selected show warning
+            # if no rows are selected show warning
             if not list_selected_rows:
                 n_clicks_export = 0
 
                 export_message_str = "No data to export"
-                # TODO: add timestamp of message?
+                # TODO: add timestamp to the message?
                 export_message_color = "warning"
                 export_message_state = True
 
-            # if rows are selected: export combined df
+            # if rows are selected: export combined
+            # dataframe
             else:
 
                 # get list of selected videos
@@ -500,7 +501,7 @@ def get_callbacks(app: dash.Dash) -> None:
 
                 # get list of dataframes to combine
                 # - one dataframe per selected video
-                # - we add 'File', 'event_tag' and 'ROI' data to each dataframe
+                # - we add the fields 'video_file', 'event_tag' and 'ROI'
                 # - we select only the frames within the interval
                 #   set by the slider
                 list_df_to_export = utils.get_dataframes_to_combine(
@@ -513,21 +514,24 @@ def get_callbacks(app: dash.Dash) -> None:
                 df = pd.concat(list_df_to_export)
 
                 # ---------
-                # Save df as h5
-                # get output path
+                # Export dataframe as h5
+                # TODO: provide an option to export as h5 or csv?
+
+                # Get path to output directory
                 # if not specified in config, use dir where
-                # 'start_wazp_server.sh' is at
+                # server was launched from
                 output_path = pl.Path(
                     app_storage["config"].get(
                         "dashboard_export_data_path", "."
                     )
                 )
 
-                # if output dir does not exist, create it
+                # If output directory does not exist,
+                # create it
                 if not output_path.is_dir():
                     os.mkdir(output_path)
 
-                # save combined df as h5 file
+                # Save combined dataframe as h5 file
                 h5_file_path = output_path / pl.Path(
                     "df_export_"
                     + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -540,7 +544,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 )
 
                 # ---------
-                # reset triggers and states
+                # Reset triggers and states
                 list_selected_rows = []
                 n_clicks_export = 0
                 export_message_str = (
