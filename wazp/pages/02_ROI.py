@@ -151,13 +151,13 @@ inactive_button_style = {
     "color": "dark",
     "active": False,
 }
-roi_save_button = dbc.Button(
+save_rois_button = dbc.Button(
     "Save", id="save-rois-button", download="rois.yaml", **active_button_style
 )
-roi_load_button = dbc.Button(
+load_rois_button = dbc.Button(
     "Load", id="load-rois-button", **active_button_style
 )
-roi_delete_button = dbc.Button(
+delete_rois_button = dbc.Button(
     "Delete", id="delete-rois-button", **active_button_style
 )
 infer_rois_button = dbc.Button(
@@ -255,9 +255,9 @@ table_card = dbc.Card(
             [
                 dbc.Row(
                     [
-                        dbc.Col(roi_save_button, width=3),
-                        dbc.Col(roi_load_button, width=3),
-                        dbc.Col(roi_delete_button, width=3),
+                        dbc.Col(save_rois_button, width=3),
+                        dbc.Col(load_rois_button, width=3),
+                        dbc.Col(delete_rois_button, width=3),
                         dbc.Col(infer_rois_button, width=3),
                         save_rois_tooltip,
                         load_rois_tooltip,
