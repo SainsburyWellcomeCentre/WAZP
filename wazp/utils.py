@@ -99,7 +99,7 @@ def set_edited_row_checkbox_to_true(
     # ignore static type checking here,
     # see https://github.com/pandas-dev/pandas-stubs/issues/256
     df_diff = df.merge(df_previous, how="outer", indicator=True).loc[
-        lambda x: x["_merge"] == "left_only"  # type: ignore
+        lambda x: x["_merge"] == "left_only"
     ]
 
     # Update the set of selected rows
@@ -200,13 +200,13 @@ def read_and_restructure_DLC_dataframe(
     if is_multianimal:
         columns_to_stack.append("individual")
     df = df.stack(level=columns_to_stack)  # type: ignore
+    # Not sure why mypy complains, list of labels is allowed
+    # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.stack.html
+    # ignoring for now
 
     # reset index to remove 'frame','scorer' and 'bodyparts'
     # if multianimal, also remove 'individuals'
-    index_levels_to_remove = ["frame", "scorer", "bodyparts"]
-    if is_multianimal:
-        index_levels_to_remove.append("individual")
-    df = df.reset_index(level=index_levels_to_remove)  # type: ignore
+    df = df.reset_index()  # removes all levels in index by default
 
     # reset name of set of columns and indices
     # (to remove columns name = 'coords')
