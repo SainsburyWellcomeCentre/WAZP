@@ -5,7 +5,9 @@ from typing import Callable
 import cv2
 import pandas as pd
 import plotly.express as px
+import shapely
 import yaml
+from shapely.geometry import Polygon
 
 
 def df_from_metadata_yaml_files(
@@ -305,9 +307,14 @@ def get_dataframes_to_combine(
                 metadata["Events"][x] for x in slider_start_end_labels
             ]
             # ---------------------------
-            # extract ROI paths for this video
-            # TODO
-            # ...
+            # extract ROI paths for this video *if defined*
+            # TODO: should I do case insensitive?
+            # if "rois" in [ky.lower() for ky in metadata.keys()]:
+            if "ROIs" in metadata:
+                ROIs_as_polygons = {
+                    el["name"]: svg_path_to_polygon(el["path"])
+                    for el in metadata["ROIs"]
+                }
             # ---------------------------
 
         # Read h5 file and reorganise columns
@@ -317,30 +324,86 @@ def get_dataframes_to_combine(
 
         # Extract subset of rows based on events slider
         # (frame numbers from slider, both inclusive)
-        list_df_to_export.append(
-            df[
-                (df.frame >= frame_start_end[0])
-                & (df.frame <= frame_start_end[1])
-            ]
-        )
+        df = df.loc[
+            (df.frame >= frame_start_end[0])
+            & (df.frame <= frame_start_end[1]),
+            :,
+        ]
 
+        # ---------------------------------------
         # Add video file column
+        # TODO: position after model_str
         df["video_file"] = video
 
         # ---------------------------------------
-        # Add ROI per frame and bodypart
-        # TODO
+        # Add ROI per frame and bodypart,
+        # if ROIs defined for this video
+
+        # TODO add buffer?
+        # TODO: sort ROIs by decreasing size?
+        # To set hierarchy:
+        # - Start assigning from the smallest,
+        # - only set ROI if not previous defined --not the most efficient
+        df["ROI_tag"] = ""
+        if "ROIs" in metadata:
+            for ROI_str, ROI_poly in sorted(
+                ROIs_as_polygons.items(),
+                key=lambda p: p[1].area,
+                reverse=False,
+            ):
+                # for optimized performance
+                shapely.prepare(ROI_poly)  # in place
+
+                slc_rows_in_ROI = shapely.intersects_xy(
+                    ROI_poly, [(x, y) for (x, y) in zip(df.x, df.y)]
+                )
+
+                slc_rows_w_empty_str = df["ROI_tag"] == ""
+
+                df.loc[
+                    slc_rows_in_ROI & slc_rows_w_empty_str, "ROI_tag"
+                ] = ROI_str
         # ---------------------------------------
 
         # Add Events columns
         # - if no event is defined for that frame: empty str
         # - if an event is defined for that frame: event_tag
-        df["event"] = ""
+        df["event_tag"] = ""
         for event_str in metadata["Events"].keys():
             event_frame = metadata["Events"][event_str]
-            df.loc[df.frame == event_frame, "event"] = event_str
+            df.loc[df.frame == event_frame, "event_tag"] = event_str
+
+        # Append to list
+        list_df_to_export.append(df)
 
     return list_df_to_export
+
+
+def svg_path_to_polygon(svg_path: str) -> Polygon:
+    """Converts an SVG Path that describes a closed
+    polygon into a Shapely polygon.
+
+    The svg_path string starts with 'M' (initial point),
+    indicates end of intermediate line segments with 'L'
+    and marks the end of the string with 'Z' (end of path)
+    (see [1]).
+
+    References
+    ----------
+    .. [1] "SVG Path",
+        https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
+    """
+
+    # strip svg path of initial and end marks
+    svg_path_no_ends = svg_path.lstrip("M").rstrip("Z")
+
+    # extract points as x,y tuples
+    list_points = [
+        tuple(float(s) for s in tuple_str.split(","))
+        for tuple_str in svg_path_no_ends.split("L")
+    ]
+
+    return Polygon(list_points)
 
 
 def assign_roi_colors(
