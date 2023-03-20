@@ -115,6 +115,7 @@ roi_table = dash_table.DataTable(
     id="roi-table",
     columns=[dict(name=c, id=c) for c in init_roi_table_columns],
     data=[],
+    selected_rows=[],
     editable=False,
     style_data={"height": 40},
     style_cell={
@@ -125,6 +126,7 @@ roi_table = dash_table.DataTable(
     },
     style_data_conditional=[],
     fill_width=True,
+    row_selectable="multi",
 )
 
 # Dropdown for ROI selection
@@ -155,24 +157,23 @@ roi_save_button = dbc.Button(
 roi_load_button = dbc.Button(
     "Load", id="load-rois-button", **active_button_style
 )
-roi_clear_button = dbc.Button(
-    "Clear", id="clear-rois-button", **active_button_style
+roi_delete_button = dbc.Button(
+    "Delete", id="delete-rois-button", **active_button_style
 )
 infer_rois_button = dbc.Button(
     "Infer", id="infer-rois-button", **inactive_button_style
 )
 # Tooltips for ROI buttons
 save_rois_tooltip = dbc.Tooltip(
-    "Save the ROIs to the video's " ".metadata.yaml file",
+    "Save all ROIs to the video's " ".metadata.yaml file",
     target="save-rois-button",
 )
 load_rois_tooltip = dbc.Tooltip(
-    "Load ROIs from the video's metadata.yaml file",
+    "Load all ROIs from the video's metadata.yaml file",
     target="load-rois-button",
 )
-clear_rois_tooltip = dbc.Tooltip(
-    "Clear ROIs for this video and start over",
-    target="clear-rois-button",
+delete_rois_tooltip = dbc.Tooltip(
+    "Delete selected ROIs", target="delete-rois-button"
 )
 infer_rois_tooltip = dbc.Tooltip(
     "NOT IMPLEMENTED YET! " "Infer ROI positions based on defined ROIs",
@@ -256,11 +257,11 @@ table_card = dbc.Card(
                     [
                         dbc.Col(roi_save_button, width=3),
                         dbc.Col(roi_load_button, width=3),
-                        dbc.Col(roi_clear_button, width=3),
+                        dbc.Col(roi_delete_button, width=3),
                         dbc.Col(infer_rois_button, width=3),
                         save_rois_tooltip,
                         load_rois_tooltip,
-                        clear_rois_tooltip,
+                        delete_rois_tooltip,
                         infer_rois_tooltip,
                     ],
                 ),

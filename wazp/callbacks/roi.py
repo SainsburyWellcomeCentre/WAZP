@@ -268,34 +268,41 @@ def get_callbacks(app: dash.Dash) -> None:
             return cond_format
 
     @app.callback(
-        Output("roi-storage", "data"),
+        [
+            Output("roi-storage", "data"),
+            Output("roi-table", "selected_rows"),
+        ],
         [
             Input("frame-graph", "relayoutData"),
             Input("load-rois-button", "n_clicks"),
-            Input("clear-rois-button", "n_clicks"),
+            Input("delete-rois-button", "n_clicks"),
         ],
         [
             State("video-select", "value"),
             State("frame-slider", "value"),
             State("roi-storage", "data"),
             State("roi-colors-storage", "data"),
+            State("roi-table", "data"),
+            State("roi-table", "selected_rows"),
         ],
     )
     def update_roi_storage(
         graph_relayout: dict,
         load_clicks: int,
-        clear_clicks: int,
+        delete_clicks: int,
         video_path: str,
         frame_num: int,
         roi_storage: dict,
         roi_color_mapping: dict,
-    ) -> dict:
+        roi_table_rows: list,
+        roi_table_selected_rows: list,
+    ) -> tuple[dict, list]:
         """
-        Update the ROI storage with the latest ROI shapes
-        drawn on the frame graph or with the ROI shapes
-        loaded from the video's .metadata.yaml file.
-        Clear the ROI storage if the clear ROIs button
-        has been clicked.
+        Update the ROI storage, when:
+        - Shapes are added/removed from the frame graph
+        - Shapes are edited on the frame graph
+        - Shapes are loaded from file
+        - Shapes are deleted from the ROI table
 
         Parameters
         ----------
@@ -304,8 +311,8 @@ def get_callbacks(app: dash.Dash) -> None:
             changes to the frame graph.
         load_clicks : int
             Number of times the load ROIs button has been clicked.
-        clear_clicks : int
-            Number of times the clear ROIs button has been clicked.
+        delete_clicks : int
+            Number of times the delete ROIs button has been clicked.
         video_path : str
             Path to the video file.
         frame_num : int
@@ -316,10 +323,17 @@ def get_callbacks(app: dash.Dash) -> None:
             Dictionary with the following keys:
                 - roi2color: dict mapping ROI names to colors
                 - color2roi: dict mapping colors to ROI names
+        roi_table_rows : list
+            List of dictionaries with ROI table data.
+        roi_table_selected_rows : list
+            List of indices for the selected rows in the ROI table.
+
         Returns
         -------
         dict
             Updated dictionary storing ROI data for each video.
+        list
+            List of indices for the selected rows in the ROI table.
         """
 
         trigger = dash.callback_context.triggered[0]["prop_id"]
@@ -393,13 +407,24 @@ def get_callbacks(app: dash.Dash) -> None:
                     yaml_path=metadata_path
                 )
 
-        # If triggered by the clear ROIs button click
-        # Clear the ROIs from the roi-storage
-        elif trigger == "clear-rois-button.n_clicks":
-            if clear_clicks > 0:
-                roi_storage[video_name]["shapes"] = []
+        # If triggered by the delete ROIs button click
+        # Delete the selected ROIs from the roi-storage
+        elif trigger == "delete-rois-button.n_clicks":
+            if delete_clicks > 0 and roi_table_selected_rows:
+                deleted_roi_names = [
+                    roi_table_rows[idx]["name"]
+                    for idx in roi_table_selected_rows
+                ]
+                stored_shapes = roi_storage[video_name]["shapes"]
+                roi_storage[video_name]["shapes"] = [
+                    sh
+                    for sh in stored_shapes
+                    if sh["roi_name"] not in deleted_roi_names
+                ]
+                # Clear the row selection
+                roi_table_selected_rows = []
 
-        return roi_storage
+        return roi_storage, roi_table_selected_rows
 
     @app.callback(
         [
