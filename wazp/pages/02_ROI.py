@@ -144,39 +144,43 @@ active_button_style = {
     "outline": False,
     "color": "dark",
     "active": True,
+    "class_name": "w-100",
 }
-inactive_button_style = {
-    "n_clicks": 0,
-    "outline": True,
-    "color": "dark",
-    "active": False,
-}
+inactive_button_style = active_button_style.copy()
+inactive_button_style.update({"active": False, "outline": True})
+
 save_rois_button = dbc.Button(
-    "Save", id="save-rois-button", download="rois.yaml", **active_button_style
+    "Save all to file",
+    id="save-rois-button",
+    download="rois.yaml",
+    **active_button_style,
 )
 load_rois_button = dbc.Button(
-    "Load", id="load-rois-button", **active_button_style
+    "Load all from file", id="load-rois-button", **active_button_style
 )
 delete_rois_button = dbc.Button(
-    "Delete", id="delete-rois-button", **active_button_style
+    "Delete selected", id="delete-rois-button", **active_button_style
 )
 infer_rois_button = dbc.Button(
-    "Infer", id="infer-rois-button", **inactive_button_style
+    "Infer positions", id="infer-rois-button", **inactive_button_style
 )
 # Tooltips for ROI buttons
 save_rois_tooltip = dbc.Tooltip(
-    "Save all ROIs to the video's " ".metadata.yaml file",
+    "Save all ROIs to the video's .metadata.yaml file. "
+    "This will overwrite any existing ROIs in the file!",
     target="save-rois-button",
 )
 load_rois_tooltip = dbc.Tooltip(
-    "Load all ROIs from the video's metadata.yaml file",
+    "Load all ROIs from the video's metadata.yaml file. "
+    "This will overwrite any existing ROIs in the app!",
     target="load-rois-button",
 )
 delete_rois_tooltip = dbc.Tooltip(
     "Delete selected ROIs", target="delete-rois-button"
 )
 infer_rois_tooltip = dbc.Tooltip(
-    "NOT IMPLEMENTED YET! " "Infer ROI positions based on defined ROIs",
+    "NOT IMPLEMENTED YET! Infer remaining ROI positions "
+    "based on the 'enclosure' ROI (has to be drawn first).",
     target="infer-rois-button",
 )
 
@@ -255,18 +259,27 @@ table_card = dbc.Card(
             [
                 dbc.Row(
                     [
-                        dbc.Col(save_rois_button, width=3),
-                        dbc.Col(load_rois_button, width=3),
-                        dbc.Col(delete_rois_button, width=3),
-                        dbc.Col(infer_rois_button, width=3),
-                        save_rois_tooltip,
-                        load_rois_tooltip,
+                        dbc.Col(delete_rois_button, width=6),
+                        dbc.Col(infer_rois_button, width=6),
                         delete_rois_tooltip,
                         infer_rois_tooltip,
                     ],
                 ),
                 html.Br(),
+                dbc.Row(
+                    [
+                        dbc.Col(save_rois_button, width=6),
+                        dbc.Col(load_rois_button, width=6),
+                        save_rois_tooltip,
+                        load_rois_tooltip,
+                    ],
+                ),
+                html.Br(),
                 dbc.Row(roi_status_alert),
+                save_rois_tooltip,
+                load_rois_tooltip,
+                delete_rois_tooltip,
+                infer_rois_tooltip,
             ]
         ),
     ]
