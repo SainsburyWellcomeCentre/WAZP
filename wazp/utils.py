@@ -143,10 +143,10 @@ def export_selected_rows_as_yaml(
     return
 
 
-def restructure_columns_in_DLC_dataframe(
-    h5_file: str, video_file: str
+def read_and_restructure_DLC_dataframe(
+    h5_file: str,
 ) -> pd.DataFrame:
-    """Reorganise columns in DLC dataframe
+    """Read and reorganise columns in DLC dataframe
     The columns in the DLC dataframe as read from the h5 file are
     reorganised to more closely match a long format.
 
@@ -175,19 +175,19 @@ def restructure_columns_in_DLC_dataframe(
     ----------
     h5_file : str
         path to the input h5 file
-    video_file : str
-        name of the video file associated to the input h5 file
-
     Returns
     -------
     pd.DataFrame
         a dataframe with the h5 file data, and the columns as specified above
     """
     # TODO: can this be less hardcoded?
-    # TODO: should I check fields exist in input h5 file firts?
+    # TODO: check with multianimal dataset!
 
     # read h5 file as a dataframe
     df = pd.read_hdf(h5_file)
+
+    # determine if model is multianimal
+    is_multianimal = "individuals" in df.columns.names
 
     # assuming the DLC index corresponds to frame number!!!
     # TODO: can I check this?
@@ -195,33 +195,60 @@ def restructure_columns_in_DLC_dataframe(
     df.index.name = "frame"
 
     # stack scorer and bodyparts levels from columns to index
-    df = df.stack(level=["scorer", "bodyparts"])
+    # if multianimal, also column 'individuals'
+    columns_to_stack = ["scorer", "bodyparts"]
+    if is_multianimal:
+        columns_to_stack.append("individual")
+    df = df.stack(level=columns_to_stack)  # type: ignore
 
     # reset index to remove 'frame','scorer' and 'bodyparts'
-    df = df.reset_index(level=["frame", "scorer", "bodyparts"])  # type: ignore
+    # if multianimal, also remove 'individuals'
+    index_levels_to_remove = ["frame", "scorer", "bodyparts"]
+    if is_multianimal:
+        index_levels_to_remove.append("individual")
+    df = df.reset_index(level=index_levels_to_remove)  # type: ignore
 
-    # reset columns name (to remove columns name = 'coords')
+    # reset name of set of columns and indices
+    # (to remove columns name = 'coords')
     df.columns.name = ""
     df.index.name = ""
 
     # rename columns
+    # TODO: if multianimal, also 'individuals'
+    columns_to_rename = {
+        "scorer": "model_str",
+        "bodyparts": "bodypart",
+    }
+    if is_multianimal:
+        columns_to_rename["individuals"] = "individual"
     df.rename(
-        columns={
-            "scorer": "model_str",
-            "bodyparts": "bodypart",
-        },
+        columns=columns_to_rename,
         inplace=True,
     )
 
     # reorder columns
-    df = df[["model_str", "frame", "bodypart", "x", "y", "likelihood"]]
+    list_columns_in_order = [
+        "model_str",
+        "frame",
+        "bodypart",
+        "x",
+        "y",
+        "likelihood",
+    ]
+    if is_multianimal:
+        # insert 'individual' in second position
+        list_columns_in_order.insert(1, "individual")
+    df = df[list_columns_in_order]
 
     # sort rows by bodypart and frame
-    df.sort_values(by=["bodypart", "frame"], inplace=True)  # type: ignore
-    df = df.reset_index(drop=True)
+    # if multianimal: sort by individual first
+    list_columns_to_sort_by = ["bodypart", "frame"]
+    if is_multianimal:
+        list_columns_to_sort_by.insert(0, "individual")
+    df.sort_values(by=list_columns_to_sort_by, inplace=True)  # type: ignore
 
-    # add video file
-    df["video_file"] = video_file
+    # reset dataframe index
+    df = df.reset_index(drop=True)
 
     return df  # type: ignore
 
@@ -249,18 +276,17 @@ def get_dataframes_to_combine(
         list of dataframes to concatenate
         before exporting
     """
-    # TODO: provide an option to export as h5 or csv?
     # TODO: allow model_str to be a list?
 
-    # List of h5 files for the selected videos
+    # List of h5 files corresponding to
+    # the selected videos
     list_h5_file_paths = [
         pl.Path(app_storage["config"]["pose_estimation_results_path"])
         / (pl.Path(vd).stem + app_storage["config"]["model_str"] + ".h5")
         for vd in list_selected_videos
     ]
 
-    # Loop thru videos and h5 files to read each dataframe and
-    # extract the relevant subset of frames
+    # Read the dataframe for each videos and h5 file
     list_df_to_export = []
     for h5, video in zip(list_h5_file_paths, list_selected_videos):
 
@@ -271,7 +297,7 @@ def get_dataframes_to_combine(
         )
 
         # Extract the frame limits for this video,
-        # from the slider and the metadata
+        # (from the slider and the metadata)
         with open(yaml_filename, "r") as yf:
             metadata = yaml.safe_load(yf)
             # extract frame start/end
@@ -285,23 +311,9 @@ def get_dataframes_to_combine(
             # ---------------------------
 
         # Read h5 file and reorganise columns
-        # TODO should I already extract subset of frames here?
-        # (less data moving around...)
-        df = restructure_columns_in_DLC_dataframe(h5, video)
-
-        # =======================================
-        # Add ROI per frame and bodypart
-        # =======================================
-        # TODO
-
-        # Add Events columns
-        # - empty string if no event defined for that frame
-        # - event_tag, if an event is defined for that frame
-
-        df["event"] = ""
-        for event_str in metadata["Events"].keys():
-            event_frame = metadata["Events"][event_str]
-            df.event[df.frame == event_frame] = event_str
+        # TODO: I assume index in DLC dataframe represents frame number
+        # Can I check this?
+        df = read_and_restructure_DLC_dataframe(h5)
 
         # Extract subset of rows based on events slider
         # (frame numbers from slider, both inclusive)
@@ -311,6 +323,22 @@ def get_dataframes_to_combine(
                 & (df.frame <= frame_start_end[1])
             ]
         )
+
+        # Add video file column
+        df["video_file"] = video
+
+        # ---------------------------------------
+        # Add ROI per frame and bodypart
+        # TODO
+        # ---------------------------------------
+
+        # Add Events columns
+        # - if no event is defined for that frame: empty str
+        # - if an event is defined for that frame: event_tag
+        df["event"] = ""
+        for event_str in metadata["Events"].keys():
+            event_frame = metadata["Events"][event_str]
+            df.loc[df.frame == event_frame, "event"] = event_str
 
     return list_df_to_export
 
