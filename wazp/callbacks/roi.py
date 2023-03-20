@@ -520,7 +520,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 new_frame = Image.open(frame_filepath)
                 # Put the frame in a figure
                 new_fig = px.imshow(new_frame)
-                # Add the stored shapes and set the next ROI color
+                # Add the stored shapes and set the nextROI color
                 new_fig.update_layout(
                     shapes=graph_shapes,
                     newshape_line_color=next_shape_color,
@@ -647,3 +647,83 @@ def get_callbacks(app: dash.Dash) -> None:
             alert_msg = "No ROIs to save."
             alert_color = "light"
             return dash.no_update, alert_msg, alert_color, True
+
+    @app.callback(
+        Output("save-rois-button", "disabled"),
+        Input("roi-storage", "data"),
+        State("video-select", "value"),
+    )
+    def enable_save_rois_button(
+        roi_storage: dict,
+        video_path: str,
+    ) -> bool:
+        """Enable the save ROIs button if there are ROIs.
+
+        Parameters
+        ----------
+        roi_storage : dict
+            Dictionary storing already drawn ROI shapes.
+        video_path : str
+            Path to the selected video file.
+
+        Returns
+        -------
+        bool
+            Whether to enable the save ROIs button.
+        """
+
+        video_name = pl.Path(video_path).name
+        roi_shapes = []
+        if video_name in roi_storage.keys():
+            roi_shapes = roi_storage[video_name]["shapes"]
+        return len(roi_shapes) == 0
+
+    @app.callback(
+        Output("load-rois-button", "disabled"), Input("video-select", "value")
+    )
+    def enable_load_rois_button(
+        video_path: str,
+    ) -> bool:
+        """If there are saved ROIs for the selected video,
+        enable the load ROIs button.
+
+        Parameters
+        ----------
+        video_path : str
+            Path to the selected video file.
+
+        Returns
+        -------
+        bool
+            Whether to enable the load ROIs button.
+        """
+
+        video_path_pl = pl.Path(video_path)
+        metadata_path = video_path_pl.with_suffix(".metadata.yaml")
+        try:
+            saved_shapes = utils.load_rois_from_yaml(yaml_path=metadata_path)
+            return len(saved_shapes) == 0
+        except (FileNotFoundError, KeyError):
+            return True
+
+    @app.callback(
+        Output("delete-rois-button", "disabled"),
+        Input("roi-table", "selected_rows"),
+    )
+    def enable_delete_rois_button(
+        selected_rows: list,
+    ) -> bool:
+        """Enable the delete ROIs button if there are selected rows
+        in the ROI table.
+
+        Parameters
+        ----------
+        selected_rows : list
+            List of selected rows.
+
+        Returns
+        -------
+        bool
+            Whether to enable the delete ROIs button.
+        """
+        return len(selected_rows) == 0

@@ -520,7 +520,7 @@ def load_rois_from_yaml(yaml_path: pl.Path) -> list:
                     yaml_entry_to_stored_shape(roi) for roi in metadata["ROIs"]
                 ]
             else:
-                raise ValueError(f"Could not find key 'ROIs' in {yaml_path}")
+                raise KeyError(f"Could not find key 'ROIs' in {yaml_path}")
     else:
         raise FileNotFoundError(f"Could not find {yaml_path}")
 
