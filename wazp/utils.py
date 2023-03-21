@@ -402,14 +402,14 @@ def add_ROIs_to_video_dataframe(
     Parameters
     ----------
     df : pd.Dataframe
-        pandas dataframe holding the pose estimation results
+        pandas dataframe with the pose estimation results
         for one video. It is a single-level dataframe, restructured
         from the DeepLabCut output.
     metadata : dict
-        dictionary holding the metadata for the current video.
+        dictionary with the metadata for the current video.
     ROIs_as_polygons : dict
-        dictionary holding pairs of ROI tags and their corresponding
-        shapely polygons for the current video.
+        dictionary for the current video with ROI tags as keys,
+        and their corresponding shapely polygons as values.
     app_storage : dict
         data held in temporary memory storage,
         accessible to all tabs in the app
@@ -417,7 +417,9 @@ def add_ROIs_to_video_dataframe(
     Returns
     -------
     df : pd.Dataframe
-        _description_
+        pandas dataframe with the pose estimation results
+        for one video, and the ROI per bodypart per frame
+        assigned.
     """
 
     # Initialize ROI column with empty strings
