@@ -16,3 +16,4 @@ event_tags:
   - box_1_open
   - box_1_closed
   - experiment_end
+use_ROIs_order_as_hierarchy: False
