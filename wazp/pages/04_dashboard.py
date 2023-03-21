@@ -18,7 +18,7 @@ dash.register_page(__name__)
 layout = html.Div(
     className="row",
     children=[
-        html.H1("Dashboard"),
+        html.H1("Dashboard & data export"),
         html.Br(),
         html.H5(
             "Input data", style={"margin-top": "20px", "margin-bottom": "20px"}
