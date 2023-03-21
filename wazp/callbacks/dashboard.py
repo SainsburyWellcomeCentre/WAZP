@@ -245,23 +245,9 @@ def create_buttons_and_message() -> html.Div:
         style={"margin-right": "10px", "margin-left": "10px"},
     )
 
-    export_message = dbc.Alert(
-        children="Data export message",
-        id="export-message",
-        dismissable=True,
-        fade=False,
-        is_open=False,
-        color="success",  # warning or danger
-        style={
-            "margin-right": "150px",
-            "margin-left": "10px",
-            "margin-top": "5px",
-        },
-    )
-
     clipboard = dcc.Clipboard(
         id="clipboard",
-        title="Copy full path to clipboard",  # tooltip text
+        title="Copy full path",  # tooltip text
         n_clicks=0,
         style={
             "display": "inline",  # visible
@@ -276,7 +262,21 @@ def create_buttons_and_message() -> html.Div:
         children=[
             clipboard,
         ],
-        style={"display": "none"},  # hidden
+        style={"display": "inline-block"},  # hidden
+    )
+
+    export_message = dbc.Alert(
+        children=["Data export message", clipboard_wrapper],
+        id="export-message",
+        dismissable=True,
+        fade=False,
+        is_open=False,
+        color="success",  # warning or danger
+        style={
+            "margin-right": "0px",
+            "margin-left": "10px",
+            "margin-top": "5px",
+        },
     )
 
     return html.Div(
@@ -285,7 +285,6 @@ def create_buttons_and_message() -> html.Div:
             unselect_all_videos_button,
             export_button,
             export_message,
-            clipboard_wrapper,
         ]
     )
 
@@ -401,11 +400,11 @@ def get_callbacks(app: dash.Dash) -> None:
         slider_marks: dict,
         pose_unavail_message_str: str,
         pose_unavail_message_state: bool,
-        export_message_str: str,
+        export_message_children: list,
         export_message_state: bool,
         export_message_color,
         app_storage: dict,
-    ) -> tuple[list, int, int, int, str, bool, str, bool, str]:
+    ) -> tuple[list, int, int, int, str, bool, list, bool, str]:
         """Modify the selection status of the rows in the videos' table.
 
         A row's selection status (i.e., its checkbox) is modified if:
@@ -437,8 +436,8 @@ def get_callbacks(app: dash.Dash) -> None:
             text content of the 'pose data unavailable' message
         pose_unavail_message_state : bool
             visibility state of the 'pose data unavailable' message
-        export_message_str : str
-            text content of the export message
+        export_message_children : list
+            children of the export message component
         export_message_state : bool
             visibility state of the export message
         export_message_color : str
@@ -461,8 +460,8 @@ def get_callbacks(app: dash.Dash) -> None:
             text content of the 'pose data unavailable' message
         pose_unavail_message_state : bool
             visibility state of the 'pose data unavailable' message
-        export_message_str : str
-            text content of the export message
+        export_message_children : list
+            children of the export message component
         export_message_state : bool
             visibility state of the export message
         export_message_color : str
@@ -513,8 +512,10 @@ def get_callbacks(app: dash.Dash) -> None:
             if not list_selected_rows:
                 n_clicks_export = 0
 
-                export_message_str = "No data to export"
-                # TODO: add timestamp of message?
+                export_message_children[0] = "No data to export"
+                export_message_children[1]["props"]["style"] = {
+                    "display": "none"
+                }
                 export_message_color = "warning"
                 export_message_state = True
 
@@ -580,13 +581,15 @@ def get_callbacks(app: dash.Dash) -> None:
                 # reset triggers and states
                 list_selected_rows = []
                 n_clicks_export = 0
-                export_message_str = "".join(
+                export_message_children[0] = "".join(
                     (
                         "Combined dataframe ",
                         f"exported successfully at: '{h5_file_path}'",
                     )
                 )  # this is because max line length in linter
-                # TODO: add timestamp to message?
+                export_message_children[1]["props"]["style"] = {
+                    "display": "inline-block"
+                }
                 export_message_color = "success"
                 export_message_state = True
 
@@ -597,7 +600,7 @@ def get_callbacks(app: dash.Dash) -> None:
             n_clicks_export,
             pose_unavail_message_str,
             pose_unavail_message_state,
-            export_message_str,
+            export_message_children,
             export_message_state,
             export_message_color,
         )
@@ -611,7 +614,7 @@ def get_callbacks(app: dash.Dash) -> None:
     )
     def copy_path_from_export_message(
         n_clicks_clipboard: int,
-        export_message_str: str,
+        export_message_children: list,
         clipboard_content: str,
     ) -> tuple[str, int]:
         """Copy fullpath from export message
@@ -621,8 +624,8 @@ def get_callbacks(app: dash.Dash) -> None:
         ----------
         n_clicks_clipboard : int
             number of clicks on the clipboard icon
-        export_message_str : str
-            text content of the export message
+        export_message_children : list
+            children of the export message component
         clipboard_content : str
             text content in the clipboard
 
@@ -637,48 +640,10 @@ def get_callbacks(app: dash.Dash) -> None:
         if n_clicks_clipboard > 0:
             # extract strings between single quotes (first match)
             # TODO: is single quotes requirement limiting?
-            relative_path = re.findall(r"\'([^]]*)\'", export_message_str)[0]
+            relative_path = re.findall(
+                r"\'([^]]*)\'", export_message_children[0]
+            )[0]
             clipboard_content = str(pl.Path(relative_path).resolve())
             n_clicks_clipboard = 0
 
         return (clipboard_content, n_clicks_clipboard)
-
-    @app.callback(
-        Output("clipboard-wrapper", "style"),  #
-        Input("export-message", "is_open"),
-        State("export-message", "color"),
-        State("clipboard-wrapper", "style"),  #
-    )
-    def toggle_clipboard_icon_visibility(
-        export_message_state: bool,
-        export_message_color: str,
-        clipboard_wrapper_style: dict,
-    ) -> dict:
-        """Toggle clipboard icon visibility
-
-        Parameters
-        ----------
-        export_message_state : bool
-            visibility state of the export message
-        export_message_color : str
-            color of the export message
-        clipboard_wrapper_style : dict
-            dictionary holding the css style of the
-            clipboard html wrapper. It contains only
-            a 'display' key.
-
-        Returns
-        -------
-        clipboard_wrapper_style : dict
-            dictionary holding the css style of the
-            clipboard html wrapper. It contains only
-            a 'display' key.
-        """
-        # if export message is visible
-        if export_message_state and (export_message_color == "success"):
-            clipboard_wrapper_style = {"display": "inline-block"}
-        # if alert is dismissed: hide icon
-        else:
-            clipboard_wrapper_style = {"display": "none"}
-
-        return clipboard_wrapper_style
