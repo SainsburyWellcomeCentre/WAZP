@@ -288,7 +288,7 @@ def get_dataframes_to_combine(
         for vd in list_selected_videos
     ]
 
-    # Read the dataframe for each videos and h5 file
+    # Read the dataframe for each video and h5 file
     list_df_to_export = []
     for h5, video in zip(list_h5_file_paths, list_selected_videos):
 
@@ -298,16 +298,18 @@ def get_dataframes_to_combine(
             pl.Path(video).stem + ".metadata.yaml"
         )
 
-        # Extract the frame limits for this video,
+        # Extract the frame limits
         # (from the slider and the metadata)
         with open(yaml_filename, "r") as yf:
+
             metadata = yaml.safe_load(yf)
+
             # extract frame start/end
             frame_start_end = [
                 metadata["Events"][x] for x in slider_start_end_labels
             ]
-            # ---------------------------
-            # extract ROI paths for this video *if defined*
+
+            # extract ROI paths for this video if defined
             # TODO: should I do case insensitive?
             # if "rois" in [ky.lower() for ky in metadata.keys()]:
             if "ROIs" in metadata:
@@ -315,11 +317,10 @@ def get_dataframes_to_combine(
                     el["name"]: svg_path_to_polygon(el["path"])
                     for el in metadata["ROIs"]
                 }
-            # ---------------------------
 
         # Read h5 file and reorganise columns
         # TODO: I assume index in DLC dataframe represents frame number
-        # Can I check this?
+        # (0-indexed) -- check this with download from ceph and ffmpeg
         df = read_and_restructure_DLC_dataframe(h5)
 
         # Extract subset of rows based on events slider
@@ -330,20 +331,18 @@ def get_dataframes_to_combine(
             :,
         ]
 
-        # ---------------------------------------
         # Add video file column
-        # TODO: position after model_str
-        df["video_file"] = video
+        # (insert after model_str)
+        df.insert(1, "video_file", video)
 
-        # ---------------------------------------
         # Add ROI per frame and bodypart,
         # if ROIs defined for this video
-
-        # TODO add buffer?
-        # TODO: sort ROIs by decreasing size?
-        # To set hierarchy:
+        #
+        # To set hierarchy of ROIs:
         # - Start assigning from the smallest,
-        # - only set ROI if not previous defined --not the most efficient
+        # - only set ROI if not previously defined
+        # TODO: Is there a better approach?
+        # TODO: should we allow for a custom hierarchy?
         df["ROI_tag"] = ""
         if "ROIs" in metadata:
             for ROI_str, ROI_poly in sorted(
@@ -352,20 +351,24 @@ def get_dataframes_to_combine(
                 reverse=False,
             ):
                 # for optimized performance
-                shapely.prepare(ROI_poly)  # in place
+                # (transforms in place)
+                shapely.prepare(ROI_poly)
 
+                # select rows with x,y coordinates in ROI
+                # TODO: add buffer?
                 slc_rows_in_ROI = shapely.intersects_xy(
                     ROI_poly, [(x, y) for (x, y) in zip(df.x, df.y)]
                 )
 
+                # select rows with no ROI assigned
                 slc_rows_w_empty_str = df["ROI_tag"] == ""
 
+                # assign ROI
                 df.loc[
                     slc_rows_in_ROI & slc_rows_w_empty_str, "ROI_tag"
                 ] = ROI_str
-        # ---------------------------------------
 
-        # Add Events columns
+        # Add Event tags
         # - if no event is defined for that frame: empty str
         # - if an event is defined for that frame: event_tag
         df["event_tag"] = ""
@@ -390,11 +393,11 @@ def svg_path_to_polygon(svg_path: str) -> Polygon:
 
     References
     ----------
-    .. [1] "SVG Path",
+    [1] "SVG Path",
         https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
     """
 
-    # strip svg path of initial and end marks
+    # strip svg_path of initial and end marks
     svg_path_no_ends = svg_path.lstrip("M").rstrip("Z")
 
     # extract points as x,y tuples
