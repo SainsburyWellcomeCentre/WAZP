@@ -4,7 +4,7 @@ metadata_key_field_str: File
 pose_estimation_results_path: ./sample_project/pose_estimation_results
 model_str: DLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000
 dashboard_export_data_path: ./sample_project/output
-roi_names:
+ROI_tags:
   - enclosure
   - left_box
   - top_box
