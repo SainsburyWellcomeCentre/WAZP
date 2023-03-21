@@ -341,17 +341,19 @@ def get_dataframes_to_combine(
         # - only set ROI if not previously defined
         # TODO: Is there a better approach?
         # TODO: should we allow for a custom hierarchy?
-        df = add_ROIs_to_video_dataframe(
-            df, metadata, ROIs_as_polygons, app_storage
-        )
+        if "ROIs" in metadata:
+            df = add_ROIs_to_video_dataframe(
+                df, metadata, ROIs_as_polygons, app_storage
+            )
 
-        # Add Event tags
+        # Add Event tags if defined
         # - if no event is defined for that frame: empty str
         # - if an event is defined for that frame: event_tag
-        df["event_tag"] = ""
-        for event_str in metadata["Events"].keys():
-            event_frame = metadata["Events"][event_str]
-            df.loc[df.frame == event_frame, "event_tag"] = event_str
+        if "Events" in metadata:
+            df["event_tag"] = ""
+            for event_str in metadata["Events"].keys():
+                event_frame = metadata["Events"][event_str]
+                df.loc[df.frame == event_frame, "event_tag"] = event_str
 
         # Append to list
         list_df_to_export.append(df)
