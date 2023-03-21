@@ -461,8 +461,17 @@ def add_ROIs_to_video_dataframe(
             # (applies transform in place)
             shapely.prepare(ROI_poly)
 
-            # select rows with x,y coordinates in ROI
-            # TODO: add buffer?
+            # Consider buffer around boundaries if required
+            # TODO: remove this buffer option? inspired by this SO answer
+            # https://stackoverflow.com/a/59033011
+            if "buffer_around_ROIs_boundaries" in app_storage["config"]:
+                ROI_poly = ROI_poly.buffer(
+                    float(
+                        app_storage["config"]["buffer_around_ROIs_boundaries"]
+                    )
+                )
+
+            # select rows with x,y coordinates inside ROI (including boundary)
             slc_rows_in_ROI = shapely.intersects_xy(
                 ROI_poly, [(x, y) for (x, y) in zip(df.x, df.y)]
             )

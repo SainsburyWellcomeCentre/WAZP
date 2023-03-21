@@ -17,3 +17,4 @@ event_tags:
   - box_1_closed
   - experiment_end
 use_ROIs_order_as_hierarchy: False
+buffer_around_ROIs_boundaries: 1e-09
