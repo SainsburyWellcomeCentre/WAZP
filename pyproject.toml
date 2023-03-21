@@ -22,7 +22,8 @@ dependencies = [
   "dash",
   "dash-bootstrap-components",
   "opencv-python",
-  "PyYAML"
+  "PyYAML",
+  "shapely",
 ]
 
 classifiers = [
