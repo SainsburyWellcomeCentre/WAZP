@@ -279,6 +279,7 @@ def get_dataframes_to_combine(
         before exporting
     """
     # TODO: allow model_str to be a list?
+    # (i.e., consider the option of different models being used)
 
     # List of h5 files corresponding to
     # the selected videos
@@ -297,26 +298,23 @@ def get_dataframes_to_combine(
         yaml_filename = pl.Path(app_storage["config"]["videos_dir_path"]) / (
             pl.Path(video).stem + ".metadata.yaml"
         )
-
-        # Extract the frame limits
-        # (from the slider and the metadata)
         with open(yaml_filename, "r") as yf:
-
             metadata = yaml.safe_load(yf)
 
-            # extract frame start/end
-            frame_start_end = [
-                metadata["Events"][x] for x in slider_start_end_labels
-            ]
+        # Extract frame start/end using info from slider
+        frame_start_end = [
+            metadata["Events"][x] for x in slider_start_end_labels
+        ]
 
-            # extract ROI paths for this video if defined
-            # TODO: should I do case insensitive?
-            # if "rois" in [ky.lower() for ky in metadata.keys()]:
-            if "ROIs" in metadata:
-                ROIs_as_polygons = {
-                    el["name"]: svg_path_to_polygon(el["path"])
-                    for el in metadata["ROIs"]
-                }
+        # Extract ROI paths for this video if defined
+        # TODO: should I do case insensitive?
+        # if "rois" in [ky.lower() for ky in metadata.keys()]:
+        if "ROIs" in metadata:
+            ROIs_as_polygons = {
+                el["name"]: svg_path_to_polygon(el["path"])
+                for el in metadata["ROIs"]
+            }
+        # -----------------------------
 
         # Read h5 file and reorganise columns
         # TODO: I assume index in DLC dataframe represents frame number
@@ -331,42 +329,21 @@ def get_dataframes_to_combine(
             :,
         ]
 
+        # -----------------------------
         # Add video file column
         # (insert after model_str)
         df.insert(1, "video_file", video)
 
         # Add ROI per frame and bodypart,
         # if ROIs defined for this video
-        #
         # To set hierarchy of ROIs:
         # - Start assigning from the smallest,
         # - only set ROI if not previously defined
         # TODO: Is there a better approach?
         # TODO: should we allow for a custom hierarchy?
-        df["ROI_tag"] = ""
-        if "ROIs" in metadata:
-            for ROI_str, ROI_poly in sorted(
-                ROIs_as_polygons.items(),
-                key=lambda p: p[1].area,
-                reverse=False,
-            ):
-                # for optimized performance
-                # (transforms in place)
-                shapely.prepare(ROI_poly)
-
-                # select rows with x,y coordinates in ROI
-                # TODO: add buffer?
-                slc_rows_in_ROI = shapely.intersects_xy(
-                    ROI_poly, [(x, y) for (x, y) in zip(df.x, df.y)]
-                )
-
-                # select rows with no ROI assigned
-                slc_rows_w_empty_str = df["ROI_tag"] == ""
-
-                # assign ROI
-                df.loc[
-                    slc_rows_in_ROI & slc_rows_w_empty_str, "ROI_tag"
-                ] = ROI_str
+        df = add_ROIs_to_video_dataframe(
+            df, metadata, ROIs_as_polygons, app_storage
+        )
 
         # Add Event tags
         # - if no event is defined for that frame: empty str
@@ -407,6 +384,96 @@ def svg_path_to_polygon(svg_path: str) -> Polygon:
     ]
 
     return Polygon(list_points)
+
+
+def add_ROIs_to_video_dataframe(
+    df: pd.DataFrame, metadata: dict, ROIs_as_polygons: dict, app_storage: dict
+) -> pd.DataFrame:
+    """Assign ROI to every row in the dataframe
+    corresponding to the current video.
+
+    If no ROIs are defined for this video, an empty string
+    is assigned to all rows.
+
+    The hierarchy of ROIs is defined either based on their area
+    (if a point is contained in several ROIs, the smallest one
+    is assigned), or based on the custom order defined by the user.
+
+    Parameters
+    ----------
+    df : pd.Dataframe
+        pandas dataframe holding the pose estimation results
+        for one video. It is a single-level dataframe, restructured
+        from the DeepLabCut output.
+    metadata : dict
+        dictionary holding the metadata for the current video.
+    ROIs_as_polygons : dict
+        dictionary holding pairs of ROI tags and their corresponding
+        shapely polygons for the current video.
+    app_storage : dict
+        data held in temporary memory storage,
+        accessible to all tabs in the app
+
+    Returns
+    -------
+    df : pd.Dataframe
+        _description_
+    """
+
+    # Initialize ROI column with empty strings
+    df["ROI_tag"] = ""
+
+    # If there are ROIs defined for this video:
+    if "ROIs" in metadata:
+
+        # Define hierarchy of ROIs
+        flag_use_ROI_custom_order = app_storage["config"].get(
+            "use_ROIs_order_as_hierarchy", False  # reads a bool
+        )
+
+        # -----------------
+        # Use custom hierarchy of ROIs
+        # if hierarchy flag in input config exists
+        # and is True
+        if flag_use_ROI_custom_order:
+            list_sorted_ROI_pairs = [
+                x
+                for x, _ in sorted(
+                    zip(
+                        ROIs_as_polygons.items(),
+                        enumerate(app_storage["config"]["ROI_tags"]),
+                    ),
+                    key=lambda pair: pair[1][0],
+                )
+            ]
+
+        # else: set hierarchy of ROIs based in their area
+        else:
+            list_sorted_ROI_pairs = sorted(
+                ROIs_as_polygons.items(),
+                key=lambda pair: pair[1].area,  # sort by increasing area
+            )
+
+        # -------------------
+        # Assign ROIs
+        for ROI_str, ROI_poly in list_sorted_ROI_pairs:
+            # for optimized performance
+            # (applies transform in place)
+            shapely.prepare(ROI_poly)
+
+            # select rows with x,y coordinates in ROI
+            # TODO: add buffer?
+            slc_rows_in_ROI = shapely.intersects_xy(
+                ROI_poly, [(x, y) for (x, y) in zip(df.x, df.y)]
+            )
+
+            # select rows with no ROI assigned
+            slc_rows_w_empty_str = df["ROI_tag"] == ""
+
+            # assign ROI
+            df.loc[slc_rows_in_ROI & slc_rows_w_empty_str, "ROI_tag"] = ROI_str
+
+    return df
 
 
 def assign_roi_colors(
