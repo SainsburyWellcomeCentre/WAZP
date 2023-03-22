@@ -237,6 +237,14 @@ def create_buttons_and_message() -> html.Div:
         style={"margin-right": "10px", "margin-left": "10px"},
     )
 
+    export_options = dcc.Checklist(
+        id="export-options",
+        options=["as .h5 file", "as .tsv file"],
+        value=["as .h5 file"],
+        style={"margin-left": "10px"},
+        labelStyle={"display": "flex", "align-items": "center"},
+    )
+
     export_message = dbc.Alert(
         children="Data export message",
         id="export-message",
@@ -256,6 +264,7 @@ def create_buttons_and_message() -> html.Div:
             select_all_videos_button,
             unselect_all_videos_button,
             export_button,
+            export_options,
             export_message,
         ]
     )
@@ -341,6 +350,7 @@ def get_callbacks(app: dash.Dash) -> None:
         Output("pose-data-unavailable-message", "message"),
         Output("pose-data-unavailable-message", "displayed"),
         Output("export-message", "children"),
+        Output("export-options", "value"),
         Output("export-message", "is_open"),
         Output("export-message", "color"),
         Input("video-data-table", "selected_rows"),
@@ -353,6 +363,7 @@ def get_callbacks(app: dash.Dash) -> None:
         State("pose-data-unavailable-message", "message"),
         State("pose-data-unavailable-message", "displayed"),
         State("export-message", "children"),
+        State("export-options", "value"),
         State("export-message", "is_open"),
         State("export-message", "color"),
         State("session-storage", "data"),
@@ -367,11 +378,12 @@ def get_callbacks(app: dash.Dash) -> None:
         slider_marks: dict,
         pose_unavail_message_str: str,
         pose_unavail_message_state: bool,
-        export_message_str,
-        export_message_state,
-        export_message_color,
+        export_message_children: list,
+        export_option_selected: list,
+        export_message_state: bool,
+        export_message_color: str,
         app_storage: dict,
-    ) -> tuple[list, int, int, int, str, bool, str, bool, str]:
+    ) -> tuple[list, int, int, int, str, bool, list, list, bool, str]:
         """Modify the selection status of the rows in the videos table.
 
         A row's selection status (i.e., its checkbox) is modified if (1) the
@@ -401,8 +413,10 @@ def get_callbacks(app: dash.Dash) -> None:
             text content of the 'pose data unavailable' message
         pose_unavail_message_state : bool
             visibility state of the 'pose data unavailable' message
-        export_message_str : _type_
+        export_message_children : _type_
             text content of the export message
+        export_message_opt : str
+            export option selected
         export_message_state : _type_
             visibility state of the export message
         export_message_color : _type_
@@ -425,8 +439,10 @@ def get_callbacks(app: dash.Dash) -> None:
             text content of the 'pose data unavailable' message
         pose_unavail_message_state : bool
             visibility state of the 'pose data unavailable' message
-        export_message_str : str
-            text content of the export message
+        export_message_children : str
+            list of children for export message component
+        export_message_opt : str
+            export option selected
         export_message_state : bool
             visibility state of the export message
         export_message_color : str
@@ -476,8 +492,7 @@ def get_callbacks(app: dash.Dash) -> None:
             if not list_selected_rows:
                 n_clicks_export = 0
 
-                export_message_str = "No data to export"
-                # TODO: add timestamp to the message?
+                export_message_children = ["No data to export"]
                 export_message_color = "warning"
                 export_message_state = True
 
@@ -531,29 +546,75 @@ def get_callbacks(app: dash.Dash) -> None:
                 if not output_path.is_dir():
                     os.mkdir(output_path)
 
-                # Save combined dataframe as h5 file
-                h5_file_path = output_path / pl.Path(
+                # Filepath without extension
+                file_path = output_path / pl.Path(
                     "df_export_"
                     + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                    + ".h5"
-                )
-                df.to_hdf(
-                    h5_file_path,
-                    key="df",
-                    mode="w",
                 )
 
-                # ---------
-                # Reset triggers and states
-                list_selected_rows = []
-                n_clicks_export = 0
-                export_message_str = (
-                    "Combined dataframe ",
-                    f"exported successfully at: '{h5_file_path}'",
-                )
-                # TODO: add timestamp to message?
-                export_message_color = "success"
-                export_message_state = True
+                # Export combined dataframe as h5 and/or tsv file
+                if not export_option_selected:
+                    n_clicks_export = 0
+                    export_message_children = ["No export format selected"]
+                    export_message_color = "warning"
+                    export_message_state = True
+
+                else:
+                    list_suffixes = []
+                    if "as .h5 file" in export_option_selected:
+                        suffix = ".h5"
+                        df.to_hdf(  # ---- changes fn
+                            file_path.with_suffix(
+                                suffix
+                            ),  # ---- changes suffix
+                            key="df",  # ---changes args
+                            mode="w",
+                        )
+                        list_suffixes.append(suffix)
+
+                    if "as .tsv file" in export_option_selected:
+                        suffix = ".tsv"
+                        df.to_csv(
+                            file_path.with_suffix(suffix),
+                            sep="\t",
+                            index=False,
+                        )
+                        list_suffixes.append(suffix)
+                        # NOTE: to read, use pandas.read_csv with sep='\t',
+                        # and keep_default_na=False
+                        # TODO: should I print this out too in the message?
+
+                    # ---------
+                    # Reset triggers and states
+                    list_selected_rows = []
+                    n_clicks_export = 0
+
+                    # Successful export message
+                    export_message_base = [
+                        "Combined dataframe successfully exported at: "
+                    ]
+                    # interleave paths to exported data with line break
+                    # components (html.Br())
+                    # TODO: to combine with clipboard functionality, I'll
+                    # need to interleave here two clipboard components,
+                    # one after each path
+                    export_message_w_line_breaks = [
+                        val
+                        for pair in zip(
+                            [html.Br()] * len(list_suffixes),
+                            [
+                                f"'{file_path.with_suffix(x)}'"
+                                for x in list_suffixes
+                            ],
+                        )
+                        for val in pair
+                    ]
+                    export_message_children = (
+                        export_message_base + export_message_w_line_breaks
+                    )
+                    export_message_color = "success"
+                    export_message_state = True
+                    export_option_selected = []
 
         return (
             list_selected_rows,
@@ -562,7 +623,8 @@ def get_callbacks(app: dash.Dash) -> None:
             n_clicks_export,
             pose_unavail_message_str,
             pose_unavail_message_state,
-            export_message_str,
+            export_message_children,
+            export_option_selected,
             export_message_state,
             export_message_color,
         )
