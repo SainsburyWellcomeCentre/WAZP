@@ -340,7 +340,7 @@ def get_dataframes_to_combine(
         # - Start assigning from the smallest,
         # - only set ROI if not previously defined
         # TODO: Is there a better approach?
-        # TODO: should we allow for a custom hierarchy?
+        df["ROI_tag"] = ""  # initialize ROI column with empty strings
         if "ROIs" in metadata:
             df = add_ROIs_to_video_dataframe(
                 df, metadata, ROIs_as_polygons, app_storage
@@ -349,8 +349,8 @@ def get_dataframes_to_combine(
         # Add Event tags if defined
         # - if no event is defined for that frame: empty str
         # - if an event is defined for that frame: event_tag
+        df["event_tag"] = ""
         if "Events" in metadata:
-            df["event_tag"] = ""
             for event_str in metadata["Events"].keys():
                 event_frame = metadata["Events"][event_str]
                 df.loc[df.frame == event_frame, "event_tag"] = event_str
@@ -424,67 +424,59 @@ def add_ROIs_to_video_dataframe(
         assigned.
     """
 
-    # Initialize ROI column with empty strings
-    df["ROI_tag"] = ""
+    # Define hierarchy of ROIs
+    flag_use_ROI_custom_order = app_storage["config"].get(
+        "use_ROIs_order_as_hierarchy", False  # reads a bool
+    )
 
-    # If there are ROIs defined for this video:
-    if "ROIs" in metadata:
+    # -----------------
+    # Use custom hierarchy of ROIs
+    # if hierarchy flag in input config exists
+    # and is True
+    if flag_use_ROI_custom_order:
+        list_sorted_ROI_pairs = [
+            x
+            for x, _ in sorted(
+                zip(
+                    ROIs_as_polygons.items(),
+                    enumerate(app_storage["config"]["ROI_tags"]),
+                ),
+                key=lambda pair: pair[1][0],
+            )
+        ]
 
-        # Define hierarchy of ROIs
-        flag_use_ROI_custom_order = app_storage["config"].get(
-            "use_ROIs_order_as_hierarchy", False  # reads a bool
+    # else: set hierarchy of ROIs based in their area
+    else:
+        list_sorted_ROI_pairs = sorted(
+            ROIs_as_polygons.items(),
+            key=lambda pair: pair[1].area,  # sort by increasing area
         )
 
-        # -----------------
-        # Use custom hierarchy of ROIs
-        # if hierarchy flag in input config exists
-        # and is True
-        if flag_use_ROI_custom_order:
-            list_sorted_ROI_pairs = [
-                x
-                for x, _ in sorted(
-                    zip(
-                        ROIs_as_polygons.items(),
-                        enumerate(app_storage["config"]["ROI_tags"]),
-                    ),
-                    key=lambda pair: pair[1][0],
-                )
-            ]
+    # -------------------
+    # Assign ROIs
+    for ROI_str, ROI_poly in list_sorted_ROI_pairs:
+        # for optimized performance
+        # (applies transform in place)
+        shapely.prepare(ROI_poly)
 
-        # else: set hierarchy of ROIs based in their area
-        else:
-            list_sorted_ROI_pairs = sorted(
-                ROIs_as_polygons.items(),
-                key=lambda pair: pair[1].area,  # sort by increasing area
+        # Consider buffer around boundaries if required
+        # TODO: remove this buffer option? inspired by this SO answer
+        # https://stackoverflow.com/a/59033011
+        if "buffer_around_ROIs_boundaries" in app_storage["config"]:
+            ROI_poly = ROI_poly.buffer(
+                float(app_storage["config"]["buffer_around_ROIs_boundaries"])
             )
 
-        # -------------------
-        # Assign ROIs
-        for ROI_str, ROI_poly in list_sorted_ROI_pairs:
-            # for optimized performance
-            # (applies transform in place)
-            shapely.prepare(ROI_poly)
+        # select rows with x,y coordinates inside ROI (including boundary)
+        slc_rows_in_ROI = shapely.intersects_xy(
+            ROI_poly, [(x, y) for (x, y) in zip(df.x, df.y)]
+        )
 
-            # Consider buffer around boundaries if required
-            # TODO: remove this buffer option? inspired by this SO answer
-            # https://stackoverflow.com/a/59033011
-            if "buffer_around_ROIs_boundaries" in app_storage["config"]:
-                ROI_poly = ROI_poly.buffer(
-                    float(
-                        app_storage["config"]["buffer_around_ROIs_boundaries"]
-                    )
-                )
+        # select rows with no ROI assigned
+        slc_rows_w_empty_str = df["ROI_tag"] == ""
 
-            # select rows with x,y coordinates inside ROI (including boundary)
-            slc_rows_in_ROI = shapely.intersects_xy(
-                ROI_poly, [(x, y) for (x, y) in zip(df.x, df.y)]
-            )
-
-            # select rows with no ROI assigned
-            slc_rows_w_empty_str = df["ROI_tag"] == ""
-
-            # assign ROI
-            df.loc[slc_rows_in_ROI & slc_rows_w_empty_str, "ROI_tag"] = ROI_str
+        # assign ROI
+        df.loc[slc_rows_in_ROI & slc_rows_w_empty_str, "ROI_tag"] = ROI_str
 
     return df
 

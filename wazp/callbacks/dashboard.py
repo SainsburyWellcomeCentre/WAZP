@@ -511,6 +511,14 @@ def get_callbacks(app: dash.Dash) -> None:
                 )
 
                 # concatenate all dataframes
+                # NOTE: Columns outside the intersection
+                # will be filled with NaN values.
+                #
+                # Option 1: do 'df=df.fillna('')' after concat
+                # Option 2: explicitly initialise ROI_tags
+                # and event_tags columns for all video dataframes
+                # with empty strings (then ROIs and events are only assigned
+                # if defined for a video) --I'm doing this for now
                 df = pd.concat(list_df_to_export)
 
                 # ---------
