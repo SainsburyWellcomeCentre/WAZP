@@ -73,7 +73,7 @@ Write your test methods and classes in the `test` folder.
 
 #### Integration tests with chrome
 
-The integration tests start a server and browse with chrome(ium). 
+The integration tests start a server and browse with chrome(ium).
 So you will need to download and install Google chrome or chromium if you don't already use one of them.
 You will then need to download a [compatible version of `chromedriver`](https://chromedriver.chromium.org/downloads).
 Once downloaded put `chromedriver` binary in your path and check you can run the integration tests.
@@ -85,7 +85,7 @@ pytest # in the root of the repository
 
 <details>
   <summary>MacOS with homebrew</summary>
-  
+
   ```bash
   brew install chromium chromedriver
   pytest
