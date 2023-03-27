@@ -67,11 +67,33 @@ pre-commit run -a  # for all files in the repository
 
 ### Testing
 
-We use [pytest](https://docs.pytest.org/en/latest/) for testing. Please try to ensure that all functions
-are tested, including both unit and integration tests.
+We use [pytest](https://docs.pytest.org/en/latest/) for testing, and our integration tests require Google chrome and a compatible `chromedriver`.
+Please try to ensure that all functions are tested, including both unit and integration tests.
 Write your test methods and classes in the `test` folder.
 
-Remember to test locally, before pushing, via running `pytest` in the root of the repository. This will run all tests and also report test coverage.
+#### Integration tests with chrome
+
+The integration tests start a server and browse with chrome(ium). 
+So you will need to download and install Google chrome or chromium if you don't already use one of them.
+You will then need to download a [compatible version of `chromedriver`](https://chromedriver.chromium.org/downloads).
+Once downloaded put `chromedriver` binary in your path and check you can run the integration tests.
+
+```bash
+export PATH=$PATH:/place/where/your/chromedriver/is/chromedriver
+pytest # in the root of the repository
+```
+
+<details>
+  <summary>MacOS with homebrew</summary>
+  
+  ```bash
+  brew install chromium chromedriver
+  pytest
+  ```
+
+</details>
+   
+It's a good idea to test locally before pushing. Pytest will run all tests and also report test coverage.
 
 ### Continuous integration
 All pushes and pull requests will be built by [GitHub actions](https://docs.github.com/en/actions). This will usually include linting, testing and deployment.
