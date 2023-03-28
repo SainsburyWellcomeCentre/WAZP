@@ -651,18 +651,19 @@ def get_callbacks(app: dash.Dash) -> None:
     @app.callback(
         Output("save-rois-button", "disabled"),
         Input("roi-storage", "data"),
-        State("video-select", "value"),
+        Input("video-select", "value"),
     )
-    def enable_save_rois_button(
+    def disable_save_rois_button(
         roi_storage: dict,
         video_path: str,
     ) -> bool:
-        """Enable the save ROIs button if there are ROIs.
+        """If there are no ROIs in the app or if the metadata file
+        does not exist, disable the save ROIs button.
 
         Parameters
         ----------
         roi_storage : dict
-            Dictionary storing already drawn ROI shapes.
+            Dictionary storing ROI shapes in the app.
         video_path : str
             Path to the selected video file.
 
@@ -672,20 +673,26 @@ def get_callbacks(app: dash.Dash) -> None:
             Whether to enable the save ROIs button.
         """
 
-        video_name = pl.Path(video_path).name
-        roi_shapes = []
+        video_path_pl = pl.Path(video_path)
+        video_name = video_path_pl.name
+        metadata_path = video_path_pl.with_suffix(".metadata.yaml")
+
+        rois_in_app = []
         if video_name in roi_storage.keys():
-            roi_shapes = roi_storage[video_name]["shapes"]
-        return len(roi_shapes) == 0
+            rois_in_app = roi_storage[video_name]["shapes"]
+
+        no_rois_to_save = len(rois_in_app) == 0
+        metadata_file_does_not_exist = not metadata_path.is_file()
+        return no_rois_to_save or metadata_file_does_not_exist
 
     @app.callback(
         Output("load-rois-button", "disabled"), Input("video-select", "value")
     )
-    def enable_load_rois_button(
+    def disable_load_rois_button(
         video_path: str,
     ) -> bool:
-        """If there are saved ROIs for the selected video,
-        enable the load ROIs button.
+        """If there are no ROIs saved in the metadata file,
+        disable the 'Load all from file' button.
 
         Parameters
         ----------
@@ -710,11 +717,12 @@ def get_callbacks(app: dash.Dash) -> None:
         Output("delete-rois-button", "disabled"),
         Input("roi-table", "selected_rows"),
     )
-    def enable_delete_rois_button(
+    def disable_delete_rois_button(
         selected_rows: list,
     ) -> bool:
-        """Enable the delete ROIs button if there are selected rows
-        in the ROI table.
+        """If there are no ROIs selected in the ROI table,
+        disable the 'Delete selected' button
+
 
         Parameters
         ----------
