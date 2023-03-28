@@ -370,6 +370,8 @@ def svg_path_to_polygon(svg_path: str) -> Polygon:
     and marks the end of the string with 'Z' (end of path)
     (see [1]).
 
+    Based on original function by @niksirbi
+
     References
     ----------
     [1] "SVG Path",
