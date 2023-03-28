@@ -342,9 +342,14 @@ def get_dataframes_to_combine(
         # TODO: Is there a better approach?
         df["ROI_tag"] = ""  # initialize ROI column with empty strings
         if "ROIs" in metadata:
-            df = add_ROIs_to_video_dataframe(
-                df, metadata, ROIs_as_polygons, app_storage
-            )
+            # Extract ROI paths for this video if defined
+            # TODO: should I do case insensitive?
+            # if "rois" in [ky.lower() for ky in metadata.keys()]:
+            ROIs_as_polygons = {
+                el["name"]: svg_path_to_polygon(el["path"])
+                for el in metadata["ROIs"]
+            }
+            df = add_ROIs_to_video_dataframe(df, ROIs_as_polygons, app_storage)
 
         # Add Event tags if defined
         # - if no event is defined for that frame: empty str
@@ -391,17 +396,24 @@ def svg_path_to_polygon(svg_path: str) -> Polygon:
 
 
 def add_ROIs_to_video_dataframe(
-    df: pd.DataFrame, metadata: dict, ROIs_as_polygons: dict, app_storage: dict
+    df: pd.DataFrame, ROIs_as_polygons: dict, app_storage: dict
 ) -> pd.DataFrame:
-    """Assign ROI to every row in the dataframe
-    corresponding to the current video.
+    """Assign an ROI to every row in the dataframe
+    of the current video. Every row corresponds to a keypoint at a
+    specific frame.
 
     If no ROIs are defined for this video, an empty string
     is assigned to all rows.
 
-    The hierarchy of ROIs is defined either based on their area
-    (if a point is contained in several ROIs, the smallest one
-    is assigned), or based on the custom order defined by the user.
+    To solve for the cases in which a point falls in two or more ROIs
+    (e.g. because one ROI contains or intersects another), we also define
+    a hierarchy of ROIs.
+
+    By default the hierarchy of ROIs is based on their area (a smaller ROI
+    prevails over a larger one). However, if in the project config the
+    parameter 'use_ROIs_order_as_hierarchy' is defined and set as True, the
+    order of the ROIs in the project config file will be interpreted as their
+    hierarchy, with top ROIs prevailing over ROIs placed below.
 
     Parameters
     ----------
@@ -409,8 +421,6 @@ def add_ROIs_to_video_dataframe(
         pandas dataframe with the pose estimation results
         for one video. It is a single-level dataframe, restructured
         from the DeepLabCut output.
-    metadata : dict
-        dictionary with the metadata for the current video.
     ROIs_as_polygons : dict
         dictionary for the current video with ROI tags as keys,
         and their corresponding shapely polygons as values.
@@ -431,11 +441,13 @@ def add_ROIs_to_video_dataframe(
         "use_ROIs_order_as_hierarchy", False  # reads a bool
     )
 
-    # -----------------
-    # Use custom hierarchy of ROIs
-    # if hierarchy flag in input config exists
-    # and is True
+    # Use order of ROIs in the project config file
+    # as hierarchy if required
     if flag_use_ROI_custom_order:
+
+        # sort pairs of ROI tags and polygons
+        # in the same order as the ROI tags appear in
+        # the config file
         list_sorted_ROI_pairs = [
             x
             for x, _ in sorted(
@@ -443,11 +455,12 @@ def add_ROIs_to_video_dataframe(
                     ROIs_as_polygons.items(),
                     enumerate(app_storage["config"]["ROI_tags"]),
                 ),
-                key=lambda pair: pair[1][0],
+                key=lambda pair: pair[1][0],  # sort by index from enumerate
             )
         ]
 
-    # else: set hierarchy of ROIs based in their area
+    # else: sort pairs of ROI tags and polygons
+    # based on the polygons' areas
     else:
         list_sorted_ROI_pairs = sorted(
             ROIs_as_polygons.items(),
@@ -470,15 +483,17 @@ def add_ROIs_to_video_dataframe(
             )
 
         # select rows with x,y coordinates inside ROI (including boundary)
-        slc_rows_in_ROI = shapely.intersects_xy(
-            ROI_poly, [(x, y) for (x, y) in zip(df.x, df.y)]
+        select_rows_in_ROI = shapely.intersects_xy(
+            ROI_poly, [(x, y) for (x, y) in zip(df["x"], df["y"])]
         )
 
         # select rows with no ROI assigned
-        slc_rows_w_empty_str = df["ROI_tag"] == ""
+        select_rows_w_empty_str = df["ROI_tag"] == ""
 
         # assign ROI
-        df.loc[slc_rows_in_ROI & slc_rows_w_empty_str, "ROI_tag"] = ROI_str
+        df.loc[
+            select_rows_in_ROI & select_rows_w_empty_str, "ROI_tag"
+        ] = ROI_str
 
     return df
 
