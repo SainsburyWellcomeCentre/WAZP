@@ -644,28 +644,20 @@ def get_callbacks(app: dash.Dash) -> None:
         video_name = video_path_pl.name
         metadata_path = video_path_pl.with_suffix(".metadata.yaml")
 
-        # Check if the metadata file exists
-        if metadata_path.exists():
-            # Read the saved ROIs from the metadata file, if any
-            rois_in_file = []
-            with open(metadata_path, "r") as yaml_file:
-                metadata = yaml.safe_load(yaml_file)
-                if "ROIs" in metadata.keys():
-                    rois_in_file = metadata["ROIs"]
-        else:
-            # Inform the user if the metadata file does not exist
-            # and stop the callback
+        # Load saved ROIs from the metadata file, if any
+        try:
+            rois_in_file = utils.load_rois_from_yaml(metadata_path)
+        except FileNotFoundError:
             alert_msg = f"Could not find {metadata_path.name}"
             alert_color = "danger"
             return alert_msg, alert_color, True
+        except KeyError:
+            rois_in_file = []
 
         # Get the app's ROI shapes for this video
         rois_in_app = []
         if video_name in roi_storage.keys():
-            roi_shapes = roi_storage[video_name]["shapes"]
-            rois_in_app = [
-                utils.stored_shape_to_yaml_entry(shape) for shape in roi_shapes
-            ]
+            rois_in_app = roi_storage[video_name]["shapes"]
 
         if not rois_in_app:
             alert_color = "light"

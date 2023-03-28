@@ -515,7 +515,7 @@ def load_rois_from_yaml(yaml_path: pl.Path) -> list:
     if yaml_path.exists():
         with open(yaml_path, "r") as yaml_file:
             metadata = yaml.safe_load(yaml_file)
-            if "ROIs" in metadata.keys():
+            if "ROIs" in metadata:
                 shapes_to_store = [
                     yaml_entry_to_stored_shape(roi) for roi in metadata["ROIs"]
                 ]
