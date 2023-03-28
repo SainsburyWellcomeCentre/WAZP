@@ -132,5 +132,6 @@ module = [
   "matplotlib.*",
   "plotly.*",
   "cv2.*",
+  "shapely.*",
 ]
 ignore_missing_imports = true
