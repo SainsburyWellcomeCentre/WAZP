@@ -529,14 +529,14 @@ def get_callbacks(app: dash.Dash) -> None:
                     yaxis={"visible": False, "showticklabels": False},
                     xaxis={"visible": False, "showticklabels": False},
                 )
-                alert_msg = f"Showing frame {frame_num} from {video_name}."
-                alert_color = "success"
+                alert_msg = f"Showing frame {frame_num} from '{video_name}'."
+                alert_color = "light"
                 alert_open = True
                 return new_fig, alert_msg, alert_color, alert_open
             except Exception as e:
                 print(e)
                 alert_msg = (
-                    f"Could not extract frames from {video_name}. "
+                    f"Could not extract frames from '{video_name}'. "
                     f"Make sure that it is a valid video file."
                 )
                 alert_color = "danger"
@@ -544,8 +544,62 @@ def get_callbacks(app: dash.Dash) -> None:
                 return dash.no_update, alert_msg, alert_color, alert_open
 
     @app.callback(
+        Output("save-rois-button", "download"),
+        Input("save-rois-button", "n_clicks"),
         [
-            Output("save-rois-button", "download"),
+            State("video-select", "value"),
+            State("roi-storage", "data"),
+        ],
+    )
+    def save_rois_to_file(
+        save_clicks: int,
+        video_path: str,
+        roi_storage: dict,
+    ) -> str:
+        """
+        Save the ROI shapes to a metadata YAML file.
+
+        Parameters
+        ----------
+        save_clicks : int
+            Number of times the save ROIs button has been clicked.
+        video_path : str
+            Path to the video file.
+        roi_storage : dict
+            Dictionary storing ROI shapes in the app.
+
+        Returns
+        -------
+        str
+            Download link for the metadata YAML file.
+        """
+        if save_clicks > 0:
+            # Get the paths to the video and metadata files
+            video_path_pl = pl.Path(video_path)
+            video_name = video_path_pl.name
+            metadata_filepath = video_path_pl.with_suffix(".metadata.yaml")
+
+            # Get the metadata from the YAML file
+            with open(metadata_filepath, "r") as yaml_file:
+                metadata = yaml.safe_load(yaml_file)
+
+            # Get the video's ROI shapes in the app
+            rois_in_app = roi_storage[video_name]["shapes"]
+            # Add the ROI shapes to the metadata and save
+            with open(metadata_filepath, "w") as yaml_file:
+                metadata["ROIs"] = [
+                    utils.stored_shape_to_yaml_entry(shape)
+                    for shape in rois_in_app
+                ]
+                yaml.safe_dump(metadata, yaml_file)
+
+            # Return the download link
+            return metadata_filepath.as_posix()
+        else:
+            return dash.no_update
+
+    @app.callback(
+        [
             Output("rois-status-alert", "children"),
             Output("rois-status-alert", "color"),
             Output("rois-status-alert", "is_open"),
@@ -556,26 +610,26 @@ def get_callbacks(app: dash.Dash) -> None:
             Input("video-select", "value"),
         ],
     )
-    def save_rois_and_update_status_alert(
+    def update_roi_status_alert(
         save_clicks: int,
         roi_storage: dict,
         video_path: str,
-    ) -> tuple[str, str, str, bool]:
+    ) -> tuple[str, str, bool]:
         """
-        Save the ROI shapes to a metadata YAML file
-        and update the ROI status alert accordingly.
+        Update the ROI status alert to inform the user about ROIs defined
+        in the app and their relation to those saved in the metadata file.
+
         Parameters
         ----------
         save_clicks : int
             Number of times the save ROIs button has been clicked.
         roi_storage : dict
-            Dictionary storing already drawn ROI shapes.
+            Dictionary storing ROI shapes in the app.
         video_path : str
             Path to the video file.
+
         Returns
         -------
-        str
-            Download path to the metadata YAML file.
         str
             Message to display in the ROI status alert.
         str
@@ -588,65 +642,66 @@ def get_callbacks(app: dash.Dash) -> None:
         # Get the paths to the video and metadata files
         video_path_pl = pl.Path(video_path)
         video_name = video_path_pl.name
-        metadata_filepath = video_path_pl.with_suffix(".metadata.yaml")
+        metadata_path = video_path_pl.with_suffix(".metadata.yaml")
 
         # Check if the metadata file exists
-        # and load any previously saved ROIs
-        if metadata_filepath.exists():
-            with open(metadata_filepath, "r") as yaml_file:
+        if metadata_path.exists():
+            # Read the saved ROIs from the metadata file, if any
+            rois_in_file = []
+            with open(metadata_path, "r") as yaml_file:
                 metadata = yaml.safe_load(yaml_file)
                 if "ROIs" in metadata.keys():
-                    saved_rois = metadata["ROIs"]
-                else:
-                    saved_rois = []
+                    rois_in_file = metadata["ROIs"]
         else:
-            alert_msg = f"Could not find {metadata_filepath.name}"
+            # Inform the user if the metadata file does not exist
+            # and stop the callback
+            alert_msg = f"Could not find {metadata_path.name}"
             alert_color = "danger"
-            return dash.no_update, alert_msg, alert_color, True
+            return alert_msg, alert_color, True
 
-        # Get the stored ROI shapes for this video
+        # Get the app's ROI shapes for this video
+        rois_in_app = []
         if video_name in roi_storage.keys():
             roi_shapes = roi_storage[video_name]["shapes"]
-            rois_to_save = [
+            rois_in_app = [
                 utils.stored_shape_to_yaml_entry(shape) for shape in roi_shapes
             ]
-        else:
-            rois_to_save = []
 
-        if rois_to_save:
-            if trigger == "roi-storage.data" and rois_to_save == saved_rois:
-                # This means that the ROIs have just been loaded
-                alert_msg = f"Loaded ROIs from {metadata_filepath.name}"
-                alert_color = "success"
-                return dash.no_update, alert_msg, alert_color, True
-            elif trigger == "roi-storage.data" and rois_to_save != saved_rois:
-                # This means that the ROIs have been modified
-                # in respect to the metadata file
-                alert_msg = "Detected unsaved changes to ROIs."
-                alert_color = "warning"
-                return dash.no_update, alert_msg, alert_color, True
-            else:
-                if save_clicks > 0:
-                    # This means that the user wants to save the ROIs
-                    # This overwrites any previously saved ROIs
-                    with open(metadata_filepath, "w") as yaml_file:
-                        metadata["ROIs"] = rois_to_save
-                        yaml.safe_dump(metadata, yaml_file)
-                    alert_msg = f"Saved ROIs to {metadata_filepath.name}"
-                    alert_color = "success"
-                    return (
-                        metadata_filepath.as_posix(),
-                        alert_msg,
-                        alert_color,
-                        True,
-                    )
-                else:
-                    return dash.no_update, dash.no_update, dash.no_update, True
-
-        else:
-            alert_msg = "No ROIs to save."
+        if not rois_in_app:
             alert_color = "light"
-            return dash.no_update, alert_msg, alert_color, True
+            if rois_in_file:
+                alert_msg = (
+                    f"Found {len(rois_in_file)} ROIs saved in "
+                    f"'{metadata_path.name}'. Click the "
+                    "'Load all from file' button to load them."
+                )
+            else:
+                alert_msg = (
+                    "No ROIs to save or to load. "
+                    "Draw some ROIs on the video frame."
+                )
+
+        else:
+            # Some ROIs exist in the app
+            if rois_in_app == rois_in_file:
+                alert_color = "success"
+                if trigger == "save-rois-button.n_clicks" and save_clicks > 0:
+                    alert_msg = f"Saved ROIs to '{metadata_path.name}'"
+                elif trigger == "roi-storage.data":
+                    alert_msg = f"Loaded ROIs from '{metadata_path.name}'"
+                else:
+                    alert_msg = (
+                        f"Shown ROIs match those in '{metadata_path.name}'"
+                    )
+
+            else:
+                alert_color = "warning"
+                alert_msg = (
+                    "Detected unsaved changes to ROIs. Click "
+                    "the 'Save all to file' button to save them."
+                )
+
+        return alert_msg, alert_color, True
 
     @app.callback(
         Output("save-rois-button", "disabled"),
