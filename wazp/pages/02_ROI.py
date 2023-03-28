@@ -273,7 +273,7 @@ table_card = dbc.Card(
                     ],
                 ),
                 html.Br(),
-                dbc.Row(roi_status_alert),
+                dcc.Loading(dbc.Row(roi_status_alert)),
                 save_rois_tooltip,
                 load_rois_tooltip,
                 delete_rois_tooltip,
