@@ -67,16 +67,16 @@ pre-commit run -a  # for all files in the repository
 
 ### Testing
 
-We use [pytest](https://docs.pytest.org/en/latest/) for testing, and our integration tests require Google chrome and a compatible `chromedriver`.
+We use [pytest](https://docs.pytest.org/en/latest/) for testing, and our integration tests require Google chrome or chromium and a compatible `chromedriver`.
 Please try to ensure that all functions are tested, including both unit and integration tests.
 Write your test methods and classes in the `test` folder.
 
 #### Integration tests with chrome
 
-The integration tests start a server and browse with chrome(ium).
-So you will need to download and install Google chrome or chromium if you don't already use one of them.
+The integration tests start a server and browse with chrome(ium),
+so you will need to download and install Google chrome or chromium (if you don't already use one of them).
 You will then need to download a [compatible version of `chromedriver`](https://chromedriver.chromium.org/downloads).
-Once downloaded put `chromedriver` binary in your path and check you can run the integration tests.
+Once downloaded put the `chromedriver` binary in your `PATH` and check that you can run the integration tests.
 
 ```bash
 export PATH=$PATH:/place/where/your/chromedriver/is/chromedriver
@@ -86,13 +86,16 @@ pytest # in the root of the repository
 <details>
   <summary>MacOS with homebrew</summary>
 
+  MacOS users can use homebrew which symlinks the binary to your `PATH`.
+  So you can simply:
+
   ```bash
   brew install chromium chromedriver
-  pytest
+  pytest # in the root of the repository
   ```
 
 </details>
-   
+
 It's a good idea to test locally before pushing. Pytest will run all tests and also report test coverage.
 
 ### Continuous integration
