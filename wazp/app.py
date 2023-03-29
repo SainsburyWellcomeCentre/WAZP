@@ -107,10 +107,16 @@ home.get_callbacks(app)
 metadata.get_callbacks(app)
 roi.get_callbacks(app)
 dashboard.get_callbacks(app)
+dashboard.get_cache_callbacks(app)
+
+
+#####################
 
 
 def startwazp():
     app.run_server(debug=True)
+
+    # initialise_cache(app)
 
 
 ###############

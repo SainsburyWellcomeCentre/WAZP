@@ -1,3 +1,4 @@
+import copy
 import datetime
 import pathlib as pl
 import re
@@ -6,6 +7,7 @@ import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import Input, Output, State, dash_table, dcc, html
+from flask_caching import Cache
 
 from wazp import utils
 
@@ -326,6 +328,168 @@ def create_dashboard_storage():
     )
 
 
+# -------
+# TODO check dbc row components
+def create_row_of_plots():
+    return html.Div(
+        [
+            html.Div(
+                dcc.Graph(id="trajectories-plot"), className="six columns"
+            ),
+            html.Div(dcc.Graph(id="heatmap-plot"), className="six columns"),
+        ],
+        className="row",
+    )
+
+
+#############################
+# Cache callbacks
+####################
+def get_cache_callbacks(app):
+
+    # initialise cache
+    CACHE_CONFIG = {
+        "CACHE_TYPE": "FileSystemCache",
+        "CACHE_DIR": pl.Path.home() / ".WAZP" / "dashboard_storage",
+        "CACHE_DEFAULT_TIMEOUT": 3600,
+    }
+    cache = Cache()
+    cache.init_app(app.server, config=CACHE_CONFIG)
+
+    # perform expensive computations in this "global store"
+    # these computations are cached in a globally available
+    # (FileSystem) memory store which is available across processes
+    # and for all time.
+    @cache.memoize()
+    def cache_user_defined_dataframe(  # global_store
+        list_selected_videos,
+        slider_start_end_labels,
+        app_storage,
+    ):
+
+        # extract dataframes to concatenate
+        list_df_to_export = utils.get_dataframes_to_combine(
+            list_selected_videos,
+            slider_start_end_labels,
+            app_storage,
+        )
+
+        return pd.concat(list_df_to_export)
+
+    def generate_figure(
+        list_selected_videos, slider_start_end_labels, app_storage, figure
+    ):
+        fig = copy.deepcopy(figure)
+
+        if list_selected_videos:
+            df = cache_user_defined_dataframe(
+                list_selected_videos, slider_start_end_labels, app_storage
+            )
+            fig["data"][0]["x"] = df["x"]
+            fig["data"][0]["y"] = df["y"]
+            fig["layout"] = {"margin": {"l": 20, "r": 10, "b": 20, "t": 10}}
+
+        return fig
+
+    # ------------------------------------
+    # Define callback to compute the data and store it in cache
+    @app.callback(
+        Output(
+            "dashboard-storage", "data"
+        ),  # this only holds True (if dataframe cached) or false if not
+        Input("video-data-table", "selected_rows"),
+        Input("time-slider", "value"),
+        State("time-slider", "marks"),
+        State("video-data-table", "data"),
+        State("session-storage", "data"),
+    )
+    def compute_dataframe_and_save_to_cache(
+        list_selected_rows: list,
+        slider_start_end_idcs: list,
+        slider_marks: dict,
+        videos_table_data: list[dict],
+        app_storage: dict,
+    ):
+        # compute value and send a signal when done
+        if list_selected_rows:  # and slider_start_end_labels:
+
+            # get list of selected videos in table
+            list_selected_videos = [
+                videos_table_data[r][
+                    app_storage["config"]["metadata_key_field_str"]
+                ]
+                for r in list_selected_rows
+            ]
+
+            # get list of slider start and end
+            slider_start_end_labels = [
+                slider_marks[str(x)]["label"] for x in slider_start_end_idcs
+            ]
+
+            # cache combined dataframe
+            _ = cache_user_defined_dataframe(
+                list_selected_videos, slider_start_end_labels, app_storage
+            )
+            return True
+        else:
+            return False
+
+    # Update figure when storage changes
+    @app.callback(
+        Output("trajectories-plot", "figure"),
+        Input("dashboard-storage", "data"),
+        Input("video-data-table", "selected_rows"),
+        State("time-slider", "value"),
+        State("time-slider", "marks"),
+        State("video-data-table", "data"),
+        State("session-storage", "data"),
+    )
+    def update_trajectory_graph(
+        dashboard_storage_bool,
+        list_selected_rows,
+        slider_start_end_idcs,
+        slider_marks,
+        videos_table_data,
+        app_storage,
+    ):
+        # generate_figure gets data from `global_store`.
+        # the data in `global_store` has already been computed
+        # by the `compute_value` callback and the result is stored
+        # in the global redis cached
+
+        # get list of selected videos in table
+        list_selected_videos = [
+            videos_table_data[r][
+                app_storage["config"]["metadata_key_field_str"]
+            ]
+            for r in list_selected_rows
+        ]
+
+        # get list of slider start and end
+        slider_start_end_labels = [
+            slider_marks[str(x)]["label"] for x in slider_start_end_idcs
+        ]
+
+        # figure?
+        figure = {
+            "data": [
+                {
+                    "type": "scatter",
+                    "mode": "markers",
+                    "marker": {
+                        "opacity": 0.5,
+                        "size": 14,
+                        "line": {"border": "thin darkgrey solid"},
+                    },
+                }
+            ]
+        }
+
+        return generate_figure(
+            list_selected_videos, slider_start_end_labels, app_storage, figure
+        )
+
+
 #############################
 # Callbacks
 ###########################
@@ -343,7 +507,7 @@ def get_callbacks(app: dash.Dash) -> None:
         Input("input-data-container", "children"),
         State("session-storage", "data"),
     )
-    def create_dashboard_components(
+    def create_export_components(
         input_data_container_children: list, app_storage: dict
     ) -> list:
         """Create components for the main data container
@@ -383,67 +547,44 @@ def get_callbacks(app: dash.Dash) -> None:
 
         return input_data_container_children
 
-    # ------------------------------------
     @app.callback(
-        Output("dashboard-storage", "data"),
-        Input("video-data-table", "selected_rows"),
-        Input("time-slider", "value"),
-        State("time-slider", "marks"),
-        State("video-data-table", "data"),
+        Output("custom-plot-container", "children"),
+        Input("custom-plot-container", "children"),
         State("session-storage", "data"),
     )
-    def update_dashboard_storage(
-        list_selected_rows: list,
-        slider_start_end_idcs: list,
-        slider_marks: dict,
-        videos_table_data: list[dict],
-        app_storage: dict,
-    ):
-        """Update the dashboard storage holding the dataframe.
+    def create_plot_components(
+        custom_plot_container_children: list, app_storage: dict
+    ) -> list:
+        """Create components for the main data container
+        in the dashboard tab layout
 
-        The dataframe in storage is updated when the selected rows
-        in the video table change, or when the time slider changes.
+        Returns a list with the following components:
+        - video data table
+        - time slider for event tags
+        - buttons and messages for (un)selecting and exporting
+          data
+        - popup message for when pose data is unavailable for
+          a selected video
+
+        Parameters
+        ----------
+        input_data_container_children : list
+            children of the input data container
+        app_storage : dict
+            data held in temporary memory storage,
+            accessible to all tabs in the app
 
         Returns
         -------
-        _type_
-            _description_
+        list
+            components to pass as children of the main data container
+            in the dashboard tab layout
         """
-        # trigger = dash.callback_context.triggered[0]["prop_id"]
 
-        if list_selected_rows:  # and slider_start_end_labels:
-            # get list of selected videos in table
-            list_selected_videos = [
-                videos_table_data[r][
-                    app_storage["config"]["metadata_key_field_str"]
-                ]
-                for r in list_selected_rows
-            ]
+        if not custom_plot_container_children:
+            custom_plot_container_children = [create_row_of_plots()]
 
-            # get list of slider start and end
-            slider_start_end_labels = [
-                slider_marks[str(x)]["label"] for x in slider_start_end_idcs
-            ]
-
-            # extract dataframes to concatenate
-            list_df_to_export = utils.get_dataframes_to_combine(
-                list_selected_videos,
-                slider_start_end_labels,
-                app_storage,
-            )
-
-            df = pd.concat(list_df_to_export)
-            dashboard_storage_data = df.to_dict("records")
-            # from dash/plotly docs: "If you are using Pandas,
-            # consider serializing with Apache Arrow for faster
-            # serialization "
-            print("storage updated")
-            # pdb.set_trace()
-
-        else:
-            dashboard_storage_data = []
-
-        return dashboard_storage_data
+        return custom_plot_container_children
 
     # -----------------------
     @app.callback(
