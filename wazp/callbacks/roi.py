@@ -15,7 +15,6 @@ from wazp import utils
 
 # TODO: other video extensions? have this in project config file instead?
 VIDEO_TYPES = [".avi", ".mp4"]
-# TODO: make this colormap a project config parameter?
 ROI_CMAP = px.colors.qualitative.Dark24
 
 
