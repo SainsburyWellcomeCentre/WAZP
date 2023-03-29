@@ -139,6 +139,7 @@ def get_callbacks(app: dash.Dash) -> None:
         is selected. Read the parameters from storage if available,
         otherwise extract them from the video file (slower),
         and update the storage for future use.
+
         Parameters
         ----------
         video_path : str
@@ -155,7 +156,7 @@ def get_callbacks(app: dash.Dash) -> None:
         Returns
         -------
         int
-            Maximum frame input value.
+            Maximum frame index value.
         int
             Frame step size.
         int
@@ -166,31 +167,36 @@ def get_callbacks(app: dash.Dash) -> None:
         video_name = pl.Path(video_path).name
         if video_name in frame_slider_storage.keys():
             stored_video_params = frame_slider_storage[video_name]
-            num_frames = stored_video_params["max"]
+            max_frame_idx = stored_video_params["max"]
             frame_step = stored_video_params["step"]
             middle_frame = stored_video_params["value"]
-            return num_frames - 1, frame_step, middle_frame, dash.no_update
+            return max_frame_idx, frame_step, middle_frame, dash.no_update
         else:
             try:
-                num_frames = int(utils.get_num_frames(video_path))
-            except OSError:
-                return (
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
-                )
-            # Round the frame step to the nearest 1000
-            frame_step = round(int(num_frames / 4), -3)
+                num_frames = utils.get_num_frames(video_path)
+            except RuntimeError as e:
+                print(e)
+                # If the number of frames cannot be extracted,
+                # return a negative frame value.
+                # This will trigger an alert message in the app
+                return dash.no_update, dash.no_update, -1, dash.no_update
+
+            # Divide the number of frames into 4 steps
+            frame_step = int(num_frames / 4)
+            # Round to the nearest 1000 if step is > 1000
+            if frame_step > 1000:
+                frame_step = int(frame_step / 1000) * 1000
+
             # Default to the middle step
             middle_frame = frame_step * 2
+            max_frame_idx = num_frames - 1
             frame_slider_storage[video_name] = {
-                "max": num_frames - 1,
+                "max": max_frame_idx,
                 "step": frame_step,
                 "value": middle_frame,
             }
             return (
-                num_frames - 1,
+                max_frame_idx,
                 frame_step,
                 middle_frame,
                 frame_slider_storage,
@@ -449,24 +455,27 @@ def get_callbacks(app: dash.Dash) -> None:
         [
             State("frame-graph", "figure"),
             State("roi-colors-storage", "data"),
+            State("frame-slider", "max"),
         ],
     )
     def update_frame_graph(
         video_path: str,
-        frame_num: int,
+        shown_frame_idx: int,
         roi_name: str,
         roi_storage: dict,
         current_fig: go.Figure,
         roi_color_mapping: dict,
+        max_frame_idx: int,
     ) -> tuple[go.Figure, str, str, bool]:
         """
         Update the frame graph
+
         Parameters
         ----------
         video_path : str
             Path to the video file.
-        frame_num : int
-            Frame number (which video frame to display).
+        shown_frame_idx : int
+            Index of the frame to be shown.
         roi_name : str
             Name of the next ROI to be drawn.
         roi_storage : dict
@@ -477,6 +486,9 @@ def get_callbacks(app: dash.Dash) -> None:
             Dictionary with the following keys:
                 - roi2color: dict mapping ROI names to colors
                 - color2roi: dict mapping colors to ROI names
+        max_frame_idx : int
+            Maximum frame index (num_frames - 1)
+
         Returns
         -------
         plotly.graph_objects.Figure.Figure
@@ -487,7 +499,17 @@ def get_callbacks(app: dash.Dash) -> None:
             Color of the frame status alert.
         bool
             Whether to open the frame status alert.
+        int
+            Maximum frame index (num_frames - 1)
         """
+
+        # If a negative frame index is passed, it means that the video
+        # could not be read correctly. So don't update the frame,
+        # but display an alert message
+        if shown_frame_idx < 0:
+            alert_msg = f"Could not read from '{video_path}'. "
+            alert_msg += "Is this a valid video file?"
+            return dash.no_update, alert_msg, "danger", True
 
         # Get the video path and file name
         video_path_pl = pl.Path(video_path)
@@ -523,16 +545,13 @@ def get_callbacks(app: dash.Dash) -> None:
         # Load the frame into a new figure
         else:
             try:
-                frame_filepath = utils.cache_frame(video_path_pl, frame_num)
-                new_frame = Image.open(frame_filepath)
-            except OSError:
-                alert_msg = (
-                    f"Could not extract frames from '{video_name}'. "
-                    "Is it a valid video file?"
+                frame_filepath = utils.cache_frame(
+                    video_path_pl, shown_frame_idx
                 )
-                return dash.no_update, alert_msg, "danger", True
+            except RuntimeError as e:
+                return dash.no_update, str(e), "danger", True
 
-            # Put the frame in a figure
+            new_frame = Image.open(frame_filepath)
             new_fig = px.imshow(new_frame)
             # Add the stored shapes and set the nextROI color
             new_fig.update_layout(
@@ -543,7 +562,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 yaxis={"visible": False, "showticklabels": False},
                 xaxis={"visible": False, "showticklabels": False},
             )
-            alert_msg = f"Showing frame {frame_num}"
+            alert_msg = f"Showing frame {shown_frame_idx}/{max_frame_idx}"
             return new_fig, alert_msg, "light", True
 
     @app.callback(
