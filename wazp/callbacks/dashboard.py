@@ -308,6 +308,24 @@ def create_pose_data_unavailable_popup() -> dcc.ConfirmDialog:
     )
 
 
+def create_dashboard_storage():
+    """Create storage for dashboard tab.
+
+    The storage holds the combined dataframe,
+    for all selected videos and for the time frame considered
+
+    Returns
+    -------
+    dcc.Store
+        A storage component
+    """
+    return dcc.Store(
+        id="dashboard-storage",
+        storage_type="memory",
+        data=[],
+    )
+
+
 #############################
 # Callbacks
 ###########################
@@ -325,7 +343,7 @@ def get_callbacks(app: dash.Dash) -> None:
         Input("input-data-container", "children"),
         State("session-storage", "data"),
     )
-    def create_dashboard_and_data_export_components(
+    def create_dashboard_components(
         input_data_container_children: list, app_storage: dict
     ) -> list:
         """Create components for the main data container
@@ -360,9 +378,72 @@ def get_callbacks(app: dash.Dash) -> None:
                 create_time_slider(app_storage),
                 create_buttons_and_message(),
                 create_pose_data_unavailable_popup(),
+                create_dashboard_storage(),
             ]
 
         return input_data_container_children
+
+    # ------------------------------------
+    @app.callback(
+        Output("dashboard-storage", "data"),
+        Input("video-data-table", "selected_rows"),
+        Input("time-slider", "value"),
+        State("time-slider", "marks"),
+        State("video-data-table", "data"),
+        State("session-storage", "data"),
+    )
+    def update_dashboard_storage(
+        list_selected_rows: list,
+        slider_start_end_idcs: list,
+        slider_marks: dict,
+        videos_table_data: list[dict],
+        app_storage: dict,
+    ):
+        """Update the dashboard storage holding the dataframe.
+
+        The dataframe in storage is updated when the selected rows
+        in the video table change, or when the time slider changes.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+        # trigger = dash.callback_context.triggered[0]["prop_id"]
+
+        if list_selected_rows:  # and slider_start_end_labels:
+            # get list of selected videos in table
+            list_selected_videos = [
+                videos_table_data[r][
+                    app_storage["config"]["metadata_key_field_str"]
+                ]
+                for r in list_selected_rows
+            ]
+
+            # get list of slider start and end
+            slider_start_end_labels = [
+                slider_marks[str(x)]["label"] for x in slider_start_end_idcs
+            ]
+
+            # extract dataframes to concatenate
+            list_df_to_export = utils.get_dataframes_to_combine(
+                list_selected_videos,
+                slider_start_end_labels,
+                app_storage,
+            )
+
+            df = pd.concat(list_df_to_export)
+            dashboard_storage_data = df.to_dict("records")
+            # from dash/plotly docs: "If you are using Pandas,
+            # consider serializing with Apache Arrow for faster
+            # serialization "
+            print("storage updated")
+            # pdb.set_trace()
+
+        else:
+            dashboard_storage_data = []
+
+        return dashboard_storage_data
 
     # -----------------------
     @app.callback(
