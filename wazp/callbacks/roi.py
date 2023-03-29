@@ -172,16 +172,20 @@ def get_callbacks(app: dash.Dash) -> None:
             return num_frames - 1, frame_step, middle_frame, dash.no_update
         else:
             try:
-                num_frames = int(utils.get_num_frames(video_path))
-            except OSError:
-                return (
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
-                )
-            # Round the frame step to the nearest 1000
-            frame_step = round(int(num_frames / 4), -3)
+                num_frames = utils.get_num_frames(video_path)
+            except RuntimeError as e:
+                print(e)
+                # If the number of frames cannot be extracted,
+                # return a negative frame value.
+                # This will trigger an alert message in the app
+                return dash.no_update, dash.no_update, -1, dash.no_update
+
+            # Divide the number of frames into 4 steps
+            frame_step = int(num_frames / 4)
+            # Round to the nearest 1000 if step is > 1000
+            if frame_step > 1000:
+                frame_step = int(frame_step / 1000) * 1000
+
             # Default to the middle step
             middle_frame = frame_step * 2
             frame_slider_storage[video_name] = {
@@ -489,6 +493,14 @@ def get_callbacks(app: dash.Dash) -> None:
             Whether to open the frame status alert.
         """
 
+        # If a negative frame number is passed, it means that the video
+        # could not be read correctly. So don't update the frame,
+        # but display an alert message
+        if frame_num < 0:
+            alert_msg = f"Could not read from '{video_path}'. "
+            alert_msg += "Is this a valid video file?"
+            return dash.no_update, alert_msg, "danger", True
+
         # Get the video path and file name
         video_path_pl = pl.Path(video_path)
         video_name = video_path_pl.name
@@ -524,15 +536,10 @@ def get_callbacks(app: dash.Dash) -> None:
         else:
             try:
                 frame_filepath = utils.cache_frame(video_path_pl, frame_num)
-                new_frame = Image.open(frame_filepath)
-            except OSError:
-                alert_msg = (
-                    f"Could not extract frames from '{video_name}'. "
-                    "Is it a valid video file?"
-                )
-                return dash.no_update, alert_msg, "danger", True
+            except RuntimeError as e:
+                return dash.no_update, str(e), "danger", True
 
-            # Put the frame in a figure
+            new_frame = Image.open(frame_filepath)
             new_fig = px.imshow(new_frame)
             # Add the stored shapes and set the nextROI color
             new_fig.update_layout(

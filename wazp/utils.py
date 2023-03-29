@@ -529,7 +529,7 @@ def assign_roi_colors(
     }
 
 
-def get_num_frames(video_path):
+def get_num_frames(video_path) -> int:
     """
     Get the number of frames in a video.
 
@@ -543,13 +543,13 @@ def get_num_frames(video_path):
     int
         Number of frames in the video
     """
-    vidcap = cv2.VideoCapture(video_path)
-    try:
-        num_frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
-    except Exception as e:
-        raise OSError(
-            f"Error getting number of frames from {video_path}"
-        ) from e
+    vidcap = cv2.VideoCapture(video_path, apiPreference=cv2.CAP_FFMPEG)
+    num_frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+    if num_frames < 1:
+        raise RuntimeError(
+            f"Could not read from '{video_path}'. "
+            "Is this a valid video file?"
+        )
     return num_frames
 
 
@@ -569,14 +569,17 @@ def extract_frame(
         Path to the output image file
     """
     print(f"Extracting frame {frame_number} from video {video_path}")
-    vidcap = cv2.VideoCapture(video_path)
+
+    vidcap = cv2.VideoCapture(video_path, apiPreference=cv2.CAP_FFMPEG)
     vidcap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
     success, image = vidcap.read()
     if success:
         cv2.imwrite(output_path, image)
-        print(f"Saved frame to {output_path}")
+        print(f"Saved frame {frame_number} to {output_path}")
     else:
-        raise OSError(f"Error extracting frame from {video_path}")
+        raise RuntimeError(
+            f"Could not extract frame {frame_number} from {video_path}."
+        )
 
 
 def cache_frame(
