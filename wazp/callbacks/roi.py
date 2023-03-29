@@ -528,7 +528,7 @@ def get_callbacks(app: dash.Dash) -> None:
                     yaxis={"visible": False, "showticklabels": False},
                     xaxis={"visible": False, "showticklabels": False},
                 )
-                alert_msg = f"Showing frame {frame_num} from '{video_name}'."
+                alert_msg = f"Showing frame {frame_num}"
                 alert_color = "light"
                 alert_open = True
                 return new_fig, alert_msg, alert_color, alert_open
@@ -536,7 +536,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 print(e)
                 alert_msg = (
                     f"Could not extract frames from '{video_name}'. "
-                    f"Make sure that it is a valid video file."
+                    "Is it a valid video file?"
                 )
                 alert_color = "danger"
                 alert_open = True
@@ -662,15 +662,10 @@ def get_callbacks(app: dash.Dash) -> None:
             alert_color = "light"
             if rois_in_file:
                 alert_msg = (
-                    f"Found {len(rois_in_file)} ROIs saved in "
-                    f"'{metadata_path.name}'. Click the "
-                    "'Load all from file' button to load them."
+                    f"Found {len(rois_in_file)} ROIs in '{metadata_path.name}'"
                 )
             else:
-                alert_msg = (
-                    "No ROIs to save or to load. "
-                    "Draw some ROIs on the video frame."
-                )
+                alert_msg = "No ROIs defined in the metadata file."
 
         else:
             # Some ROIs exist in the app
@@ -687,10 +682,7 @@ def get_callbacks(app: dash.Dash) -> None:
 
             else:
                 alert_color = "warning"
-                alert_msg = (
-                    "Detected unsaved changes to ROIs. Click "
-                    "the 'Save all to file' button to save them."
-                )
+                alert_msg = "Detected unsaved changes to ROIs."
 
         return alert_msg, alert_color, True
 
