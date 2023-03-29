@@ -1,5 +1,4 @@
 import datetime
-import os
 import pathlib as pl
 import re
 
@@ -18,8 +17,10 @@ FALSE_EMOJI = "❌"
 ################################
 # Functions to create components
 ################################
+# TODO: this could be in a layout/custom_components module?
 def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
-    """Create table to select videos to include in plots.
+    """Create table to select videos to include in exports and
+    in plots.
 
     Only videos with a matching YAML file are shown.
     The availability of pose estimation data is also shown.
@@ -33,7 +34,7 @@ def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
 
     Returns
     -------
-    html.Div
+    dash_table.DataTable
         dash DataTable component to pass to the table container
     """
 
@@ -146,7 +147,10 @@ def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
 
 
 def create_time_slider(app_storage: dict) -> html.Div:
-    """Create time slider component
+    """Create a time slider component
+
+    The time slider is a dash RangeSlider component
+    that allows to define the two sides of an interval
 
     Parameters
     ----------
@@ -201,12 +205,15 @@ def create_time_slider(app_storage: dict) -> html.Div:
 
 
 def create_buttons_and_message() -> html.Div:
-    """Create buttons for videos table and export functions
+    """Create buttons and messages related to
+    selecting/unselecting videos in the table
+    and for exporting the data.
 
     Returns
     -------
     html.Div
-        html Div component wrapping the table and export buttons
+        html Div component wrapping the buttons
+        and messages
     """
     select_all_videos_button = html.Button(
         children="Select all rows",
@@ -237,15 +244,35 @@ def create_buttons_and_message() -> html.Div:
         style={"margin-right": "10px", "margin-left": "10px"},
     )
 
+    clipboard = dcc.Clipboard(
+        id="clipboard",
+        title="Copy full path",  # tooltip text
+        n_clicks=0,
+        style={
+            "display": "inline",  # visible
+            "fontSize": 20,
+            "margin-right": "10px",
+            "margin-left": "10px",
+        },
+    )
+
+    clipboard_wrapper = html.Div(
+        id="clipboard-wrapper",
+        children=[
+            clipboard,
+        ],
+        style={"display": "inline-block"},  # hidden
+    )
+
     export_message = dbc.Alert(
-        children="Data export message",
+        children=["Data export message", clipboard_wrapper],
         id="export-message",
         dismissable=True,
         fade=False,
         is_open=False,
         color="success",  # warning or danger
         style={
-            "margin-right": "10px",
+            "margin-right": "0px",
             "margin-left": "10px",
             "margin-top": "5px",
         },
@@ -262,10 +289,11 @@ def create_buttons_and_message() -> html.Div:
 
 
 def create_pose_data_unavailable_popup() -> dcc.ConfirmDialog:
-    """Create pop-up message for unavailable pose data
+    """Create pop-up message when pose data is
+    unavailable for a selected video.
 
-    A message will pop up when a row in the videos table
-    is selected but has no pose data available
+    A message will pop up when a video in the table
+    is selected but has no pose data available.
 
     Returns
     -------
@@ -297,16 +325,19 @@ def get_callbacks(app: dash.Dash) -> None:
         Input("input-data-container", "children"),
         State("session-storage", "data"),
     )
-    def create_video_data_table_slider_and_buttons(
+    def create_dashboard_and_data_export_components(
         input_data_container_children: list, app_storage: dict
     ) -> list:
-        """Create list of components for the inpud data container
+        """Create components for the main data container
+        in the dashboard tab layout
 
         Returns a list with the following components:
         - video data table
         - time slider for event tags
-        - buttons and export message
-        - popup message for when pose data is unavailable
+        - buttons and messages for (un)selecting and exporting
+          data
+        - popup message for when pose data is unavailable for
+          a selected video
 
         Parameters
         ----------
@@ -319,18 +350,19 @@ def get_callbacks(app: dash.Dash) -> None:
         Returns
         -------
         list
-            components to pass as children of the input data container
+            components to pass as children of the main data container
+            in the dashboard tab layout
         """
 
         if not input_data_container_children:
-            return [
+            input_data_container_children = [
                 create_video_data_table(app_storage),
                 create_time_slider(app_storage),
                 create_buttons_and_message(),
                 create_pose_data_unavailable_popup(),
             ]
 
-        return []
+        return input_data_container_children
 
     # -----------------------
     @app.callback(
@@ -367,18 +399,20 @@ def get_callbacks(app: dash.Dash) -> None:
         slider_marks: dict,
         pose_unavail_message_str: str,
         pose_unavail_message_state: bool,
-        export_message_str,
-        export_message_state,
+        export_message_children: list,
+        export_message_state: bool,
         export_message_color,
         app_storage: dict,
-    ) -> tuple[list, int, int, int, str, bool, str, bool, str]:
-        """Modify the selection status of the rows in the videos table.
+    ) -> tuple[list, int, int, int, str, bool, list, bool, str]:
+        """Modify the selection status of the rows in the videos' table.
 
-        A row's selection status (i.e., its checkbox) is modified if (1) the
-        user selects the row but there is no pose data available for that video
-        (then its checkbox is set to False), (2) the export button is clicked
-        (then the selected rows are reset to False), or (3) the 'select/
-        unselect' all button is clicked.
+        A row's selection status (i.e., its checkbox) is modified if:
+        (1) the 'select/unselect' all button is clicked,
+        (2) the user selects a row whiose video has no pose data
+            available. In that case, its checkbox is set to False,
+        (3) the export button is clicked. In that case the selected rows
+            are reset to False.
+
 
         Parameters
         ----------
@@ -401,11 +435,11 @@ def get_callbacks(app: dash.Dash) -> None:
             text content of the 'pose data unavailable' message
         pose_unavail_message_state : bool
             visibility state of the 'pose data unavailable' message
-        export_message_str : _type_
-            text content of the export message
-        export_message_state : _type_
+        export_message_children : list
+            children of the export message component
+        export_message_state : bool
             visibility state of the export message
-        export_message_color : _type_
+        export_message_color : str
             color of the export message
         app_storage : dict
             data held in temporary memory storage,
@@ -425,15 +459,14 @@ def get_callbacks(app: dash.Dash) -> None:
             text content of the 'pose data unavailable' message
         pose_unavail_message_state : bool
             visibility state of the 'pose data unavailable' message
-        export_message_str : str
-            text content of the export message
+        export_message_children : list
+            children of the export message component
         export_message_state : bool
             visibility state of the export message
         export_message_color : str
             color of the export message
         """
 
-        # TODO: select all rows *per page*
         list_missing_pose_data_bool = [
             videos_table_data[r][POSE_DATA_STR] == FALSE_EMOJI
             for r in range(len(videos_table_data))
@@ -472,16 +505,18 @@ def get_callbacks(app: dash.Dash) -> None:
         # ---------------------------
         # If export button is clicked
         if n_clicks_export > 0:
-            # if no rows selected show warning
+            # if no rows are selected show warning
             if not list_selected_rows:
                 n_clicks_export = 0
 
-                export_message_str = "No data to export"
-                # TODO: add timestamp of message?
+                export_message_children[0] = "No data to export"
+                export_message_children[1]["props"]["style"] = {
+                    "display": "none"
+                }
                 export_message_color = "warning"
                 export_message_state = True
 
-            # if rows are selected: export combined df
+            # if rows are selected: export combined dataframe
             else:
 
                 # get list of selected videos
@@ -500,7 +535,7 @@ def get_callbacks(app: dash.Dash) -> None:
 
                 # get list of dataframes to combine
                 # - one dataframe per selected video
-                # - we add 'File', 'event_tag' and 'ROI' data to each dataframe
+                # - we add the fields 'video_file', 'event_tag' and 'ROI'
                 # - we select only the frames within the interval
                 #   set by the slider
                 list_df_to_export = utils.get_dataframes_to_combine(
@@ -510,24 +545,30 @@ def get_callbacks(app: dash.Dash) -> None:
                 )
 
                 # concatenate all dataframes
+                # NOTE: we explicitly initialise ROI_tags
+                # and event_tags columns for all video dataframes
+                # with empty strings (then ROIs and events are only assigned
+                # if defined for a video)
                 df = pd.concat(list_df_to_export)
 
                 # ---------
-                # Save df as h5
-                # get output path
+                # Export dataframe as h5
+                # TODO: provide an option to export as h5 or csv?
+
+                # Get path to output directory
                 # if not specified in config, use dir where
-                # 'start_wazp_server.sh' is at
+                # server was launched from
                 output_path = pl.Path(
                     app_storage["config"].get(
                         "dashboard_export_data_path", "."
                     )
                 )
 
-                # if output dir does not exist, create it
-                if not output_path.is_dir():
-                    os.mkdir(output_path)
+                # If output directory does not exist,
+                # create it
+                output_path.mkdir(parents=True, exist_ok=True)
 
-                # save combined df as h5 file
+                # Save combined dataframe as h5 file
                 h5_file_path = output_path / pl.Path(
                     "df_export_"
                     + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -540,14 +581,18 @@ def get_callbacks(app: dash.Dash) -> None:
                 )
 
                 # ---------
-                # reset triggers and states
+                # Reset triggers and states
                 list_selected_rows = []
                 n_clicks_export = 0
-                export_message_str = (
-                    "Combined dataframe ",
-                    f"exported successfully at: '{h5_file_path}'",
-                )
-                # TODO: add timestamp to message?
+                export_message_children[0] = "".join(
+                    (
+                        "Combined dataframe ",
+                        f"exported successfully at: '{h5_file_path}'",
+                    )
+                )  # this is because max line length in linter
+                export_message_children[1]["props"]["style"] = {
+                    "display": "inline-block"
+                }
                 export_message_color = "success"
                 export_message_state = True
 
@@ -558,7 +603,50 @@ def get_callbacks(app: dash.Dash) -> None:
             n_clicks_export,
             pose_unavail_message_str,
             pose_unavail_message_state,
-            export_message_str,
+            export_message_children,
             export_message_state,
             export_message_color,
         )
+
+    @app.callback(
+        Output("clipboard", "content"),
+        Output("clipboard", "n_clicks"),
+        Input("clipboard", "n_clicks"),
+        State("export-message", "children"),
+        State("clipboard", "content"),
+    )
+    def copy_path_from_export_message(
+        n_clicks_clipboard: int,
+        export_message_children: list,
+        clipboard_content: str,
+    ) -> tuple[str, int]:
+        """Copy fullpath from export message
+        to clipboard
+
+        Parameters
+        ----------
+        n_clicks_clipboard : int
+            number of clicks on the clipboard icon
+        export_message_children : list
+            children of the export message component
+        clipboard_content : str
+            text content in the clipboard
+
+        Returns
+        -------
+        clipboard_content : str
+            text content in the clipboard
+        n_clicks_clipboard : int
+            number of clicks on the clipboard icon
+        """
+
+        if n_clicks_clipboard > 0:
+            # extract strings between single quotes (first match)
+            # TODO: is single quotes requirement limiting?
+            relative_path = re.findall(
+                r"\'([^]]*)\'", export_message_children[0]
+            )[0]
+            clipboard_content = str(pl.Path(relative_path).resolve())
+            n_clicks_clipboard = 0
+
+        return (clipboard_content, n_clicks_clipboard)

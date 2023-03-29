@@ -1,4 +1,3 @@
-import math
 import pathlib as pl
 from datetime import datetime, timedelta
 from typing import Callable
@@ -6,7 +5,9 @@ from typing import Callable
 import cv2
 import pandas as pd
 import plotly.express as px
+import shapely
 import yaml
+from shapely.geometry import Polygon
 
 
 def df_from_metadata_yaml_files(
@@ -71,7 +72,8 @@ def df_from_metadata_yaml_files(
 def set_edited_row_checkbox_to_true(
     data_previous: list[dict], data: list[dict], list_selected_rows: list[int]
 ) -> list[int]:
-    """Set a row's checkbox to True when its data is edited.
+    """Set a metadata table row's checkbox to True
+    when its data is edited.
 
     Parameters
     ----------
@@ -96,10 +98,8 @@ def set_edited_row_checkbox_to_true(
     df = pd.DataFrame(data=data)
     df_previous = pd.DataFrame(data_previous)
 
-    # ignore static type checking here,
-    # see https://github.com/pandas-dev/pandas-stubs/issues/256
     df_diff = df.merge(df_previous, how="outer", indicator=True).loc[
-        lambda x: x["_merge"] == "left_only"  # type: ignore
+        lambda x: x["_merge"] == "left_only"
     ]
 
     # Update the set of selected rows
@@ -113,7 +113,7 @@ def set_edited_row_checkbox_to_true(
 def export_selected_rows_as_yaml(
     data: list[dict], list_selected_rows: list[int], app_storage: dict
 ) -> None:
-    """Export selected rows as yaml files.
+    """Export selected metadata rows as yaml files.
 
     Parameters
     ----------
@@ -122,7 +122,8 @@ def export_selected_rows_as_yaml(
     list_selected_rows : list[int]
         a list of indices for the currently selected rows
     app_storage : dict
-        _description_
+        data held in temporary memory storage,
+        accessible to all tabs in the app
     """
 
     # Export selected rows
@@ -142,110 +143,348 @@ def export_selected_rows_as_yaml(
     return
 
 
+def read_and_restructure_DLC_dataframe(
+    h5_file: str,
+) -> pd.DataFrame:
+    """Read and reorganise columns in DLC dataframe
+    The columns in the DLC dataframe as read from the h5 file are
+    reorganised to more closely match a long format.
+
+    The original columns in the DLC dataframe are multi-level, with
+    the following levels:
+    - scorer: if using the output from a model, this would be the model_str
+      (e.g. 'DLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000').
+    - bodyparts: the keypoints tracked in the animal (e.g., head, thorax)
+    - coords: x, y, likelihood
+
+    We reshape the dataframe to have a single level along the columns,
+    and the following columns:
+    - model_str: string that characterises the model used
+      (e.g. 'DLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000')
+    - frame: the (zero-indexed) frame number the data was tracked at.
+      This is inherited from the index of the DLC dataframe.
+    - bodypart: the keypoints tracked in the animal (e.g., head, thorax).
+      Note we use the singular, rather than the plural as in DLC.
+    - x: x-coordinate of the bodypart tracked.
+    - y: y-coordinate of the bodypart tracked.
+    - likelihood: likelihood of the estimation provided by the model
+    The data is sorted by bodypart, and then by frame.
+
+    Parameters
+    ----------
+    h5_file : str
+        path to the input h5 file
+    Returns
+    -------
+    pd.DataFrame
+        a dataframe with the h5 file data, and the columns as specified above
+    """
+    # TODO: can this be less hardcoded?
+    # TODO: check with multianimal dataset!
+
+    # read h5 file as a dataframe
+    df = pd.read_hdf(h5_file)
+
+    # determine if model is multianimal
+    is_multianimal = "individuals" in df.columns.names
+
+    # assuming the DLC index corresponds to frame number!!!
+    # TODO: can I check this?
+    # frames are zero-indexed
+    df.index.name = "frame"
+
+    # stack scorer and bodyparts levels from columns to index
+    # if multianimal, also column 'individuals'
+    columns_to_stack = ["scorer", "bodyparts"]
+    if is_multianimal:
+        columns_to_stack.append("individual")
+    df = df.stack(level=columns_to_stack)  # type: ignore
+    # Not sure why mypy complains, list of labels is allowed
+    # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.stack.html
+    # ignoring for now
+
+    # reset index to remove 'frame','scorer' and 'bodyparts'
+    # if multianimal, also remove 'individuals'
+    df = df.reset_index()  # removes all levels in index by default
+
+    # reset name of set of columns and indices
+    # (to remove columns name = 'coords')
+    df.columns.name = ""
+    df.index.name = ""
+
+    # rename columns
+    # TODO: if multianimal, also 'individuals'
+    columns_to_rename = {
+        "scorer": "model_str",
+        "bodyparts": "bodypart",
+    }
+    if is_multianimal:
+        columns_to_rename["individuals"] = "individual"
+    df.rename(
+        columns=columns_to_rename,
+        inplace=True,
+    )
+
+    # reorder columns
+    list_columns_in_order = [
+        "model_str",
+        "frame",
+        "bodypart",
+        "x",
+        "y",
+        "likelihood",
+    ]
+    if is_multianimal:
+        # insert 'individual' in second position
+        list_columns_in_order.insert(1, "individual")
+    df = df[list_columns_in_order]
+
+    # sort rows by bodypart and frame
+    # if multianimal: sort by individual first
+    list_columns_to_sort_by = ["bodypart", "frame"]
+    if is_multianimal:
+        list_columns_to_sort_by.insert(0, "individual")
+    df.sort_values(by=list_columns_to_sort_by, inplace=True)  # type: ignore
+
+    # reset dataframe index
+    df = df.reset_index(drop=True)
+
+    return df  # type: ignore
+
+
 def get_dataframes_to_combine(
     list_selected_videos: list,
     slider_start_end_labels: list,
     app_storage: dict,
-):
-    # build list of h5 files for the selected videos
-    # TODO: provide an option to export as h5 or csv
-    # TODO: try to make it generic to any pose estim library?
-    # TODO: what is several pose_estimation_model_str are provided?
-    # (right now DLC)
+) -> list:
+    """Create list of dataframes to export as one
+
+    Parameters
+    ----------
+    list_selected_videos : list
+        list of videos selected in the table
+    slider_start_end_labels : list
+        labels for the slider start and end positions
+    app_storage : dict
+        data held in temporary memory storage,
+        accessible to all tabs in the app
+
+    Returns
+    -------
+    list_df_to_export : list
+        list of dataframes to concatenate
+        before exporting
+    """
+    # TODO: allow model_str to be a list?
+    # (i.e., consider the option of different models being used)
+
+    # List of h5 files corresponding to
+    # the selected videos
     list_h5_file_paths = [
         pl.Path(app_storage["config"]["pose_estimation_results_path"])
-        / (
-            pl.Path(vd).stem
-            + app_storage["config"]["pose_estimation_model_str"]
-            + ".h5"
-        )
+        / (pl.Path(vd).stem + app_storage["config"]["model_str"] + ".h5")
         for vd in list_selected_videos
     ]
 
-    # loop thru videos and h5 files to read dataframe and
-    # extract subset of rows
+    # Read the dataframe for each video and h5 file
     list_df_to_export = []
     for h5, video in zip(list_h5_file_paths, list_selected_videos):
 
-        # get the metadata file for this video
+        # Get the metadata file for this video
         # (built from video filename)
         yaml_filename = pl.Path(app_storage["config"]["videos_dir_path"]) / (
             pl.Path(video).stem + ".metadata.yaml"
         )
-
-        # extract the frame numbers
-        # from the slider position
         with open(yaml_filename, "r") as yf:
             metadata = yaml.safe_load(yf)
-            # extract frame start/end
-            frame_start_end = [
-                metadata["Events"][x] for x in slider_start_end_labels
-            ]
-            # extract ROI paths
-            # TODO
-            # ...
 
-        # read h5 as dataframe and add 'File'
-        # as the outermost level of the (multi) index
-        df = pd.concat(
-            [pd.read_hdf(h5)],
-            keys=[video],
-            names=[app_storage["config"]["metadata_key_field_str"]],
-            axis=1,
-        )
+        # Extract frame start/end using info from slider
+        frame_start_end = [
+            metadata["Events"][x] for x in slider_start_end_labels
+        ]
 
-        # add ROI and event tag per bodypart
-        # TODO: is there a nicer way using pandas?
-        # right now levels are hardcoded....
-        # TODO: ideally event_tags are not repeated per bodypart
-        # alternative; set as index? add frame from index?
-        # # df = df.set_index([df.index, "event_tag"])
-        metadata["Events"] = dict(
-            sorted(
-                metadata["Events"].items(),
-                key=lambda item: item[1],
-            )
-        )  # ensure keys are sorted by value
-        list_keys = list(metadata["Events"].keys())
-        list_next_keys = list_keys[1:]
-        list_next_keys.append("NAN")
-        for vd in df.columns.get_level_values(0).unique().to_list():
-            for scorer in df.columns.get_level_values(1).unique().to_list():
-                for bdprt in df.columns.get_level_values(2).unique().to_list():
-                    # assign ROI (placeholder for now)
-                    # TODO: read from yaml and assign
-                    df[vd, scorer, bdprt, "ROI"] = ""
+        # -----------------------------
 
-                    # assign event_tag per bodypart
-                    for ky, next_ky in zip(list_keys, list_next_keys):
-                        df.loc[
-                            (df.index >= metadata["Events"][ky])
-                            & (
-                                df.index
-                                < metadata["Events"].get(next_ky, math.inf)
-                            ),
-                            (vd, scorer, bdprt, "event_tag"),
-                        ] = ky
+        # Read h5 file and reorganise columns
+        # TODO: I assume index in DLC dataframe represents frame number
+        # (0-indexed) -- check this with download from ceph and ffmpeg
+        df = read_and_restructure_DLC_dataframe(h5)
 
-        # sort to ensure best performance
-        # when accessing data
-        # TODO: keep original bodyparts order?
-        # rn: sorting alphabetically by bodypart
-        df.sort_index(
-            axis=1, level=["bodyparts"], ascending=[True], inplace=True
-        )
+        # Extract subset of rows based on events slider
+        # (frame numbers from slider, both inclusive)
+        df = df.loc[
+            (df["frame"] >= frame_start_end[0])
+            & (df["frame"] <= frame_start_end[1]),
+            :,
+        ]
 
-        # select subset of rows based on
-        # frame numbers from slider (both inclusive)
-        # (index as frame number)
-        list_df_to_export.append(
-            df[
-                (df.index >= frame_start_end[0])
-                & (df.index <= frame_start_end[1])
-            ]
-        )
+        # -----------------------------
+        # Add video file column
+        # (insert after model_str)
+        df.insert(1, "video_file", video)
+
+        # Add ROI per frame and bodypart,
+        # if ROIs defined for this video
+        # To set hierarchy of ROIs:
+        # - Start assigning from the smallest,
+        # - only set ROI if not previously defined
+        # TODO: Is there a better approach?
+        df["ROI_tag"] = ""  # initialize ROI column with empty strings
+        if "ROIs" in metadata:
+            # Extract ROI paths for this video if defined
+            # TODO: should I do case insensitive?
+            # if "rois" in [ky.lower() for ky in metadata.keys()]:
+            ROIs_as_polygons = {
+                el["name"]: svg_path_to_polygon(el["path"])
+                for el in metadata["ROIs"]
+            }
+            df = add_ROIs_to_video_dataframe(df, ROIs_as_polygons, app_storage)
+
+        # Add Event tags if defined
+        # - if no event is defined for that frame: empty str
+        # - if an event is defined for that frame: event_tag
+        df["event_tag"] = ""
+        if "Events" in metadata:
+            for event_str in metadata["Events"].keys():
+                event_frame = metadata["Events"][event_str]
+                df.loc[df["frame"] == event_frame, "event_tag"] = event_str
+
+        # Append to list
+        list_df_to_export.append(df)
 
     return list_df_to_export
+
+
+def svg_path_to_polygon(svg_path: str) -> Polygon:
+    """Converts an SVG Path that describes a closed
+    polygon into a Shapely polygon.
+
+    The svg_path string starts with 'M' (initial point),
+    indicates end of intermediate line segments with 'L'
+    and marks the end of the string with 'Z' (end of path)
+    (see [1]).
+
+    Based on original function by @niksirbi
+
+    References
+    ----------
+    [1] "SVG Path",
+        https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
+    """
+
+    # strip svg_path of initial and end marks
+    svg_path_no_ends = svg_path.lstrip("M").rstrip("Z")
+
+    # extract points as x,y tuples
+    list_points = [
+        tuple(float(s) for s in tuple_str.split(","))
+        for tuple_str in svg_path_no_ends.split("L")
+    ]
+
+    return Polygon(list_points)
+
+
+def add_ROIs_to_video_dataframe(
+    df: pd.DataFrame, ROIs_as_polygons: dict, app_storage: dict
+) -> pd.DataFrame:
+    """Assign an ROI to every row in the dataframe
+    of the current video. Every row corresponds to a keypoint at a
+    specific frame.
+
+    If no ROIs are defined for this video, an empty string
+    is assigned to all rows.
+
+    To solve for the cases in which a point falls in two or more ROIs
+    (e.g. because one ROI contains or intersects another), we also define
+    a hierarchy of ROIs.
+
+    By default the hierarchy of ROIs is based on their area (a smaller ROI
+    prevails over a larger one). However, if in the project config the
+    parameter 'use_ROIs_order_as_hierarchy' is defined and set as True, the
+    order of the ROIs in the project config file will be interpreted as their
+    hierarchy, with top ROIs prevailing over ROIs placed below.
+
+    Parameters
+    ----------
+    df : pd.Dataframe
+        pandas dataframe with the pose estimation results
+        for one video. It is a single-level dataframe, restructured
+        from the DeepLabCut output.
+    ROIs_as_polygons : dict
+        dictionary for the current video with ROI tags as keys,
+        and their corresponding shapely polygons as values.
+    app_storage : dict
+        data held in temporary memory storage,
+        accessible to all tabs in the app
+
+    Returns
+    -------
+    df : pd.Dataframe
+        pandas dataframe with the pose estimation results
+        for one video, and the ROI per bodypart per frame
+        assigned.
+    """
+
+    # Define hierarchy of ROIs
+    flag_use_ROI_custom_order = app_storage["config"].get(
+        "use_ROIs_order_as_hierarchy", False  # reads a bool
+    )
+
+    # Use order of ROIs in the project config file
+    # as hierarchy if required
+    if flag_use_ROI_custom_order:
+
+        # sort pairs of ROI tags and polygons
+        # in the same order as the ROI tags appear in
+        # the config file
+        list_sorted_ROI_pairs = [
+            x
+            for x, _ in sorted(
+                zip(
+                    ROIs_as_polygons.items(),
+                    enumerate(app_storage["config"]["ROI_tags"]),
+                ),
+                key=lambda pair: pair[1][0],  # sort by index from enumerate
+            )
+        ]
+
+    # else: sort pairs of ROI tags and polygons
+    # based on the polygons' areas
+    else:
+        list_sorted_ROI_pairs = sorted(
+            ROIs_as_polygons.items(),
+            key=lambda pair: pair[1].area,  # sort by increasing area
+        )
+
+    # -------------------
+    # Assign ROIs
+    for ROI_str, ROI_poly in list_sorted_ROI_pairs:
+        # for optimized performance
+        # (applies transform in place)
+        shapely.prepare(ROI_poly)
+
+        # Consider buffer around boundaries if required
+        # TODO: remove this buffer option? inspired by this SO answer
+        # https://stackoverflow.com/a/59033011
+        if "buffer_around_ROIs_boundaries" in app_storage["config"]:
+            ROI_poly = ROI_poly.buffer(
+                float(app_storage["config"]["buffer_around_ROIs_boundaries"])
+            )
+
+        # select rows with x,y coordinates inside ROI (including boundary)
+        select_rows_in_ROI = shapely.intersects_xy(
+            ROI_poly, [(x, y) for (x, y) in zip(df["x"], df["y"])]
+        )
+
+        # select rows with no ROI assigned
+        select_rows_w_empty_str = df["ROI_tag"] == ""
+
+        # assign ROI
+        df.loc[
+            select_rows_in_ROI & select_rows_w_empty_str, "ROI_tag"
+        ] = ROI_str
+
+    return df
 
 
 def assign_roi_colors(
