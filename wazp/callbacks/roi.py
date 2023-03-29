@@ -591,7 +591,7 @@ def get_callbacks(app: dash.Dash) -> None:
                     utils.stored_shape_to_yaml_entry(shape)
                     for shape in rois_in_app
                 ]
-                yaml.safe_dump(metadata, yaml_file)
+                yaml.safe_dump(metadata, yaml_file, sort_keys=False)
 
             # Return the download link
             return metadata_filepath.as_posix()
