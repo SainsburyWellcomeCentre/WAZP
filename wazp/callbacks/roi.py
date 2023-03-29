@@ -109,7 +109,7 @@ def get_callbacks(app: dash.Dash) -> None:
         if "config" in app_storage.keys():
             # Get ROI names from stored config
             config = app_storage["config"]
-            roi_names = config["roi_names"]
+            roi_names = config["ROI_tags"]
             options = [{"label": r, "value": r} for r in roi_names]
             value = roi_names[0]
 
