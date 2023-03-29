@@ -148,19 +148,16 @@ disabled_button_style = {
 }
 
 save_rois_button = dbc.Button(
-    "Save all to file",
+    "Save all",
     id="save-rois-button",
     download="rois.yaml",
     **disabled_button_style,
 )
 load_rois_button = dbc.Button(
-    "Load all from file", id="load-rois-button", **disabled_button_style
+    "Load all", id="load-rois-button", **disabled_button_style
 )
 delete_rois_button = dbc.Button(
     "Delete selected", id="delete-rois-button", **disabled_button_style
-)
-infer_rois_button = dbc.Button(
-    "Infer positions", id="infer-rois-button", **disabled_button_style
 )
 # Tooltips for ROI buttons
 save_rois_tooltip = dbc.Tooltip(
@@ -172,14 +169,6 @@ load_rois_tooltip = dbc.Tooltip(
     "Load all ROIs from the video's metadata.yaml file. "
     "This will overwrite any existing ROIs in the app!",
     target="load-rois-button",
-)
-delete_rois_tooltip = dbc.Tooltip(
-    "Delete selected ROIs", target="delete-rois-button"
-)
-infer_rois_tooltip = dbc.Tooltip(
-    "NOT IMPLEMENTED YET! Infer remaining ROI positions "
-    "based on the 'enclosure' ROI (has to be drawn first).",
-    target="infer-rois-button",
 )
 
 # ROI status alert
@@ -257,27 +246,15 @@ table_card = dbc.Card(
             [
                 dbc.Row(
                     [
-                        dbc.Col(delete_rois_button, width=6),
-                        dbc.Col(infer_rois_button, width=6),
-                        delete_rois_tooltip,
-                        infer_rois_tooltip,
-                    ],
-                ),
-                html.Br(),
-                dbc.Row(
-                    [
-                        dbc.Col(save_rois_button, width=6),
-                        dbc.Col(load_rois_button, width=6),
+                        dbc.Col(delete_rois_button, width={"size": "auto"}),
+                        dbc.Col(save_rois_button, width={"size": "auto"}),
+                        dbc.Col(load_rois_button, width={"size": "auto"}),
                         save_rois_tooltip,
                         load_rois_tooltip,
                     ],
                 ),
                 html.Br(),
                 dcc.Loading(dbc.Row(roi_status_alert)),
-                save_rois_tooltip,
-                load_rois_tooltip,
-                delete_rois_tooltip,
-                infer_rois_tooltip,
             ]
         ),
     ]
