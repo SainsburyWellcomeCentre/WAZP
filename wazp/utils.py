@@ -544,7 +544,13 @@ def get_num_frames(video_path):
         Number of frames in the video
     """
     vidcap = cv2.VideoCapture(video_path)
-    return int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+    try:
+        num_frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+    except Exception as e:
+        raise OSError(
+            f"Error getting number of frames from {video_path}"
+        ) from e
+    return num_frames
 
 
 def extract_frame(
@@ -570,7 +576,7 @@ def extract_frame(
         cv2.imwrite(output_path, image)
         print(f"Saved frame to {output_path}")
     else:
-        print("Error extracting frame from video")
+        raise OSError(f"Error extracting frame from {video_path}")
 
 
 def cache_frame(

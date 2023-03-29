@@ -171,7 +171,15 @@ def get_callbacks(app: dash.Dash) -> None:
             middle_frame = stored_video_params["value"]
             return num_frames - 1, frame_step, middle_frame, dash.no_update
         else:
-            num_frames = int(utils.get_num_frames(video_path))
+            try:
+                num_frames = int(utils.get_num_frames(video_path))
+            except OSError:
+                return (
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                )
             # Round the frame step to the nearest 1000
             frame_step = round(int(num_frames / 4), -3)
             # Default to the middle step
@@ -517,30 +525,26 @@ def get_callbacks(app: dash.Dash) -> None:
             try:
                 frame_filepath = utils.cache_frame(video_path_pl, frame_num)
                 new_frame = Image.open(frame_filepath)
-                # Put the frame in a figure
-                new_fig = px.imshow(new_frame)
-                # Add the stored shapes and set the nextROI color
-                new_fig.update_layout(
-                    shapes=graph_shapes,
-                    newshape_line_color=next_shape_color,
-                    dragmode="drawclosedpath",
-                    margin=dict(l=0, r=0, t=0, b=0),
-                    yaxis={"visible": False, "showticklabels": False},
-                    xaxis={"visible": False, "showticklabels": False},
-                )
-                alert_msg = f"Showing frame {frame_num}"
-                alert_color = "light"
-                alert_open = True
-                return new_fig, alert_msg, alert_color, alert_open
-            except Exception as e:
-                print(e)
+            except OSError:
                 alert_msg = (
                     f"Could not extract frames from '{video_name}'. "
                     "Is it a valid video file?"
                 )
-                alert_color = "danger"
-                alert_open = True
-                return dash.no_update, alert_msg, alert_color, alert_open
+                return dash.no_update, alert_msg, "danger", True
+
+            # Put the frame in a figure
+            new_fig = px.imshow(new_frame)
+            # Add the stored shapes and set the nextROI color
+            new_fig.update_layout(
+                shapes=graph_shapes,
+                newshape_line_color=next_shape_color,
+                dragmode="drawclosedpath",
+                margin=dict(l=0, r=0, t=0, b=0),
+                yaxis={"visible": False, "showticklabels": False},
+                xaxis={"visible": False, "showticklabels": False},
+            )
+            alert_msg = f"Showing frame {frame_num}"
+            return new_fig, alert_msg, "light", True
 
     @app.callback(
         Output("save-rois-button", "download"),
