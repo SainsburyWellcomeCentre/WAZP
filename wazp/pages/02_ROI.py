@@ -31,18 +31,6 @@ init_roi_storage: dict = {v: {"shapes": []} for v in init_videos}
 # Initialize the ROI status alert
 init_roi_status: dict = {"message": "No ROIs to save.", "color": "light"}
 
-# Instructions for the user
-instructions = (
-    "#### Instructions\n"
-    "1. Select the video from the top dropdown menu. \n"
-    "2. Use the slider to change the shown frame (if necessary). \n"
-    "3. Select an ROI and draw it on the frame. \n"
-    "4. You may also select an existing ROI "
-    "to edit it or delete it.\n"
-    "5. When satisfied with the drawn ROIs, "
-    "save them and move on to the next video.\n"
-)
-
 
 ###############################
 # Graph showing a video frame #
@@ -216,14 +204,7 @@ frame_card = dbc.Card(
             ]
         ),
         dbc.CardBody(frame_graph),
-        dbc.CardFooter(
-            dbc.Row(
-                [
-                    dcc.Loading(frame_status_alert),
-                    dcc.Markdown(instructions),
-                ],
-            )
-        ),
+        dbc.CardFooter(dcc.Loading(frame_status_alert)),
     ],
 )
 
