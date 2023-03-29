@@ -98,8 +98,6 @@ def set_edited_row_checkbox_to_true(
     df = pd.DataFrame(data=data)
     df_previous = pd.DataFrame(data_previous)
 
-    # ignore static type checking here,
-    # see https://github.com/pandas-dev/pandas-stubs/issues/256
     df_diff = df.merge(df_previous, how="outer", indicator=True).loc[
         lambda x: x["_merge"] == "left_only"
     ]
@@ -158,7 +156,6 @@ def read_and_restructure_DLC_dataframe(
       (e.g. 'DLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000').
     - bodyparts: the keypoints tracked in the animal (e.g., head, thorax)
     - coords: x, y, likelihood
-    # TODO: is this different in multianimal? (maybe an extra ID column?)
 
     We reshape the dataframe to have a single level along the columns,
     and the following columns:
@@ -306,14 +303,6 @@ def get_dataframes_to_combine(
             metadata["Events"][x] for x in slider_start_end_labels
         ]
 
-        # Extract ROI paths for this video if defined
-        # TODO: should I do case insensitive?
-        # if "rois" in [ky.lower() for ky in metadata.keys()]:
-        if "ROIs" in metadata:
-            ROIs_as_polygons = {
-                el["name"]: svg_path_to_polygon(el["path"])
-                for el in metadata["ROIs"]
-            }
         # -----------------------------
 
         # Read h5 file and reorganise columns
@@ -324,8 +313,8 @@ def get_dataframes_to_combine(
         # Extract subset of rows based on events slider
         # (frame numbers from slider, both inclusive)
         df = df.loc[
-            (df.frame >= frame_start_end[0])
-            & (df.frame <= frame_start_end[1]),
+            (df["frame"] >= frame_start_end[0])
+            & (df["frame"] <= frame_start_end[1]),
             :,
         ]
 
@@ -358,7 +347,7 @@ def get_dataframes_to_combine(
         if "Events" in metadata:
             for event_str in metadata["Events"].keys():
                 event_frame = metadata["Events"][event_str]
-                df.loc[df.frame == event_frame, "event_tag"] = event_str
+                df.loc[df["frame"] == event_frame, "event_tag"] = event_str
 
         # Append to list
         list_df_to_export.append(df)

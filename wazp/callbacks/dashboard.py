@@ -1,5 +1,4 @@
 import datetime
-import os
 import pathlib as pl
 import re
 
@@ -433,7 +432,6 @@ def get_callbacks(app: dash.Dash) -> None:
             color of the export message
         """
 
-        # TODO: select all rows per page?
         list_missing_pose_data_bool = [
             videos_table_data[r][POSE_DATA_STR] == FALSE_EMOJI
             for r in range(len(videos_table_data))
@@ -511,14 +509,10 @@ def get_callbacks(app: dash.Dash) -> None:
                 )
 
                 # concatenate all dataframes
-                # NOTE: Columns outside the intersection
-                # will be filled with NaN values.
-                #
-                # Option 1: do 'df=df.fillna('')' after concat
-                # Option 2: explicitly initialise ROI_tags
+                # NOTE: we explicitly initialise ROI_tags
                 # and event_tags columns for all video dataframes
                 # with empty strings (then ROIs and events are only assigned
-                # if defined for a video) --I'm doing this for now
+                # if defined for a video)
                 df = pd.concat(list_df_to_export)
 
                 # ---------
@@ -536,8 +530,7 @@ def get_callbacks(app: dash.Dash) -> None:
 
                 # If output directory does not exist,
                 # create it
-                if not output_path.is_dir():
-                    os.mkdir(output_path)
+                output_path.mkdir(parents=True, exist_ok=True)
 
                 # Save combined dataframe as h5 file
                 h5_file_path = output_path / pl.Path(
