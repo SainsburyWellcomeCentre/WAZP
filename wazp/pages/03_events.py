@@ -31,7 +31,7 @@ events_table = dash_table.DataTable(
     id="events-table",
     columns=[dict(name=c, id=c) for c in init_events_table_columns],
     data=[],
-    editable=True,
+    editable=False,
     style_data={"height": 40},
     style_cell={
         "overflow": "hidden",
@@ -51,6 +51,24 @@ events_video_select = dcc.Dropdown(
     clearable=False,
 )
 
+event_dropdown = dcc.Dropdown(
+    id="event-select",
+    placeholder="Select event",
+    options=[{"label": e, "value": e} for e in init_event_tags],
+    value=init_event_tags[0],
+    clearable=False,
+)
+
+frame_index_input = dbc.Input(
+    id="frame-index-input",
+    type="number",
+    placeholder="Frame index",
+    min=0,
+    max=1,
+    step=1,
+    value=0,
+)
+
 # events status alert
 events_status_alert = dbc.Alert(
     init_events_status["message"],
@@ -66,8 +84,25 @@ events_status_alert = dbc.Alert(
 
 # events table card
 events_table_card = dbc.Card(
-    [
-        dbc.CardHeader(events_video_select),
+    children=[
+        dbc.CardHeader(
+            [
+                dbc.Row(
+                    [
+                        dbc.Col(dcc.Markdown("Select video"), width=3),
+                        dbc.Col(events_video_select, width=9),
+                    ],
+                ),
+                dbc.Row(
+                    [
+                        dbc.Col(dcc.Markdown("Tag event for"), width=3),
+                        dbc.Col(event_dropdown, width=3),
+                        dbc.Col(dcc.Markdown("at frame index"), width=3),
+                        dbc.Col(dcc.Loading(frame_index_input), width=3),
+                    ],
+                ),
+            ],
+        ),
         dbc.CardBody(
             [
                 dbc.Row(dbc.Col(html.H4("Defined events"))),
