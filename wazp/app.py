@@ -107,7 +107,9 @@ home.get_callbacks(app)
 metadata.get_callbacks(app)
 roi.get_callbacks(app)
 dashboard.get_callbacks(app)
-dashboard.get_cache_callbacks(app)
+
+# get cache callbacks (why separately?)
+# dashboard.get_cache_callbacks(app)
 
 
 #####################

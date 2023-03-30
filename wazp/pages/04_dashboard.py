@@ -23,7 +23,7 @@ layout = html.Div(
         html.H5(
             "Input data", style={"margin-top": "20px", "margin-bottom": "20px"}
         ),
-        html.Div(children=[], id="input-data-container"),
+        html.Div(children=[], id="export-data-container"),
         html.Div(children=[], id="custom-plot-container"),
         html.Div(
             [

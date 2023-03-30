@@ -7,9 +7,11 @@ import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import Input, Output, State, dash_table, dcc, html
-from flask_caching import Cache
 
 from wazp import utils
+
+# from flask_caching import Cache
+
 
 POSE_DATA_STR = "Pose data available?"
 TRUE_EMOJI = "✔️"
@@ -310,6 +312,16 @@ def create_pose_data_unavailable_popup() -> dcc.ConfirmDialog:
     )
 
 
+# TODO check dbc row components
+def create_row_of_plots():
+    return dbc.Row(
+        [
+            dbc.Col(dcc.Graph(id="trajectories-plot"), width=6),
+            dbc.Col(dcc.Graph(id="heatmap-plot"), width=6),
+        ]
+    )
+
+
 def create_dashboard_storage():
     """Create storage for dashboard tab.
 
@@ -328,166 +340,42 @@ def create_dashboard_storage():
     )
 
 
-# -------
-# TODO check dbc row components
-def create_row_of_plots():
-    return html.Div(
-        [
-            html.Div(
-                dcc.Graph(id="trajectories-plot"), className="six columns"
-            ),
-            html.Div(dcc.Graph(id="heatmap-plot"), className="six columns"),
-        ],
-        className="row",
-    )
-
-
 #############################
 # Cache callbacks
 ####################
-def get_cache_callbacks(app):
+# def get_cache_callbacks(app):
 
-    # initialise cache
-    CACHE_CONFIG = {
-        "CACHE_TYPE": "FileSystemCache",
-        "CACHE_DIR": pl.Path.home() / ".WAZP" / "dashboard_storage",
-        "CACHE_DEFAULT_TIMEOUT": 3600,
-    }
-    cache = Cache()
-    cache.init_app(app.server, config=CACHE_CONFIG)
+#     # initialise cache for our app
+#     CACHE_CONFIG = {
+#         "CACHE_TYPE": "FileSystemCache",
+#         "CACHE_DIR": pl.Path.home() / ".WAZP" / "dashboard_storage",
+#         "CACHE_DEFAULT_TIMEOUT": 3600,
+#     }
+#     cache = Cache()
+#     cache.init_app(app.server, config=CACHE_CONFIG)
+#     # TODO: how and where/when do I clear the cache?
+#     # to clear: cache.clear() ----where?
 
-    # perform expensive computations in this "global store"
-    # these computations are cached in a globally available
-    # (FileSystem) memory store which is available across processes
-    # and for all time.
-    @cache.memoize()
-    def cache_user_defined_dataframe(  # global_store
-        list_selected_videos,
-        slider_start_end_labels,
-        app_storage,
-    ):
+#     # perform expensive computations in this "global store"
+#     # these computations are cached in
+#     # (FileSystem) memory store
+#     # 'memoize' caches the result of a function
+#     # 'cached' caches the function itself?
+#     @cache.memoize()
+#     def get_videos_dataframe(  # global_store
+#         list_selected_videos,
+#         slider_start_end_labels,
+#         app_storage,
+#     ):
 
-        # extract dataframes to concatenate
-        list_df_to_export = utils.get_dataframes_to_combine(
-            list_selected_videos,
-            slider_start_end_labels,
-            app_storage,
-        )
+#         # extract dataframes to concatenate
+#         list_df_to_export = utils.get_dataframes_to_combine(
+#             list_selected_videos,
+#             slider_start_end_labels,
+#             app_storage,
+#         )
 
-        return pd.concat(list_df_to_export)
-
-    def generate_figure(
-        list_selected_videos, slider_start_end_labels, app_storage, figure
-    ):
-        fig = copy.deepcopy(figure)
-
-        if list_selected_videos:
-            df = cache_user_defined_dataframe(
-                list_selected_videos, slider_start_end_labels, app_storage
-            )
-            fig["data"][0]["x"] = df["x"]
-            fig["data"][0]["y"] = df["y"]
-            fig["layout"] = {"margin": {"l": 20, "r": 10, "b": 20, "t": 10}}
-
-        return fig
-
-    # ------------------------------------
-    # Define callback to compute the data and store it in cache
-    @app.callback(
-        Output(
-            "dashboard-storage", "data"
-        ),  # this only holds True (if dataframe cached) or false if not
-        Input("video-data-table", "selected_rows"),
-        Input("time-slider", "value"),
-        State("time-slider", "marks"),
-        State("video-data-table", "data"),
-        State("session-storage", "data"),
-    )
-    def compute_dataframe_and_save_to_cache(
-        list_selected_rows: list,
-        slider_start_end_idcs: list,
-        slider_marks: dict,
-        videos_table_data: list[dict],
-        app_storage: dict,
-    ):
-        # compute value and send a signal when done
-        if list_selected_rows:  # and slider_start_end_labels:
-
-            # get list of selected videos in table
-            list_selected_videos = [
-                videos_table_data[r][
-                    app_storage["config"]["metadata_key_field_str"]
-                ]
-                for r in list_selected_rows
-            ]
-
-            # get list of slider start and end
-            slider_start_end_labels = [
-                slider_marks[str(x)]["label"] for x in slider_start_end_idcs
-            ]
-
-            # cache combined dataframe
-            _ = cache_user_defined_dataframe(
-                list_selected_videos, slider_start_end_labels, app_storage
-            )
-            return True
-        else:
-            return False
-
-    # Update figure when storage changes
-    @app.callback(
-        Output("trajectories-plot", "figure"),
-        Input("dashboard-storage", "data"),
-        Input("video-data-table", "selected_rows"),
-        State("time-slider", "value"),
-        State("time-slider", "marks"),
-        State("video-data-table", "data"),
-        State("session-storage", "data"),
-    )
-    def update_trajectory_graph(
-        dashboard_storage_bool,
-        list_selected_rows,
-        slider_start_end_idcs,
-        slider_marks,
-        videos_table_data,
-        app_storage,
-    ):
-        # generate_figure gets data from `global_store`.
-        # the data in `global_store` has already been computed
-        # by the `compute_value` callback and the result is stored
-        # in the global redis cached
-
-        # get list of selected videos in table
-        list_selected_videos = [
-            videos_table_data[r][
-                app_storage["config"]["metadata_key_field_str"]
-            ]
-            for r in list_selected_rows
-        ]
-
-        # get list of slider start and end
-        slider_start_end_labels = [
-            slider_marks[str(x)]["label"] for x in slider_start_end_idcs
-        ]
-
-        # figure?
-        figure = {
-            "data": [
-                {
-                    "type": "scatter",
-                    "mode": "markers",
-                    "marker": {
-                        "opacity": 0.5,
-                        "size": 14,
-                        "line": {"border": "thin darkgrey solid"},
-                    },
-                }
-            ]
-        }
-
-        return generate_figure(
-            list_selected_videos, slider_start_end_labels, app_storage, figure
-        )
+#         return pd.concat(list_df_to_export)
 
 
 #############################
@@ -503,8 +391,8 @@ def get_callbacks(app: dash.Dash) -> None:
     """
 
     @app.callback(
-        Output("input-data-container", "children"),
-        Input("input-data-container", "children"),
+        Output("export-data-container", "children"),
+        Input("export-data-container", "children"),
         State("session-storage", "data"),
     )
     def create_export_components(
@@ -586,6 +474,145 @@ def get_callbacks(app: dash.Dash) -> None:
 
         return custom_plot_container_children
 
+    @app.callback(
+        Output("dashboard-storage", "data"),
+        Input("video-data-table", "selected_rows"),
+        Input("time-slider", "value"),
+        State("time-slider", "marks"),
+        State("video-data-table", "data"),
+        State("session-storage", "data"),
+    )
+    def update_dashborad_storage(
+        list_selected_rows: list,
+        slider_start_end_idcs: list,
+        slider_marks: dict,
+        videos_table_data: list[dict],
+        app_storage: dict,
+    ) -> dict:
+        """Update dashboard storage when video selection or
+        time slider position change.
+
+        The dashboard storage holds the list of selected videos for
+        which there is pose data available and the event_tags for the
+        start and end positions of the slider.
+
+
+        Parameters
+        ----------
+        list_selected_rows : list
+            _description_
+        slider_start_end_idcs : list
+            _description_
+        slider_marks : dict
+            _description_
+        videos_table_data : list[dict]
+            _description_
+        app_storage : dict
+            _description_
+
+        Returns
+        -------
+        dict
+            a dictionary holding
+            - the list of selected videos (for the key: 'selected_videos')
+            - the event tags corresponding to the start and end
+              positions of the slider (for the key: 'slider_start_end_tags')
+        """
+
+        dashboard_storage = {}
+
+        if list_selected_rows:
+
+            # list of rows with pose data unavailable
+            list_missing_pose_data_bool = [
+                videos_table_data[r][POSE_DATA_STR] == FALSE_EMOJI
+                for r in range(len(videos_table_data))
+            ]
+            # remove rows with pose data unavailable
+            if any(
+                [list_missing_pose_data_bool[r] for r in list_selected_rows]
+            ):
+                list_selected_rows = [
+                    r
+                    for r in list_selected_rows
+                    if not list_missing_pose_data_bool[r]
+                ]
+
+            # get list of selected videos in table
+            list_selected_videos = [
+                videos_table_data[r][
+                    app_storage["config"]["metadata_key_field_str"]
+                ]
+                for r in list_selected_rows
+            ]
+
+            # get list of slider start and end
+            slider_start_end_tags = [
+                slider_marks[str(x)]["label"] for x in slider_start_end_idcs
+            ]
+
+            dashboard_storage["list_selected_videos"] = list_selected_videos
+            dashboard_storage["slider_start_end_tags"] = slider_start_end_tags
+
+        # print(
+        #     f'dashboard storage updated {datetime.datetime.now()}'
+        # # .strftime("%Y%m%d_%H%M%S")
+        # )
+        # print(dashboard_storage)
+
+        return dashboard_storage
+
+    # -----------
+    @app.callback(
+        Output("trajectories-plot", "figure"),
+        Input("dashboard-storage", "data"),
+        State("session-storage", "data"),
+    )
+    def plot_trajectories(dashboard_storage: dict, app_storage: dict):
+        # initialise figure
+        fig = {
+            "data": [
+                {
+                    "type": "scatter",
+                    "mode": "markers",
+                    "marker": {
+                        "opacity": 0.5,
+                        "size": 14,
+                        "line": {"border": "thin darkgrey solid"},
+                    },
+                }
+            ]
+        }
+
+        # if 'list_selected_videos' exists and not empty
+        if (
+            dashboard_storage.get("list_selected_videos", False)
+            and dashboard_storage["list_selected_videos"]
+        ):
+
+            # get list of df to export
+            list_df_to_export = utils.get_dataframes_to_combine(
+                dashboard_storage["list_selected_videos"],
+                dashboard_storage["slider_start_end_tags"],
+                app_storage,
+            )
+            print(f"list df ready {datetime.datetime.now()}")
+
+            # concatenate all dataframes
+            df = pd.concat(list_df_to_export)
+            print(df.columns)
+            print(f"df concatenated {datetime.datetime.now()}")
+
+            # prepare figure
+            fig = copy.deepcopy(fig)  # do I need deepcopy? why not update?
+            fig["data"][0]["x"] = [5, 5]  # type: ignore #df["x"]
+            fig["data"][0]["y"] = [5, 5]  # type: ignore # df["y"]
+            fig["layout"] = {
+                "margin": {"l": 20, "r": 10, "b": 20, "t": 10}
+            }  # type: ignore
+
+        return fig
+
     # -----------------------
     @app.callback(
         Output("video-data-table", "selected_rows"),
@@ -598,6 +625,8 @@ def get_callbacks(app: dash.Dash) -> None:
         Output("export-message", "is_open"),
         Output("export-message", "color"),
         Input("video-data-table", "selected_rows"),
+        # Input("dashboard-storage", "data"), #dashboard storage changes
+        # if selected rows or timeline changes!
         Input("select-all-videos-button", "n_clicks"),
         Input("unselect-all-videos-button", "n_clicks"),
         Input("export-dataframe-button", "n_clicks"),
@@ -625,12 +654,12 @@ def get_callbacks(app: dash.Dash) -> None:
         export_message_state: bool,
         export_message_color,
         app_storage: dict,
-    ) -> tuple[list, int, int, int, str, bool, list, bool, str]:
+    ):  # -> tuple[list, int, int, int, str, bool, list, bool, str]:
         """Modify the selection status of the rows in the videos' table.
 
         A row's selection status (i.e., its checkbox) is modified if:
         (1) the 'select/unselect' all button is clicked,
-        (2) the user selects a row whiose video has no pose data
+        (2) the user selects a row whose video has no pose data
             available. In that case, its checkbox is set to False,
         (3) the export button is clicked. In that case the selected rows
             are reset to False.
@@ -771,6 +800,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 # and event_tags columns for all video dataframes
                 # with empty strings (then ROIs and events are only assigned
                 # if defined for a video)
+                # TODO: check if it exists in cache for figure?
                 df = pd.concat(list_df_to_export)
 
                 # ---------
