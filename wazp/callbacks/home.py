@@ -1,9 +1,12 @@
 import base64
+import pathlib as pl
 from typing import Any
 
 import dash
 import yaml
 from dash import Input, Output, State
+
+from wazp import utils
 
 
 def get_callbacks(app: dash.Dash) -> None:
@@ -47,6 +50,8 @@ def get_callbacks(app: dash.Dash) -> None:
             - 'config': a dict with the project configuration parameters
             - 'metadata_fields': a dict with a set of attributes (description, type...)
             for each metadata field
+            - 'video_paths': a dict with the path to the video file for each video
+            (key: video name, value: video path)
         up_message_state : bool
             visibility of the upload message
         output_message : str
@@ -71,10 +76,22 @@ def get_callbacks(app: dash.Dash) -> None:
                     with open(config["metadata_fields_file_path"]) as mdf:
                         metadata_fields_dict = yaml.safe_load(mdf)
 
+                    # get video paths from the videos directory
+                    video_paths = utils.get_video_paths_from_folder(
+                        pl.Path(config["videos_dir_path"]),
+                        video_extensions=[".mp4", ".avi"],
+                    )
+                    video_paths.sort()
+                    # store video paths as a dict with video names as keys
+                    video_paths_dict = {
+                        v.name: v.absolute().as_posix() for v in video_paths
+                    }
+
                     # bundle data
                     data_to_store = {
                         "config": config,
                         "metadata_fields": metadata_fields_dict,
+                        "video_paths": video_paths_dict,
                     }
 
                     # output message
