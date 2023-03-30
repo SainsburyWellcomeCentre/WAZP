@@ -23,6 +23,14 @@ init_events_storage: dict = {v: {} for v in init_videos}
 # Initialize the events status alert
 init_events_status: dict = {"message": "No events defined", "color": "light"}
 
+disabled_button_style = {
+    "n_clicks": 0,
+    "outline": False,
+    "color": "dark",
+    "disabled": True,
+    "class_name": "w-100",
+}
+
 ###############################
 # Table of events             #
 ###############################
@@ -69,6 +77,12 @@ frame_index_input = dbc.Input(
     value=0,
 )
 
+tag_event_button = dbc.Button(
+    "Tag event",
+    id="tag-event-button",
+    **disabled_button_style,
+)
+
 # events status alert
 events_status_alert = dbc.Alert(
     init_events_status["message"],
@@ -89,16 +103,17 @@ events_table_card = dbc.Card(
             [
                 dbc.Row(
                     [
-                        dbc.Col(dcc.Markdown("Select video"), width=3),
-                        dbc.Col(events_video_select, width=9),
+                        dbc.Col(dcc.Markdown("Select video"), width=2),
+                        dbc.Col(events_video_select, width=10),
                     ],
                 ),
                 dbc.Row(
                     [
-                        dbc.Col(dcc.Markdown("Tag event for"), width=3),
+                        dbc.Col(dcc.Markdown("Select event"), width=2),
                         dbc.Col(event_dropdown, width=3),
-                        dbc.Col(dcc.Markdown("at frame index"), width=3),
-                        dbc.Col(dcc.Loading(frame_index_input), width=3),
+                        dbc.Col(dcc.Markdown("at frame"), width=2),
+                        dbc.Col(dcc.Loading(frame_index_input), width=2),
+                        dbc.Col(tag_event_button, width=3),
                     ],
                 ),
             ],
