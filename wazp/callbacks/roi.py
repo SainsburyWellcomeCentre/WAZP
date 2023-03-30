@@ -666,6 +666,13 @@ def get_callbacks(app: dash.Dash) -> None:
         video_name = video_path_pl.name
         metadata_path = video_path_pl.with_suffix(".metadata.yaml")
 
+        # If triggered by a click on the save ROIs button
+        # return with a success message
+        if trigger == "save-rois-button.n_clicks":
+            alert_msg = f"Saved ROIs to '{metadata_path.name}'"
+            alert_color = "success"
+            return alert_msg, alert_color, True
+
         # Load saved ROIs from the metadata file, if any
         try:
             rois_in_file = utils.load_rois_from_yaml(metadata_path)
@@ -694,9 +701,7 @@ def get_callbacks(app: dash.Dash) -> None:
             # Some ROIs exist in the app
             if rois_in_app == rois_in_file:
                 alert_color = "success"
-                if trigger == "save-rois-button.n_clicks" and save_clicks > 0:
-                    alert_msg = f"Saved ROIs to '{metadata_path.name}'"
-                elif trigger == "roi-storage.data":
+                if trigger == "roi-storage.data":
                     alert_msg = f"Loaded ROIs from '{metadata_path.name}'"
                 else:
                     alert_msg = (
