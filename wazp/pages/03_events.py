@@ -12,9 +12,9 @@ dash.register_page(__name__)
 ###############################
 
 # Get initial video
-init_videos = ["No videos found yet"]
+init_videos = [""]
 # Get initial set of event tags to initialize table
-init_event_tags = ["start", "end"]
+init_event_tags = [""]
 
 # Columns for events table
 init_events_table_columns = ["tag", "frame index", "seconds"]
