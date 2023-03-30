@@ -11,10 +11,10 @@ dash.register_page(__name__)
 ################
 layout = html.Div(
     children=[
-        html.H1(children="Pose estimation inference"),
+        html.H1(children="Event tagging"),
         html.Div(
             children="""
-        This is the Pose estimation page content.
+        Define events in time.
     """
         ),
     ]
