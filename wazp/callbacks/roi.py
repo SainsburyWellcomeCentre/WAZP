@@ -2,6 +2,7 @@ import pathlib as pl
 
 # import pdb
 import re
+import time
 from typing import Optional
 
 import dash
@@ -752,9 +753,14 @@ def get_callbacks(app: dash.Dash) -> None:
         return no_rois_to_save or metadata_file_does_not_exist
 
     @app.callback(
-        Output("load-rois-button", "disabled"), Input("video-select", "value")
+        Output("load-rois-button", "disabled"),
+        [
+            Input("save-rois-button", "n_clicks"),
+            Input("video-select", "value"),
+        ],
     )
     def disable_load_rois_button(
+        save_clicks: int,
         video_path: str,
     ) -> bool:
         """If there are no ROIs saved in the metadata file,
@@ -762,6 +768,8 @@ def get_callbacks(app: dash.Dash) -> None:
 
         Parameters
         ----------
+        save_clicks : int
+            Number of times the save ROIs button has been clicked.
         video_path : str
             Path to the selected video file.
 
@@ -773,6 +781,13 @@ def get_callbacks(app: dash.Dash) -> None:
 
         video_path_pl = pl.Path(video_path)
         metadata_path = video_path_pl.with_suffix(".metadata.yaml")
+
+        # If triggered by a click on the save ROIs button,
+        # wait a few seconds before checking for ROIs in the file
+        trigger = dash.callback_context.triggered[0]["prop_id"]
+        if trigger == "save-rois-button.n_clicks" and save_clicks > 1:
+            time.sleep(2)
+
         try:
             saved_shapes = utils.load_rois_from_yaml(yaml_path=metadata_path)
             return len(saved_shapes) == 0
