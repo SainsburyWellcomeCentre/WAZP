@@ -321,30 +321,26 @@ def create_pose_data_unavailable_popup() -> dcc.ConfirmDialog:
 
 
 # TODO check dbc row components
-def create_row_of_plots():
-    return dbc.Row(
+def create_tabs_w_plots():
+    return dbc.Tabs(
         [
-            dbc.Col(dcc.Graph(id="trajectories-plot"), width=6),
-            dbc.Col(dcc.Graph(id="heatmap-plot"), width=6),
-        ]
-    )
-
-
-def create_dashboard_storage():
-    """Create storage for dashboard tab.
-
-    The storage holds the combined dataframe,
-    for all selected videos and for the time frame considered
-
-    Returns
-    -------
-    dcc.Store
-        A storage component
-    """
-    return dcc.Store(
-        id="dashboard-storage",
-        storage_type="memory",  # resets on page refresh
-        data=[],
+            dbc.Tab(
+                label="Trajectories",
+                tab_id="trajectories-tab",
+                children=[
+                    dcc.Graph(id="trajectories-plot"),
+                    dcc.Dropdown(id="color-by-dropdown"),
+                ],
+            ),
+            dbc.Tab(
+                label="Heatmaps",
+                tab_id="heatmaps-tab",
+                children=[dcc.Graph(id="heatmap-plot")],
+            ),
+            dbc.Tab(label="ROIs barplots", tab_id="rois-tab"),
+        ],
+        id="tabs",
+        active_tab="Trajectories",
     )
 
 
@@ -406,8 +402,8 @@ def get_callbacks(app: dash.Dash) -> None:
         return input_data_container_children
 
     @app.callback(
-        Output("plot-container", "children"),
-        Input("plot-container", "children"),
+        Output("plots-container", "children"),
+        Input("plots-container", "children"),
         State("session-storage", "data"),
     )
     def create_plot_components(
@@ -440,7 +436,7 @@ def get_callbacks(app: dash.Dash) -> None:
         """
 
         if not plot_container_children:
-            plot_container_children = [create_row_of_plots()]
+            plot_container_children = create_tabs_w_plots()
 
         return plot_container_children
 
@@ -753,17 +749,23 @@ def get_callbacks(app: dash.Dash) -> None:
         # fig = go.Figure(
         #     data=[],
         #     layout={
-        #         'title': {'text': 'Trajectories'},
-        #         'xaxis': {
-        #             'anchor': 'y', 'domain': [0.0, 1.0],
-        # 'title': {'text':'x (pixels)'}
+        #         "title": {"text": "Trajectories"},
+        #         "xaxis": {
+        #             "anchor": "y",
+        #             "domain": [0.0, 0.5],
+        #             "title": {"text": "x (pixels)"},
+        #             "range": [-1, 1500]
         #         },
-        #         'yaxis': {
-        #             'anchor': 'x', 'domain': [0.0, 1.0],
-        # 'title': {'text':'y (pixels)'}
+        #         "yaxis": {
+        #             "anchor": "x",
+        #             "domain": [0.0, 0.5],
+        #             "title": {"text": "y (pixels)"},
+        #             "range": [-1, 1500]
         #         },
-        #         'margin': {'l': 40, 'b': 40, 't': 100, 'r': 10},
-        #     }
+        #         "margin": {"l": 40, "b": 40, "t": 100, "r": 10},
+        #         "width": 800,
+        #         "height": 800,
+        #     },
         # )
 
         # fill with data
@@ -811,7 +813,6 @@ def get_callbacks(app: dash.Dash) -> None:
             # if defined for a video)
             # TODO: check if it exists in cache for figure?
             df = pd.concat(list_df_to_export)
-            print("df ready")
 
             # df = df.iloc[0:10,:]
             # print(len(df))
@@ -826,37 +827,74 @@ def get_callbacks(app: dash.Dash) -> None:
                 y="y",
                 color="video_file",
             )
+            fig.update_layout(
+                {
+                    "title": {"text": "Trajectories"},
+                    "xaxis": {
+                        "anchor": "y",
+                        # "domain": [0.0, 1],
+                        "title": {"text": "x (pixels)"},
+                        # "range": [0, 1500],
+                    },
+                    "yaxis": {
+                        "anchor": "x",
+                        # "domain": [0.0, 1],
+                        "title": {"text": "y (pixels)"},
+                        # "range": [0, 1500],
+                        "scaleanchor": "x",
+                        "scaleratio": 1,
+                    },
+                    # "margin": {"l": 40, "b": 40, "t": 100, "r": 10},
+                    "width": 900,
+                    "height": 900,
+                    "legend": {
+                        "orientation": "v",
+                        "yanchor": "top",
+                        "y": 1.00,
+                        "xanchor": "left",
+                        "x": 0.01,
+                    },
+                }
+            )
 
-            # fig.update_traces(
-            # customdata=dff[dff['Indicator Name'] == yaxis_column_name]
-            # ['Country Name']
+            # fig.update_layout(
+            #     title_text="Trajectories",
+            #     margin={"l": 40, "b": 0, "t": 100, "r": 10},
+            #     xaxis={
+            #         "anchor": "y",
+            #         "domain": [0, 1.0],
+            #     },
+            #     yaxis={
+            #         "anchor": "x",
+            #         "domain": [0, 1.0],
+            #     },
+            #     hovermode="closest",
+            #     width=800,
+            #     height=800,
+            # )
+            # # fig.update_layout(transition_duration=500)
+            # fig.update_traces(marker_size=1)
+            # fig.update_xaxes(
+            # range=[0, 1500], rangemode='nonnegative',
+            # title_text = "x (pixels)")
+            # fig.update_yaxes(range=[0, 1200], rangemode='nonnegative',
+            # title_text = "y (pixels)", scaleanchor = "x", scaleratio = 1)
+
+            # fig.update_layout(yaxis_range=[-4,4])
+
+            # fig.update_yaxes(
+            #     scaleanchor = "x",
+            #     scaleratio = 1,
             # )
 
-            # fig.update_xaxes(title=xaxis_column_name,
-            # type='linear' if xaxis_type == 'Linear' else 'log')
+            # fig.update_layout(legend=dict(
+            #     orientation="v",
+            #     yanchor="top",
+            #     y=-0.2,
+            #     xanchor="left",
+            #     x=0.01
+            # ))
 
-            # fig.update_yaxes(title=yaxis_column_name,
-            # type='linear' if yaxis_type == 'Linear' else 'log')
-
-            fig.update_layout(
-                title_text="Trajectories",
-                margin={"l": 40, "b": 40, "t": 100, "r": 10},
-                xaxis={
-                    "anchor": "y",
-                    "domain": [0.0, 1.0],
-                    "title": {"text": "x (pixels)"},
-                },
-                yaxis={
-                    "anchor": "x",
-                    "domain": [0.0, 1.0],
-                    "title": {"text": "y (pixels)"},
-                },
-                hovermode="closest",
-            )
-            # fig.update_layout(transition_duration=500)
-            fig.update_traces(marker_size=1)
-
-            print(fig)
             return fig
 
         else:
@@ -868,14 +906,20 @@ def get_callbacks(app: dash.Dash) -> None:
                     "title": {"text": "Trajectories"},
                     "xaxis": {
                         "anchor": "y",
-                        "domain": [0.0, 1.0],
+                        "domain": [0.0, 1],
                         "title": {"text": "x (pixels)"},
+                        "range": [0, 1500],
                     },
                     "yaxis": {
                         "anchor": "x",
-                        "domain": [0.0, 1.0],
+                        "domain": [0.0, 1],
                         "title": {"text": "y (pixels)"},
+                        "range": [0, 1500],
+                        "scaleanchor": "x",
+                        "scaleratio": 1,
                     },
-                    "margin": {"l": 40, "b": 40, "t": 100, "r": 10},
+                    # "margin": {"l": 40, "b": 40, "t": 100, "r": 10},
+                    "width": 800,
+                    "height": 800,
                 },
             )
