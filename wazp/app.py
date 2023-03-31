@@ -108,19 +108,12 @@ metadata.get_callbacks(app)
 roi.get_callbacks(app)
 dashboard.get_callbacks(app)
 
-# get cache callbacks (why separately?)
-dashboard.get_cache_callbacks(app)
-
 
 #####################
 
 
 def startwazp():
-    # see https://dash.plotly.com/sharing-data-between-callbacks#example-3
-    # ---caching-and-signaling
-    app.run_server(debug=True, processes=6, threaded=False)
-
-    # initialise_cache(app)
+    app.run_server(debug=True)
 
 
 ###############
