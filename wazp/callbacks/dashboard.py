@@ -11,10 +11,6 @@ from dash import Input, Output, State, dash_table, dcc, html
 
 from wazp import utils
 
-# from flask_caching import Cache
-# from dash.exceptions import PreventUpdate
-# import copy
-
 POSE_DATA_STR = "Pose data available?"
 TRUE_EMOJI = "✔️"
 FALSE_EMOJI = "❌"
@@ -344,6 +340,7 @@ def create_tabs():
                 label="Heatmaps",
                 tab_id="heatmaps-tab",
                 children=[],
+                disabled=True,
                 style={"margin-top": "0px", "margin-bottom": "0px"},
             ),
             dbc.Tab(
@@ -409,10 +406,10 @@ def create_trajectories_tab_content():
                                 value="video_file",
                             ),
                             html.Br(),
-                            html.P("DLC p-cutoff:"),
+                            html.P("Likelihood (DLC p-cutoff):"),
                             dcc.Slider(
                                 id="pcutoff-slider",
-                                value=0.95,
+                                value=0.5,
                                 min=0.0,
                                 max=1.0,
                                 step=0.05,
@@ -863,6 +860,7 @@ def get_callbacks(app: dash.Dash) -> None:
         ),  # TODO: fix, why not Input? (gives odd errors)
         State("video-data-table", "data"),
         State("time-slider", "marks"),
+        State("pcutoff-slider", "value"),  # TODO: this should also be Input
         State("session-storage", "data"),
     )
     def update_trajectory_plot(
@@ -871,6 +869,7 @@ def get_callbacks(app: dash.Dash) -> None:
         color_by_str: str,
         videos_table_data: list[dict],
         slider_marks: dict,
+        pcutoff_value: float,
         app_storage: dict,
     ):
         # initialise figure's layout
@@ -943,6 +942,9 @@ def get_callbacks(app: dash.Dash) -> None:
             # if defined for a video)
             # TODO: check if it exists in cache for figure?
             df = pd.concat(list_df_to_export)
+
+            # keep only datapoints with likelihood above threshold
+            df = df[df["likelihood"] >= pcutoff_value]
 
             # plot
             # | 'model_str' | 'video_file' | 'individual'* | 'frame'
