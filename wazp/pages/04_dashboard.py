@@ -20,12 +20,9 @@ layout = html.Div(
     children=[
         html.H1("Dashboard & data export"),
         html.Br(),
-        html.H5(
-            "Input data", style={"margin-top": "20px", "margin-bottom": "20px"}
-        ),
-        # html.Br(),
+        html.H5("", style={"margin-top": "20px", "margin-bottom": "20px"}),
         html.Div(children=[], id="export-data-container"),
-        html.Br(),
+        html.H5("", style={"margin-top": "10px", "margin-bottom": "20px"}),
         html.Div(children=[], id="plots-container"),
     ],
 )

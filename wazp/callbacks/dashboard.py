@@ -221,33 +221,31 @@ def create_buttons_and_message() -> html.Div:
         html Div component wrapping the buttons
         and messages
     """
+    buttons_css_style = {
+        "margin-right": "0px",
+        "margin-left": "10px",
+        "margin-top": "60px",
+    }
+
     select_all_videos_button = html.Button(
         children="Select all rows",
         id="select-all-videos-button",
         n_clicks=0,
-        style={
-            "margin-right": "10px",
-            "margin-left": "10px",
-            "margin-top": "60px",
-        },
+        style=buttons_css_style,
     )
 
     unselect_all_videos_button = html.Button(
         children="Unselect all rows",
         id="unselect-all-videos-button",
         n_clicks=0,
-        style={
-            "margin-right": "10px",
-            "margin-left": "10px",
-            "margin-top": "60px",
-        },
+        style=buttons_css_style,
     )
 
     export_button = html.Button(
         children="Export selected data",  # csv? h5?
         id="export-dataframe-button",
         n_clicks=0,
-        style={"margin-right": "10px", "margin-left": "10px"},
+        style=buttons_css_style,
     )
 
     clipboard = dcc.Clipboard(
@@ -292,10 +290,16 @@ def create_buttons_and_message() -> html.Div:
 
     return html.Div(
         [
-            select_all_videos_button,
-            unselect_all_videos_button,
-            export_button,
-            export_message,
+            dbc.Row(
+                [
+                    dbc.Col(select_all_videos_button, width="auto"),
+                    dbc.Col(unselect_all_videos_button, width="auto"),
+                    dbc.Col(export_button, width="auto"),
+                ],
+                align="start",
+                justify="start",
+            ),
+            dbc.Row(export_message),
         ]
     )
 
@@ -334,16 +338,24 @@ def create_tabs():
                 label="Trajectories",
                 tab_id="trajectories-tab",
                 children=[],
+                style={"margin-top": "0px", "margin-bottom": "0px"},
             ),
             dbc.Tab(
                 label="Heatmaps",
                 tab_id="heatmaps-tab",
                 children=[],
+                style={"margin-top": "0px", "margin-bottom": "0px"},
             ),
-            dbc.Tab(label="ROIs barplots", tab_id="rois-tab", disabled=True),
+            dbc.Tab(
+                label="ROIs barplots",
+                tab_id="rois-tab",
+                disabled=True,
+                style={"margin-top": "0px", "margin-bottom": "0px"},
+            ),
         ],
         id="tabs",
         active_tab="trajectories-tab",
+        style={"margin-top": "0px", "margin-bottom": "0px"},
     )
 
 
@@ -357,6 +369,7 @@ def create_tabs_content():
     """
     return html.Div(
         id="tabs-content",
+        style={"margin-top": "0px", "margin-bottom": "0px"},
     )
 
 
@@ -371,9 +384,25 @@ def create_trajectories_tab_content():
     return html.Div(
         id="trajectories-tabs-content",
         children=[
-            dcc.Graph(id="trajectories-plot"),
-            dcc.Dropdown(id="color-by-dropdown"),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dcc.Graph(id="trajectories-plot"),
+                        style={"margin-top": "0px", "margin-bottom": "0px"},
+                    ),
+                    dbc.Col(
+                        [
+                            html.P("Color by:"),
+                            dcc.Dropdown(id="color-by-dropdown"),
+                        ],
+                        style={
+                            "margin-top": "35px",
+                        },
+                    ),
+                ],
+            )
         ],
+        style={"margin-top": "0px"},
     )
 
 
@@ -501,7 +530,6 @@ def get_callbacks(app: dash.Dash) -> None:
         _type_
             a single or list of html / dbc components
         """
-        print(tab_id)
         if tab_id == "trajectories-tab":
             return create_trajectories_tab_content()
         elif tab_id == "heatmaps-tab":
@@ -813,30 +841,30 @@ def get_callbacks(app: dash.Dash) -> None:
         slider_marks: dict,
         app_storage: dict,
     ):
-        # initialise figure
-        # fig = go.Figure(
-        #     data=[],
-        #     layout={
-        #         "title": {"text": "Trajectories"},
-        #         "xaxis": {
-        #             "anchor": "y",
-        #             "domain": [0.0, 0.5],
-        #             "title": {"text": "x (pixels)"},
-        #             "range": [-1, 1500]
-        #         },
-        #         "yaxis": {
-        #             "anchor": "x",
-        #             "domain": [0.0, 0.5],
-        #             "title": {"text": "y (pixels)"},
-        #             "range": [-1, 1500]
-        #         },
-        #         "margin": {"l": 40, "b": 40, "t": 100, "r": 10},
-        #         "width": 800,
-        #         "height": 800,
-        #     },
-        # )
+        # initialise figure's layout
+        fig_layout = {
+            "margin": {"l": 20, "b": 20, "t": 40, "r": 20},
+            "legend": {
+                "orientation": "v",
+                "yanchor": "top",
+                "y": 1.00,
+                "xanchor": "left",
+                "x": 0.01,
+            },
+            "xaxis": {
+                "anchor": "y",
+                "title": {"text": "x (pixels)"},
+                # "range": [0, 1500],
+            },
+            "yaxis": {
+                "anchor": "x",
+                "title": {"text": "y (pixels)"},
+                "scaleanchor": "x",
+                "scaleratio": 1,
+            },
+        }
 
-        # fill with data
+        # fill figure with data
         if list_selected_rows:
 
             # ammend list of selected rows
@@ -882,9 +910,6 @@ def get_callbacks(app: dash.Dash) -> None:
             # TODO: check if it exists in cache for figure?
             df = pd.concat(list_df_to_export)
 
-            # df = df.iloc[0:10,:]
-            # print(len(df))
-            # print(fig)
             # plot
             # | 'model_str' | 'video_file' | 'individual'* | 'frame'
             # | 'bodypart' | 'x' | 'y' | 'likelihood' | 'ROI_tag'
@@ -895,99 +920,17 @@ def get_callbacks(app: dash.Dash) -> None:
                 y="y",
                 color="video_file",
             )
-            fig.update_layout(
-                {
-                    "title": {"text": "Trajectories"},
-                    "xaxis": {
-                        "anchor": "y",
-                        # "domain": [0.0, 1],
-                        "title": {"text": "x (pixels)"},
-                        # "range": [0, 1500],
-                    },
-                    "yaxis": {
-                        "anchor": "x",
-                        # "domain": [0.0, 1],
-                        "title": {"text": "y (pixels)"},
-                        # "range": [0, 1500],
-                        "scaleanchor": "x",
-                        "scaleratio": 1,
-                    },
-                    # "margin": {"l": 40, "b": 40, "t": 100, "r": 10},
-                    "width": 900,
-                    "height": 900,
-                    "legend": {
-                        "orientation": "v",
-                        "yanchor": "top",
-                        "y": 1.00,
-                        "xanchor": "left",
-                        "x": 0.01,
-                    },
-                }
-            )
-
-            # fig.update_layout(
-            #     title_text="Trajectories",
-            #     margin={"l": 40, "b": 0, "t": 100, "r": 10},
-            #     xaxis={
-            #         "anchor": "y",
-            #         "domain": [0, 1.0],
-            #     },
-            #     yaxis={
-            #         "anchor": "x",
-            #         "domain": [0, 1.0],
-            #     },
-            #     hovermode="closest",
-            #     width=800,
-            #     height=800,
-            # )
-            # # fig.update_layout(transition_duration=500)
-            # fig.update_traces(marker_size=1)
-            # fig.update_xaxes(
-            # range=[0, 1500], rangemode='nonnegative',
-            # title_text = "x (pixels)")
-            # fig.update_yaxes(range=[0, 1200], rangemode='nonnegative',
-            # title_text = "y (pixels)", scaleanchor = "x", scaleratio = 1)
-
-            # fig.update_layout(yaxis_range=[-4,4])
-
-            # fig.update_yaxes(
-            #     scaleanchor = "x",
-            #     scaleratio = 1,
-            # )
-
-            # fig.update_layout(legend=dict(
-            #     orientation="v",
-            #     yanchor="top",
-            #     y=-0.2,
-            #     xanchor="left",
-            #     x=0.01
-            # ))
-
+            fig.update_layout(fig_layout)
             return fig
 
+        # if no data selected: return empty figure
         else:
-            # raise PreventUpdate
-            # set size from image size
+            # TODO: set xlim, ylim from image size
+            fig_layout["xaxis"].update({"range": [0, 1500]})  # type: ignore
+            fig_layout["yaxis"].update({"range": [0, 1500]})  # type: ignore
+            fig_layout.update({"width": 800, "height": 800})
+
             return go.Figure(
                 data=[],
-                layout={
-                    "title": {"text": "Trajectories"},
-                    "xaxis": {
-                        "anchor": "y",
-                        "domain": [0.0, 1],
-                        "title": {"text": "x (pixels)"},
-                        "range": [0, 1500],
-                    },
-                    "yaxis": {
-                        "anchor": "x",
-                        "domain": [0.0, 1],
-                        "title": {"text": "y (pixels)"},
-                        "range": [0, 1500],
-                        "scaleanchor": "x",
-                        "scaleratio": 1,
-                    },
-                    # "margin": {"l": 40, "b": 40, "t": 100, "r": 10},
-                    "width": 800,
-                    "height": 800,
-                },
+                layout=fig_layout,
             )
