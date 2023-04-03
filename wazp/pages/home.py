@@ -38,6 +38,11 @@ upload_message = dbc.Alert(
     fade=False,
     is_open=False,
     color="light",
+    style={
+        "textAlign": "left",
+        "margin": "10px",
+        "width": "100%",
+    },
 )
 
 ###############

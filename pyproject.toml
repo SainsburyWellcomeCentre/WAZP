@@ -1,23 +1,35 @@
 [project]
 name = "WAZP"
-authors = [{name = "Sofia Miñano", email= "s.minano@ucl.ac.uk"},
-           {name = "Nikoloz Sirmpilatze", email= "niko.sirbiladze@gmail.com"},
-           {name = "Sam Cunliffe", email= "s.cunliffe@ucl.ac.uk"},
-           {name = "Adam Tyson", email= "code@adamltyson.com"}]
+authors = [
+  {name = "Sofia Miñano", email = "s.minano@ucl.ac.uk"},
+  {name = "Nikoloz Sirmpilatze", email = "niko.sirbiladze@gmail.com"},
+  {name = "Sam Cunliffe", email = "s.cunliffe@ucl.ac.uk"},
+  {name = "Adam Tyson", email = "code@adamltyson.com"}
+]
 description = "Wasp Animal-tracking Zoo project with Pose estimation"
 readme = "README.md"
-requires-python = ">=3.8.0"
+requires-python = ">=3.9.0"
 dynamic = ["version"]
 
 license = {text = "BSD-3-Clause"}
 
-dependencies = ["pandas", "dash", "dash-bootstrap-components"]
+dependencies = [
+  "tables",
+  "blosc2",
+  "numpy",
+  "pillow",
+  "pandas",
+  "dash",
+  "dash-bootstrap-components",
+  "opencv-python",
+  "PyYAML",
+  "shapely",
+]
 
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Operating System :: OS Independent",
@@ -25,26 +37,31 @@ classifiers = [
 ]
 
 [project.urls]
-homepage = "https://github.com/SainsburyWellcomeCentre/WAZP"
-bug_tracker = "https://github.com/SainsburyWellcomeCentre/WAZP/issues"
-documentation = "https://github.com/SainsburyWellcomeCentre/WAZP"
-source_code = "https://github.com/SainsburyWellcomeCentre/WAZP"
-user_support = "https://github.com/SainsburyWellcomeCentre/WAZP/issues"
+"Homepage" = "https://github.com/SainsburyWellcomeCentre/WAZP"
+"Bug tracker" = "https://github.com/SainsburyWellcomeCentre/WAZP/issues"
+"Documentation" = "https://SainsburyWellcomeCentre.github.io/WAZP"
+"Source code" = "https://github.com/SainsburyWellcomeCentre/WAZP"
+"User support" = "https://github.com/SainsburyWellcomeCentre/WAZP/issues"
+
+[project.scripts]
+startwazp = "wazp.app:startwazp"
 
 [project.optional-dependencies]
 dev = [
-	"pytest",
-	"pytest-cov",
-	"coverage",
-	"tox",
-	"black",
-  "isort",
-  "mypy",
-	"pre-commit",
-	"flake8",
- 	"setuptools_scm",
-  "types-PyYAML",
-  "pandas-stubs",
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "dash[testing]",
+    "tox",
+    "black",
+    "isort",
+    "mypy",
+    "pre-commit",
+    "flake8",
+    "setuptools-scm",
+    "types-PyYAML",
+    "pandas-stubs",
+    "types-Pillow",
 ]
 
 
@@ -62,13 +79,13 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 include = ["wazp*"]
-exclude = ["tests*"]
+exclude = ["tests*", "docs*"]
 
 [tool.pytest.ini_options]
 addopts = "--cov=wazp"
 
 [tool.black]
-target-version = ['py38', 'py39', 'py310']
+target-version = ['py39', 'py310']
 skip-string-normalization = false
 line-length = 79
 exclude = '''
@@ -97,23 +114,24 @@ line_length = 79
 
 [tool.check-manifest]
 ignore = [
-  "*.yaml",
-  ".bumpversion.cfg",
-  "tox.ini",
-  "tests/*",
-  "tests/test_unit/*",
-  "tests/test_integration/*",
-  ".flake8"
+    "*.yaml",
+    "tox.ini",
+    "tests/*",
+    "tests/test_unit/*",
+    "tests/test_integration/*",
+    "docs/",
+    "docs/source/",
+    ".flake8"
 ]
 
 [[tool.mypy.overrides]]
 module = [
   "dash.*",
   "dash_bootstrap_components.*",
-  "callbacks.*",
-  "utils.*",
   "h5py.*",
   "matplotlib.*",
-  "plotly.*"
+  "plotly.*",
+  "cv2.*",
+  "shapely.*",
 ]
 ignore_missing_imports = true

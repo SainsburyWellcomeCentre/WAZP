@@ -1,0 +1,24 @@
+File: jwaspN_nectar-open-close_nectar2.avi
+Species_name: Ampulex_compressa
+Common_name: jewel_wasp
+Subject: N_male
+Treatment: nectar-open-close_nectar2
+Treatment_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Date_start: 17/8/22
+Time_start: '14:06:14'
+Date_end: 17/8/22
+Time_end: '16:11:14'
+Time_recorded: 02:05:00
+Video_length: 02:05:00
+Hardware_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Software_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Further_description: Jwasp N sourced from 2.0 group - larger individual with fully
+  curled antennae.
+Events:
+  experiment_start: 0
+  box_1_open: 99379
+  box_1_closed: 198758
+  experiment_end: 298136

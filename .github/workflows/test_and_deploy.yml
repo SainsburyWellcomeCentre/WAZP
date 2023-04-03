@@ -12,13 +12,13 @@ jobs:
   linting:
     runs-on: ubuntu-latest
     steps:
-      - uses: neuroinformatics-unit/actions/lint@v1.0.4
+      - uses: neuroinformatics-unit/actions/lint@v2
 
   manifest:
     name: Check Manifest
     runs-on: ubuntu-latest
     steps:
-      - uses: neuroinformatics-unit/actions/check_manifest@main
+      - uses: neuroinformatics-unit/actions/check_manifest@v2
 
   test:
     needs: [linting, manifest]
@@ -26,8 +26,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # Run all supported Python versions on linux
-        python-version: ["3.8", "3.9", "3.10"]
+        # Run all supported Python versions on linux (plus one development unsupported)
+        python-version: ["3.9", "3.10", "3.11"]
         os: [ubuntu-latest]
         # Include one windows and macos run
         include:
@@ -36,8 +36,15 @@ jobs:
         - os: windows-latest
           python-version: "3.10"
     steps:
+      # A hack because chrome isn't in the PATH on Windows
+      - name: Fix Chrome application path on Windows
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          echo "C:\Program Files\Google\Chrome\Application" >> $GITHUB_PATH
+
       # Run tests
-      - uses: neuroinformatics-unit/actions/test@main
+      - uses: neuroinformatics-unit/actions/test@v2
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -47,7 +54,7 @@ jobs:
     if: github.event_name == 'push' && github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
-    - uses: neuroinformatics-unit/actions/build_sdist_wheels@main
+    - uses: neuroinformatics-unit/actions/build_sdist_wheels@v2
 
 
   upload_all:

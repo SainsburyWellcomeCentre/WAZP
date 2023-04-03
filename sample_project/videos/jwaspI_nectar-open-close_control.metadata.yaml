@@ -1,0 +1,23 @@
+File: jwaspI_nectar-open-close_control.avi
+Species_name: Ampulex_compressa
+Common_name: jewel_wasp
+Subject: I_male
+Treatment: nectar-open-close_control
+Treatment_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Date_start: 10/8/22
+Time_start: '11:28:12'
+Date_end: 10/8/22
+Time_end: '12:00:04'
+Time_recorded: 00:31:52
+Video_length: 00:31:52
+Hardware_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Software_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Further_description: '-'
+Events:
+  experiment_start: 0
+  box_1_open: 25333
+  box_1_closed: 50666
+  experiment_end: 75999

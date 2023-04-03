@@ -1,0 +1,29 @@
+File: jwaspH_nectar-open-close_nectar1.avi
+Species_name: Ampulex_compressa
+Common_name: jewel_wasp
+Subject: H_male
+Treatment: nectar-open-close_nectar1
+Treatment_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Date_start: 9/8/22
+Time_start: '13:00:34'
+Date_end: 9/8/22
+Time_end: '14:58:34'
+Time_recorded: 01:58:00
+Video_length: 01:58:00
+Hardware_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Software_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Further_description: Jwasp H was transferred to the arena by manual restraint in Jaimie's
+  hand (rather than using tube) - potential for effect on behaviour? Sanna checked
+  the iButton thermohygrologger on 15:15 9/8/22. Data appeared to remain normal once
+  the ibutton was moved out of the enclosure. Temperatures jumped half a degree of
+  Celsius for one reading (26.547C) and then returned to inside enclosure temperatures
+  (26.047C) while humidity stayed in its natural range of 50-67.5% (with regular fluctuations).
+  For subsequent trials the iButton is set up outside the enclosure.
+Events:
+  experiment_start: 0
+  box_1_open: 93824
+  box_1_closed: 187649
+  experiment_end: 281473

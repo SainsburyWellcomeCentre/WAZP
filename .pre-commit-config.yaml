@@ -1,3 +1,4 @@
+exclude: 'conf.py'
 repos:
     - repo: https://github.com/pycqa/isort
       rev: 5.12.0
@@ -25,10 +26,11 @@ repos:
       hooks:
           - id: black
     - repo: https://github.com/pre-commit/mirrors-mypy
-      rev: v0.990
+      rev: v1.1.1
       hooks:
           - id: mypy
             additional_dependencies:
                 - types-setuptools
                 - types-PyYaML
                 - pandas-stubs
+                - types-Pillow
