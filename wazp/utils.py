@@ -529,7 +529,7 @@ def assign_roi_colors(
     }
 
 
-def get_num_frames(video_path):
+def get_num_frames(video_path) -> int:
     """
     Get the number of frames in a video.
 
@@ -543,13 +543,17 @@ def get_num_frames(video_path):
     int
         Number of frames in the video
     """
-    vidcap = cv2.VideoCapture(video_path)
-    return int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+    vidcap = cv2.VideoCapture(video_path, apiPreference=cv2.CAP_FFMPEG)
+    num_frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+    if num_frames < 1:
+        raise RuntimeError(
+            f"Could not read from '{video_path}'. "
+            "Is this a valid video file?"
+        )
+    return num_frames
 
 
-def extract_frame(
-    video_path: str, frame_number: int, output_path: str
-) -> None:
+def extract_frame(video_path: str, frame_idx: int, output_path: str) -> None:
     """
     Extract a single frame from a video and save it.
 
@@ -557,25 +561,28 @@ def extract_frame(
     ----------
     video_path : str
         Path to the video file
-    frame_number : int
-        Number of the frame to extract
+    frame_idx : int
+        Index of the frame to extract
     output_path : str
         Path to the output image file
     """
-    print(f"Extracting frame {frame_number} from video {video_path}")
-    vidcap = cv2.VideoCapture(video_path)
-    vidcap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+    print(f"Extracting frame {frame_idx} from video {video_path}")
+
+    vidcap = cv2.VideoCapture(video_path, apiPreference=cv2.CAP_FFMPEG)
+    vidcap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
     success, image = vidcap.read()
     if success:
         cv2.imwrite(output_path, image)
-        print(f"Saved frame to {output_path}")
+        print(f"Saved frame {frame_idx} to {output_path}")
     else:
-        print("Error extracting frame from video")
+        raise RuntimeError(
+            f"Could not extract frame {frame_idx} from {video_path}."
+        )
 
 
 def cache_frame(
     video_path: pl.Path,
-    frame_num: int,
+    frame_idx: int,
     cache_dir: pl.Path = pl.Path.home() / ".WAZP" / "roi_frames",
     frame_suffix: str = "png",
 ) -> pl.Path:
@@ -586,8 +593,8 @@ def cache_frame(
     ----------
     video_path : pl.Path
         Path to the video file
-    frame_num : int
-        Number of the frame to extract
+    frame_idx : int
+        Index of the frame to extract
     cache_dir : pl.Path
         Path to the cache directory
     frame_suffix : str, optional
@@ -601,12 +608,12 @@ def cache_frame(
 
     cache_dir.mkdir(parents=True, exist_ok=True)
     frame_filepath = (
-        cache_dir / f"{video_path.stem}_frame-{frame_num}.{frame_suffix}"
+        cache_dir / f"{video_path.stem}_frame-{frame_idx}.{frame_suffix}"
     )
     # Extract frame if it is not already cached
     if not frame_filepath.exists():
         extract_frame(
-            video_path.as_posix(), frame_num, frame_filepath.as_posix()
+            video_path.as_posix(), frame_idx, frame_filepath.as_posix()
         )
     # Remove old frames from cache
     remove_old_frames_from_cache(
@@ -754,12 +761,12 @@ def load_rois_from_yaml(yaml_path: pl.Path) -> list:
     if yaml_path.exists():
         with open(yaml_path, "r") as yaml_file:
             metadata = yaml.safe_load(yaml_file)
-            if "ROIs" in metadata.keys():
+            if "ROIs" in metadata:
                 shapes_to_store = [
                     yaml_entry_to_stored_shape(roi) for roi in metadata["ROIs"]
                 ]
             else:
-                raise ValueError(f"Could not find key 'ROIs' in {yaml_path}")
+                raise KeyError(f"Could not find key 'ROIs' in {yaml_path}")
     else:
         raise FileNotFoundError(f"Could not find {yaml_path}")
 

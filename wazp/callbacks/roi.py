@@ -2,6 +2,7 @@ import pathlib as pl
 
 # import pdb
 import re
+import time
 from typing import Optional
 
 import dash
@@ -15,7 +16,6 @@ from wazp import utils
 
 # TODO: other video extensions? have this in project config file instead?
 VIDEO_TYPES = [".avi", ".mp4"]
-# TODO: make colomap this a project config parameter?
 ROI_CMAP = px.colors.qualitative.Dark24
 
 
@@ -140,6 +140,7 @@ def get_callbacks(app: dash.Dash) -> None:
         is selected. Read the parameters from storage if available,
         otherwise extract them from the video file (slower),
         and update the storage for future use.
+
         Parameters
         ----------
         video_path : str
@@ -156,7 +157,7 @@ def get_callbacks(app: dash.Dash) -> None:
         Returns
         -------
         int
-            Maximum frame input value.
+            Maximum frame index value.
         int
             Frame step size.
         int
@@ -167,23 +168,36 @@ def get_callbacks(app: dash.Dash) -> None:
         video_name = pl.Path(video_path).name
         if video_name in frame_slider_storage.keys():
             stored_video_params = frame_slider_storage[video_name]
-            num_frames = stored_video_params["max"]
+            max_frame_idx = stored_video_params["max"]
             frame_step = stored_video_params["step"]
             middle_frame = stored_video_params["value"]
-            return num_frames - 1, frame_step, middle_frame, dash.no_update
+            return max_frame_idx, frame_step, middle_frame, dash.no_update
         else:
-            num_frames = int(utils.get_num_frames(video_path))
-            # Round the frame step to the nearest 1000
-            frame_step = round(int(num_frames / 4), -3)
+            try:
+                num_frames = utils.get_num_frames(video_path)
+            except RuntimeError as e:
+                print(e)
+                # If the number of frames cannot be extracted,
+                # return a negative frame value.
+                # This will trigger an alert message in the app
+                return dash.no_update, dash.no_update, -1, dash.no_update
+
+            # Divide the number of frames into 4 steps
+            frame_step = int(num_frames / 4)
+            # Round to the nearest 1000 if step is > 1000
+            if frame_step > 1000:
+                frame_step = int(frame_step / 1000) * 1000
+
             # Default to the middle step
             middle_frame = frame_step * 2
+            max_frame_idx = num_frames - 1
             frame_slider_storage[video_name] = {
-                "max": num_frames - 1,
+                "max": max_frame_idx,
                 "step": frame_step,
                 "value": middle_frame,
             }
             return (
-                num_frames - 1,
+                max_frame_idx,
                 frame_step,
                 middle_frame,
                 frame_slider_storage,
@@ -268,30 +282,42 @@ def get_callbacks(app: dash.Dash) -> None:
             return cond_format
 
     @app.callback(
-        Output("roi-storage", "data"),
+        [
+            Output("roi-storage", "data"),
+            Output("roi-table", "selected_rows"),
+        ],
         [
             Input("frame-graph", "relayoutData"),
             Input("load-rois-button", "n_clicks"),
+            Input("delete-rois-button", "n_clicks"),
         ],
         [
             State("video-select", "value"),
             State("frame-slider", "value"),
             State("roi-storage", "data"),
             State("roi-colors-storage", "data"),
+            State("roi-table", "data"),
+            State("roi-table", "selected_rows"),
         ],
     )
     def update_roi_storage(
         graph_relayout: dict,
         load_clicks: int,
+        delete_clicks: int,
         video_path: str,
         frame_num: int,
         roi_storage: dict,
         roi_color_mapping: dict,
-    ) -> dict:
+        roi_table_rows: list,
+        roi_table_selected_rows: list,
+    ) -> tuple[dict, list]:
         """
-        Update the ROI storage with the latest ROI shapes
-        drawn on the frame graph or with the ROI shapes
-        loaded from the video's .metadata.yaml file.
+        Update the ROI storage, when:
+        - Shapes are added/removed from the frame graph
+        - Shapes are edited on the frame graph
+        - Shapes are loaded from file
+        - Shapes are deleted from the ROI table
+
         Parameters
         ----------
         graph_relayout : dict
@@ -299,6 +325,8 @@ def get_callbacks(app: dash.Dash) -> None:
             changes to the frame graph.
         load_clicks : int
             Number of times the load ROIs button has been clicked.
+        delete_clicks : int
+            Number of times the delete ROIs button has been clicked.
         video_path : str
             Path to the video file.
         frame_num : int
@@ -309,10 +337,17 @@ def get_callbacks(app: dash.Dash) -> None:
             Dictionary with the following keys:
                 - roi2color: dict mapping ROI names to colors
                 - color2roi: dict mapping colors to ROI names
+        roi_table_rows : list
+            List of dictionaries with ROI table data.
+        roi_table_selected_rows : list
+            List of indices for the selected rows in the ROI table.
+
         Returns
         -------
         dict
             Updated dictionary storing ROI data for each video.
+        list
+            List of indices for the selected rows in the ROI table.
         """
 
         trigger = dash.callback_context.triggered[0]["prop_id"]
@@ -386,7 +421,24 @@ def get_callbacks(app: dash.Dash) -> None:
                     yaml_path=metadata_path
                 )
 
-        return roi_storage
+        # If triggered by the delete ROIs button click
+        # Delete the selected ROIs from the roi-storage
+        elif trigger == "delete-rois-button.n_clicks":
+            if delete_clicks > 0 and roi_table_selected_rows:
+                deleted_roi_names = [
+                    roi_table_rows[idx]["name"]
+                    for idx in roi_table_selected_rows
+                ]
+                stored_shapes = roi_storage[video_name]["shapes"]
+                roi_storage[video_name]["shapes"] = [
+                    sh
+                    for sh in stored_shapes
+                    if sh["roi_name"] not in deleted_roi_names
+                ]
+                # Clear the row selection
+                roi_table_selected_rows = []
+
+        return roi_storage, roi_table_selected_rows
 
     @app.callback(
         [
@@ -404,24 +456,27 @@ def get_callbacks(app: dash.Dash) -> None:
         [
             State("frame-graph", "figure"),
             State("roi-colors-storage", "data"),
+            State("frame-slider", "max"),
         ],
     )
     def update_frame_graph(
         video_path: str,
-        frame_num: int,
+        shown_frame_idx: int,
         roi_name: str,
         roi_storage: dict,
         current_fig: go.Figure,
         roi_color_mapping: dict,
+        max_frame_idx: int,
     ) -> tuple[go.Figure, str, str, bool]:
         """
         Update the frame graph
+
         Parameters
         ----------
         video_path : str
             Path to the video file.
-        frame_num : int
-            Frame number (which video frame to display).
+        shown_frame_idx : int
+            Index of the frame to be shown.
         roi_name : str
             Name of the next ROI to be drawn.
         roi_storage : dict
@@ -432,6 +487,9 @@ def get_callbacks(app: dash.Dash) -> None:
             Dictionary with the following keys:
                 - roi2color: dict mapping ROI names to colors
                 - color2roi: dict mapping colors to ROI names
+        max_frame_idx : int
+            Maximum frame index (num_frames - 1)
+
         Returns
         -------
         plotly.graph_objects.Figure.Figure
@@ -442,7 +500,17 @@ def get_callbacks(app: dash.Dash) -> None:
             Color of the frame status alert.
         bool
             Whether to open the frame status alert.
+        int
+            Maximum frame index (num_frames - 1)
         """
+
+        # If a negative frame index is passed, it means that the video
+        # could not be read correctly. So don't update the frame,
+        # but display an alert message
+        if shown_frame_idx < 0:
+            alert_msg = f"Could not read from '{video_path}'. "
+            alert_msg += "Is this a valid video file?"
+            return dash.no_update, alert_msg, "danger", True
 
         # Get the video path and file name
         video_path_pl = pl.Path(video_path)
@@ -478,36 +546,83 @@ def get_callbacks(app: dash.Dash) -> None:
         # Load the frame into a new figure
         else:
             try:
-                frame_filepath = utils.cache_frame(video_path_pl, frame_num)
-                new_frame = Image.open(frame_filepath)
-                # Put the frame in a figure
-                new_fig = px.imshow(new_frame)
-                # Add the stored shapes and set the next ROI color
-                new_fig.update_layout(
-                    shapes=graph_shapes,
-                    newshape_line_color=next_shape_color,
-                    dragmode="drawclosedpath",
-                    margin=dict(l=0, r=0, t=0, b=0),
-                    yaxis={"visible": False, "showticklabels": False},
-                    xaxis={"visible": False, "showticklabels": False},
+                frame_filepath = utils.cache_frame(
+                    video_path_pl, shown_frame_idx
                 )
-                alert_msg = f"Showing frame {frame_num} from {video_name}."
-                alert_color = "success"
-                alert_open = True
-                return new_fig, alert_msg, alert_color, alert_open
-            except Exception as e:
-                print(e)
-                alert_msg = (
-                    f"Could not extract frames from {video_name}. "
-                    f"Make sure that it is a valid video file."
-                )
-                alert_color = "danger"
-                alert_open = True
-                return dash.no_update, alert_msg, alert_color, alert_open
+            except RuntimeError as e:
+                return dash.no_update, str(e), "danger", True
+
+            new_frame = Image.open(frame_filepath)
+            new_fig = px.imshow(new_frame)
+            # Add the stored shapes and set the nextROI color
+            new_fig.update_layout(
+                shapes=graph_shapes,
+                newshape_line_color=next_shape_color,
+                dragmode="drawclosedpath",
+                margin=dict(l=0, r=0, t=0, b=0),
+                yaxis={"visible": False, "showticklabels": False},
+                xaxis={"visible": False, "showticklabels": False},
+            )
+            alert_msg = f"Showing frame {shown_frame_idx}/{max_frame_idx}"
+            return new_fig, alert_msg, "light", True
+
+    @app.callback(
+        Output("save-rois-button", "download"),
+        Input("save-rois-button", "n_clicks"),
+        [
+            State("video-select", "value"),
+            State("roi-storage", "data"),
+        ],
+    )
+    def save_rois_to_file(
+        save_clicks: int,
+        video_path: str,
+        roi_storage: dict,
+    ) -> str:
+        """
+        Save the ROI shapes to a metadata YAML file.
+
+        Parameters
+        ----------
+        save_clicks : int
+            Number of times the save ROIs button has been clicked.
+        video_path : str
+            Path to the video file.
+        roi_storage : dict
+            Dictionary storing ROI shapes in the app.
+
+        Returns
+        -------
+        str
+            Download link for the metadata YAML file.
+        """
+        if save_clicks > 0:
+            # Get the paths to the video and metadata files
+            video_path_pl = pl.Path(video_path)
+            video_name = video_path_pl.name
+            metadata_filepath = video_path_pl.with_suffix(".metadata.yaml")
+
+            # Get the metadata from the YAML file
+            with open(metadata_filepath, "r") as yaml_file:
+                metadata = yaml.safe_load(yaml_file)
+
+            # Get the video's ROI shapes in the app
+            rois_in_app = roi_storage[video_name]["shapes"]
+            # Add the ROI shapes to the metadata and save
+            with open(metadata_filepath, "w") as yaml_file:
+                metadata["ROIs"] = [
+                    utils.stored_shape_to_yaml_entry(shape)
+                    for shape in rois_in_app
+                ]
+                yaml.safe_dump(metadata, yaml_file, sort_keys=False)
+
+            # Return the download link
+            return metadata_filepath.as_posix()
+        else:
+            return dash.no_update
 
     @app.callback(
         [
-            Output("save-rois-button", "download"),
             Output("rois-status-alert", "children"),
             Output("rois-status-alert", "color"),
             Output("rois-status-alert", "is_open"),
@@ -518,26 +633,26 @@ def get_callbacks(app: dash.Dash) -> None:
             Input("video-select", "value"),
         ],
     )
-    def save_rois_and_update_status_alert(
+    def update_roi_status_alert(
         save_clicks: int,
         roi_storage: dict,
         video_path: str,
-    ) -> tuple[str, str, str, bool]:
+    ) -> tuple[str, str, bool]:
         """
-        Save the ROI shapes to a metadata YAML file
-        and update the ROI status alert accordingly.
+        Update the ROI status alert to inform the user about ROIs defined
+        in the app and their relation to those saved in the metadata file.
+
         Parameters
         ----------
         save_clicks : int
             Number of times the save ROIs button has been clicked.
         roi_storage : dict
-            Dictionary storing already drawn ROI shapes.
+            Dictionary storing ROI shapes in the app.
         video_path : str
             Path to the video file.
+
         Returns
         -------
-        str
-            Download path to the metadata YAML file.
         str
             Message to display in the ROI status alert.
         str
@@ -550,62 +665,154 @@ def get_callbacks(app: dash.Dash) -> None:
         # Get the paths to the video and metadata files
         video_path_pl = pl.Path(video_path)
         video_name = video_path_pl.name
-        metadata_filepath = video_path_pl.with_suffix(".metadata.yaml")
+        metadata_path = video_path_pl.with_suffix(".metadata.yaml")
 
-        # Check if the metadata file exists
-        # and load any previously saved ROIs
-        if metadata_filepath.exists():
-            with open(metadata_filepath, "r") as yaml_file:
-                metadata = yaml.safe_load(yaml_file)
-                if "ROIs" in metadata.keys():
-                    saved_rois = metadata["ROIs"]
-                else:
-                    saved_rois = []
-        else:
-            alert_msg = f"Could not find {metadata_filepath.name}"
+        # If triggered by a click on the save ROIs button
+        # return with a success message
+        if trigger == "save-rois-button.n_clicks":
+            alert_msg = f"Saved ROIs to '{metadata_path.name}'"
+            alert_color = "success"
+            return alert_msg, alert_color, True
+
+        # Load saved ROIs from the metadata file, if any
+        try:
+            rois_in_file = utils.load_rois_from_yaml(metadata_path)
+        except FileNotFoundError:
+            alert_msg = f"Could not find {metadata_path.name}"
             alert_color = "danger"
-            return dash.no_update, alert_msg, alert_color, True
+            return alert_msg, alert_color, True
+        except KeyError:
+            rois_in_file = []
 
-        # Get the stored ROI shapes for this video
+        # Get the app's ROI shapes for this video
+        rois_in_app = []
         if video_name in roi_storage.keys():
-            roi_shapes = roi_storage[video_name]["shapes"]
-            rois_to_save = [
-                utils.stored_shape_to_yaml_entry(shape) for shape in roi_shapes
-            ]
-        else:
-            rois_to_save = []
+            rois_in_app = roi_storage[video_name]["shapes"]
 
-        if rois_to_save:
-            if trigger == "roi-storage.data" and rois_to_save == saved_rois:
-                # This means that the ROIs have just been loaded
-                alert_msg = f"Loaded ROIs from {metadata_filepath.name}"
-                alert_color = "success"
-                return dash.no_update, alert_msg, alert_color, True
-            elif trigger == "roi-storage.data" and rois_to_save != saved_rois:
-                # This means that the ROIs have been modified
-                # in respect to the metadata file
-                alert_msg = "Detected unsaved changes to ROIs."
-                alert_color = "warning"
-                return dash.no_update, alert_msg, alert_color, True
-            else:
-                if save_clicks > 0:
-                    # This means that the user wants to save the ROIs
-                    # This overwrites any previously saved ROIs
-                    with open(metadata_filepath, "w") as yaml_file:
-                        metadata["ROIs"] = rois_to_save
-                        yaml.safe_dump(metadata, yaml_file)
-                    alert_msg = f"Saved ROIs to {metadata_filepath.name}"
-                    alert_color = "success"
-                    return (
-                        metadata_filepath.as_posix(),
-                        alert_msg,
-                        alert_color,
-                        True,
-                    )
-                else:
-                    return dash.no_update, dash.no_update, dash.no_update, True
-
-        else:
-            alert_msg = "No ROIs to save."
+        if not rois_in_app:
             alert_color = "light"
-            return dash.no_update, alert_msg, alert_color, True
+            if rois_in_file:
+                alert_msg = (
+                    f"Found {len(rois_in_file)} ROIs in '{metadata_path.name}'"
+                )
+            else:
+                alert_msg = "No ROIs defined in the metadata file."
+
+        else:
+            # Some ROIs exist in the app
+            if rois_in_app == rois_in_file:
+                alert_color = "success"
+                if trigger == "roi-storage.data":
+                    alert_msg = f"Loaded ROIs from '{metadata_path.name}'"
+                else:
+                    alert_msg = (
+                        f"Shown ROIs match those in '{metadata_path.name}'"
+                    )
+
+            else:
+                alert_color = "warning"
+                alert_msg = "Detected unsaved changes to ROIs."
+
+        return alert_msg, alert_color, True
+
+    @app.callback(
+        Output("save-rois-button", "disabled"),
+        Input("roi-storage", "data"),
+        Input("video-select", "value"),
+    )
+    def disable_save_rois_button(
+        roi_storage: dict,
+        video_path: str,
+    ) -> bool:
+        """If there are no ROIs in the app or if the metadata file
+        does not exist, disable the save ROIs button.
+
+        Parameters
+        ----------
+        roi_storage : dict
+            Dictionary storing ROI shapes in the app.
+        video_path : str
+            Path to the selected video file.
+
+        Returns
+        -------
+        bool
+            Whether to enable the save ROIs button.
+        """
+
+        video_path_pl = pl.Path(video_path)
+        video_name = video_path_pl.name
+        metadata_path = video_path_pl.with_suffix(".metadata.yaml")
+
+        rois_in_app = []
+        if video_name in roi_storage.keys():
+            rois_in_app = roi_storage[video_name]["shapes"]
+
+        no_rois_to_save = len(rois_in_app) == 0
+        metadata_file_does_not_exist = not metadata_path.is_file()
+        return no_rois_to_save or metadata_file_does_not_exist
+
+    @app.callback(
+        Output("load-rois-button", "disabled"),
+        [
+            Input("save-rois-button", "n_clicks"),
+            Input("video-select", "value"),
+        ],
+    )
+    def disable_load_rois_button(
+        save_clicks: int,
+        video_path: str,
+    ) -> bool:
+        """If there are no ROIs saved in the metadata file,
+        disable the 'Load all from file' button.
+
+        Parameters
+        ----------
+        save_clicks : int
+            Number of times the save ROIs button has been clicked.
+        video_path : str
+            Path to the selected video file.
+
+        Returns
+        -------
+        bool
+            Whether to enable the load ROIs button.
+        """
+
+        video_path_pl = pl.Path(video_path)
+        metadata_path = video_path_pl.with_suffix(".metadata.yaml")
+
+        # If triggered by a click on the save ROIs button,
+        # wait a few seconds before checking for ROIs in the file
+        trigger = dash.callback_context.triggered[0]["prop_id"]
+        if trigger == "save-rois-button.n_clicks" and save_clicks > 1:
+            time.sleep(2)
+
+        try:
+            saved_shapes = utils.load_rois_from_yaml(yaml_path=metadata_path)
+            return len(saved_shapes) == 0
+        except (FileNotFoundError, KeyError):
+            return True
+
+    @app.callback(
+        Output("delete-rois-button", "disabled"),
+        Input("roi-table", "selected_rows"),
+    )
+    def disable_delete_rois_button(
+        selected_rows: list,
+    ) -> bool:
+        """If there are no ROIs selected in the ROI table,
+        disable the 'Delete selected' button
+
+
+        Parameters
+        ----------
+        selected_rows : list
+            List of selected rows.
+
+        Returns
+        -------
+        bool
+            Whether to enable the delete ROIs button.
+        """
+        return len(selected_rows) == 0
