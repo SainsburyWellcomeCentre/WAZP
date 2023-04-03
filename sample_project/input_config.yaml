@@ -6,10 +6,10 @@ model_str: DLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000
 dashboard_export_data_path: ./sample_project/output
 ROI_tags:
   - enclosure
-  - left_box
-  - top_box
-  - right_box
-  - bottom_box
+  - nectar1_box
+  - control_box
+  - water_only_box
+  - nectar2_box
   - tube
 event_tags:
   - experiment_start
