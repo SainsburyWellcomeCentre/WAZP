@@ -320,28 +320,44 @@ def create_pose_data_unavailable_popup() -> dcc.ConfirmDialog:
     )
 
 
-# TODO check dbc row components
-def create_tabs_w_plots():
+def create_tabs():
     return dbc.Tabs(
         [
             dbc.Tab(
                 label="Trajectories",
                 tab_id="trajectories-tab",
-                children=[
-                    dcc.Graph(id="trajectories-plot"),
-                    dcc.Dropdown(id="color-by-dropdown"),
-                ],
+                children=[],
             ),
             dbc.Tab(
                 label="Heatmaps",
                 tab_id="heatmaps-tab",
-                children=[dcc.Graph(id="heatmap-plot")],
+                children=[],
             ),
-            dbc.Tab(label="ROIs barplots", tab_id="rois-tab"),
+            dbc.Tab(label="ROIs barplots", tab_id="rois-tab", disabled=True),
         ],
         id="tabs",
-        active_tab="Trajectories",
+        active_tab="trajectories-tab",
     )
+
+
+def create_tabs_content():
+    return html.Div(
+        id="tabs-content",
+    )
+
+
+def create_trajectories_tab_content():
+    return html.Div(
+        id="trajectories-tabs-content",
+        children=[
+            dcc.Graph(id="trajectories-plot"),
+            dcc.Dropdown(id="color-by-dropdown"),
+        ],
+    )
+
+
+def create_heatmaps_tab_content():
+    return (dcc.Graph(id="heatmap-plot"),)
 
 
 #############################
@@ -404,10 +420,9 @@ def get_callbacks(app: dash.Dash) -> None:
     @app.callback(
         Output("plots-container", "children"),
         Input("plots-container", "children"),
-        State("session-storage", "data"),
     )
     def create_plot_components(
-        plot_container_children: list, app_storage: dict
+        plot_container_children: list,
     ) -> list:
         """Create components for the main data container
         in the dashboard tab layout
@@ -436,9 +451,22 @@ def get_callbacks(app: dash.Dash) -> None:
         """
 
         if not plot_container_children:
-            plot_container_children = create_tabs_w_plots()
-
+            plot_container_children = [
+                create_tabs(),
+                create_tabs_content(),
+            ]
         return plot_container_children
+
+    @app.callback(
+        Output("tabs-content", "children"), Input("tabs", "active_tab")
+    )
+    def switch_tab(tab_id):
+        print(tab_id)
+        if tab_id == "trajectories-tab":
+            return create_trajectories_tab_content()
+        elif tab_id == "heatmaps-tab":
+            return create_heatmaps_tab_content()
+        return html.P("Select a tab to display the data")
 
     # -----------------------
     @app.callback(
