@@ -408,6 +408,21 @@ def create_trajectories_tab_content():
                                 ],
                                 value="video_file",
                             ),
+                            html.Br(),
+                            html.P("DLC p-cutoff:"),
+                            dcc.Slider(
+                                id="pcutoff-slider",
+                                value=0.95,
+                                min=0.0,
+                                max=1.0,
+                                step=0.05,
+                                marks={i / 10: f"{i/10}" for i in range(11)},
+                                # TODO: why start/end marks not showing?
+                                tooltip={
+                                    "placement": "top",
+                                    "always_visible": True,
+                                },
+                            ),
                         ],
                         style={
                             "margin-top": "35px",
@@ -843,7 +858,9 @@ def get_callbacks(app: dash.Dash) -> None:
         Output("trajectories-plot", "figure"),
         Input("video-data-table", "selected_rows"),
         Input("time-slider", "value"),
-        State("color-dropdown", "value"),
+        State(
+            "color-dropdown", "value"
+        ),  # TODO: fix, why not Input? (gives odd errors)
         State("video-data-table", "data"),
         State("time-slider", "marks"),
         State("session-storage", "data"),
@@ -878,6 +895,8 @@ def get_callbacks(app: dash.Dash) -> None:
                 "scaleratio": 1,
             },
         }
+
+        # trigger = dash.callback_context.triggered[0]["prop_id"]
 
         # fill figure with data
         if list_selected_rows:
