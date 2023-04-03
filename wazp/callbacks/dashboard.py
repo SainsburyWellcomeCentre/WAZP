@@ -393,7 +393,21 @@ def create_trajectories_tab_content():
                     dbc.Col(
                         [
                             html.P("Color by:"),
-                            dcc.Dropdown(id="color-by-dropdown"),
+                            dcc.Dropdown(
+                                id="color-dropdown",
+                                options=[
+                                    "model_str",
+                                    "video_file",
+                                    #  'individual', # TODO: fix if individual
+                                    # not present!
+                                    "frame",
+                                    "bodypart",
+                                    "likelihood",
+                                    "ROI_tag",
+                                    "event_tag",
+                                ],
+                                value="video_file",
+                            ),
                         ],
                         style={
                             "margin-top": "35px",
@@ -465,13 +479,12 @@ def get_callbacks(app: dash.Dash) -> None:
 
         if not input_data_container_children:
             input_data_container_children = [
-                create_video_data_table(app_storage),
-                create_time_slider(app_storage),
-                create_buttons_and_message(),
+                dbc.Row(create_video_data_table(app_storage)),
+                dbc.Row(create_time_slider(app_storage)),
+                dbc.Row(create_buttons_and_message()),
                 create_pose_data_unavailable_popup(),
                 # create_dashboard_storage(),
             ]
-
         return input_data_container_children
 
     @app.callback(
@@ -830,6 +843,7 @@ def get_callbacks(app: dash.Dash) -> None:
         Output("trajectories-plot", "figure"),
         Input("video-data-table", "selected_rows"),
         Input("time-slider", "value"),
+        State("color-dropdown", "value"),
         State("video-data-table", "data"),
         State("time-slider", "marks"),
         State("session-storage", "data"),
@@ -837,6 +851,7 @@ def get_callbacks(app: dash.Dash) -> None:
     def update_trajectory_plot(
         list_selected_rows: list[int],
         slider_start_end_idcs: list,
+        color_by_str: str,
         videos_table_data: list[dict],
         slider_marks: dict,
         app_storage: dict,
@@ -918,7 +933,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 df,
                 x="x",
                 y="y",
-                color="video_file",
+                color=color_by_str,
             )
             fig.update_layout(fig_layout)
             return fig
