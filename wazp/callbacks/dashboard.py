@@ -321,6 +321,13 @@ def create_pose_data_unavailable_popup() -> dcc.ConfirmDialog:
 
 
 def create_tabs():
+    """Create header with tabs
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     return dbc.Tabs(
         [
             dbc.Tab(
@@ -341,12 +348,26 @@ def create_tabs():
 
 
 def create_tabs_content():
+    """Create container for tabs content
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     return html.Div(
         id="tabs-content",
     )
 
 
 def create_trajectories_tab_content():
+    """Create content to display when trajectories tab is selected
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     return html.Div(
         id="trajectories-tabs-content",
         children=[
@@ -357,6 +378,13 @@ def create_trajectories_tab_content():
 
 
 def create_heatmaps_tab_content():
+    """Create content to display when heatmaps tab is selected
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     return (dcc.Graph(id="heatmap-plot"),)
 
 
@@ -460,7 +488,19 @@ def get_callbacks(app: dash.Dash) -> None:
     @app.callback(
         Output("tabs-content", "children"), Input("tabs", "active_tab")
     )
-    def switch_tab(tab_id):
+    def update_tab_content(tab_id):
+        """Update content based on selected tab
+
+        Parameters
+        ----------
+        tab_id : string
+            ID of the selected tab
+
+        Returns
+        -------
+        _type_
+            a single or list of html / dbc components
+        """
         print(tab_id)
         if tab_id == "trajectories-tab":
             return create_trajectories_tab_content()
