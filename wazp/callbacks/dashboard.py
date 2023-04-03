@@ -387,7 +387,7 @@ def create_trajectories_tab_content():
             dbc.Row(
                 [
                     dbc.Col(
-                        dcc.Graph(id="trajectories-plot"),
+                        dcc.Loading(dcc.Graph(id="trajectories-plot")),
                         style={"margin-top": "0px", "margin-bottom": "0px"},
                     ),
                     dbc.Col(
