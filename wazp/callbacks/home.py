@@ -20,8 +20,8 @@ def get_callbacks(app: dash.Dash) -> None:
         Output("upload-message", "is_open"),
         Output("upload-message", "children"),
         Output("upload-message", "color"),
-        Input("upload-data", "contents"),
-        State("upload-data", "filename"),
+        Input("upload-project-config", "contents"),
+        State("upload-project-config", "filename"),
         State("upload-message", "is_open"),
     )
     def save_input_config_to_storage(

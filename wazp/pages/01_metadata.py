@@ -15,7 +15,7 @@ layout = html.Div(
     children=[
         html.H1(children="Metadata"),
         html.Div(
-            id="output-metadata", style={"height": "1200px"}, children=[]
+            id="metadata-container", style={"height": "1200px"}, children=[]
         ),  # component to hold the output from the data upload
     ]
 )
