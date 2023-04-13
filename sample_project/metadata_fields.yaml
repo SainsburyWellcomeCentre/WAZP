@@ -67,3 +67,7 @@ Events:
     Type: dict
     LongName: event tags and associated frames
     Description: event tags describe specific events of interest that occur during the video
+ROIs:
+    Type: dict
+    LongName: ROI tags and associated polygons
+    Description: ROIs describe areas of interest in a frame

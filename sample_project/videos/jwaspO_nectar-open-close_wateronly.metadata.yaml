@@ -1,21 +1,22 @@
-File: jwaspN_nectar-open-close_control.avi
+File: jwaspO_nectar-open-close_wateronly.avi
 Species_name: Ampulex_compressa
 Common_name: jewel_wasp
-Subject: N_male
-Treatment: nectar-open-close_control
+Subject: O_female
+Treatment: nectar-open-close_wateronly
 Treatment_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
   or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
-Date_start: '2022-08-17 00:00:00'
-Time_start: '11:20:03'
-Date_end: '2022-08-17 00:00:00'
-Time_end: '11:52:21'
-Time_recorded: 00:32:18
-Video_length: 00:32:18
+Date_start: '2022-11-10 00:00:00'
+Time_start: '10:43:35'
+Date_end: '2022-11-10 00:00:00'
+Time_end: '11:14:35'
+Time_recorded: 00:31:00
+Video_length: 00:31:00
 Hardware_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
   or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
 Software_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
   or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
-Further_description: Jwasp N sourced from 2.0 group - larger individual with fully
-  curled antennae.
+Further_description: 'Jwasp O sourced from on-show display (all others sourced from
+  upstairs BUGS holding room bestides jwaspM). Poster boards moved slightly during
+  the control box closing with the servo motor. '
 Events: ''
 ROIs: ''

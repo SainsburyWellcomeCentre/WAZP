@@ -5,9 +5,9 @@ Subject: E_male
 Treatment: nectar-open-close_nectar1
 Treatment_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
   or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
-Date_start: 5/8/22
+Date_start: '2022-08-05 00:00:00'
 Time_start: '11:48:22'
-Date_end: 5/8/22
+Date_end: '2022-08-05 00:00:00'
 Time_end: '13:51:40'
 Time_recorded: 02:03:18
 Video_length: 02:03:18
@@ -16,8 +16,5 @@ Hardware_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\Lon
 Software_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
   or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
 Further_description: '-'
-Events:
-  experiment_start: 0
-  box_1_open: 98026
-  box_1_closed: 196052
-  experiment_end: 294077
+Events: ''
+ROIs: ''

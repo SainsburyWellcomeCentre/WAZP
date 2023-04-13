@@ -1,25 +1,21 @@
-File: jwaspO_nectar-open-close_wateronly_s.avi
+File: jwaspM_nectar-open-close_wateronly.avi
 Species_name: Ampulex_compressa
 Common_name: jewel_wasp
-Subject: O_female
+Subject: M_female
 Treatment: nectar-open-close_wateronly
 Treatment_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
   or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
-Date_start: 10/11/22
-Time_start: '10:43:35'
-Date_end: 10/11/22
-Time_end: '11:14:35'
-Time_recorded: 00:31:00
-Video_length: 00:31:00
+Date_start: '2022-08-16 00:00:00'
+Time_start: '10:47:42'
+Date_end: '2022-08-16 00:00:00'
+Time_end: '11:20:43'
+Time_recorded: 00:33:01
+Video_length: 00:33:01
 Hardware_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
   or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
 Software_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
   or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
-Further_description: 'Jwasp O sourced from on-show display (all others sourced from
-  upstairs BUGS holding room bestides jwaspM). Poster boards moved slightly during
-  the control box closing with the servo motor. '
-Events:
-  experiment_start: 0
-  box_1_open: 18009
-  box_1_closed: 36019
-  experiment_end: 54028
+Further_description: 'Jwasp M was sourced from the on-show display (all others sourced
+  from upstairs BUGS holding room besides jwaspO). '
+Events: ''
+ROIs: ''
