@@ -20,6 +20,7 @@ VIDEO_TYPES = [".avi", ".mp4"]
 ###########################
 def create_metadata_table_component_from_df(
     df: pd.DataFrame,
+    config: dict,
 ) -> dash_table.DataTable:
     """Build a Dash table component populated with the input dataframe.
 
@@ -55,11 +56,21 @@ def create_metadata_table_component_from_df(
             {
                 "id": c,
                 "name": c,
-                "hideable": (True if c != "File" else False),
-                "editable": True,  # TODO: make ROI and Events columns
-                # not editable!
-                # check type in dict from metadata_fields yaml.
-                # If dict, then make it not editable?
+                "hideable": (
+                    True if c != config["metadata_key_field_str"] else False
+                ),
+                "editable": (
+                    True
+                    if c
+                    not in [
+                        # config["metadata_key_field_str"],
+                        # TODO: make Filename not editable?
+                        # (if so, then 'Add empty row' doesnt make sense)
+                        "Events",  # TODO: can we not hardcode this?
+                        "ROIs",  # TODO: can we not hardcode this?
+                    ]
+                    else False
+                ),
                 "presentation": "input",
             }
             for c in df.columns
@@ -128,26 +139,58 @@ def create_metadata_table_component_from_df(
         },
         style_header_conditional=[
             {
-                "if": {"column_id": "File"},
+                "if": {"column_id": config["metadata_key_field_str"]},
                 # TODO: consider getting file from app_storage
                 "backgroundColor": "rgb(200, 200, 400)",
             }
         ],
         style_data_conditional=[
             {
-                "if": {"column_id": "File", "row_index": "odd"},
+                "if": {
+                    "column_id": [config["metadata_key_field_str"]],
+                    "row_index": "odd",
+                },
                 "backgroundColor": "rgb(220, 220, 420)",  # darker blue
             },
             {
-                "if": {"column_id": "File", "row_index": "even"},
+                "if": {
+                    "column_id": [config["metadata_key_field_str"]],
+                    "row_index": "even",
+                },
                 "backgroundColor": "rgb(235, 235, 255)",  # lighter blue
             },
             {
                 "if": {
-                    "column_id": [c for c in df.columns if c != "File"],
+                    "column_id": [
+                        c
+                        for c in df.columns
+                        if c not in [config["metadata_key_field_str"]]
+                    ],
                     "row_index": "odd",
                 },
                 "backgroundColor": "rgb(240, 240, 240)",  # gray
+            },
+            {
+                "if": {
+                    "column_id": [
+                        "ROIs",
+                        "Events",
+                    ],  # TODO can we not hardcode this?
+                    "row_index": "odd",
+                },
+                "backgroundColor": "rgb(180, 180, 180)",
+                # to highlight not editable
+            },
+            {
+                "if": {
+                    "column_id": [
+                        "ROIs",
+                        "Events",
+                    ],  # TODO can we not hardcode this?
+                    "row_index": "even",
+                },
+                "backgroundColor": "rgb(190, 190, 190)",
+                # to highlight not editable
             },
         ],
     )
@@ -206,7 +249,8 @@ def get_callbacks(app: dash.Dash) -> None:
                 utils.df_from_metadata_yaml_files(
                     app_storage["config"]["videos_dir_path"],
                     app_storage["metadata_fields"],
-                )
+                ),
+                app_storage["config"],
             )
 
             # TODO: define style of all buttons separately?
