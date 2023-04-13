@@ -1,24 +1,25 @@
 # -*- coding: utf-8 -*-
 
+import pdb
+
 import dash
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
 
 import wazp.callbacks.dashboard as dashboard
-import wazp.callbacks.home as home
 import wazp.callbacks.metadata as metadata
 import wazp.callbacks.roi as roi
+from wazp.callbacks.home import *
+from wazp.initialise import app
 
-#################
-# Initialise app
-#################
-app = Dash(
+app = dash.Dash(
     __name__,
     use_pages=True,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     suppress_callback_exceptions=True
     # TODO: is there an alternative to prevent error w/ chained callbacks?
 )
+
 
 ###############
 # Components
@@ -103,7 +104,8 @@ app.layout = html.Div(
 ###############
 # Callbacks
 ################
-home.get_callbacks(app)
+# home.random_function()  # get_callbacks(app)
+# app.(save_input_config_to_storage)
 metadata.get_callbacks(app)
 roi.get_callbacks(app)
 dashboard.get_callbacks(app)

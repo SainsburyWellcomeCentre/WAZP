@@ -487,7 +487,6 @@ def get_callbacks(app: dash.Dash) -> None:
         # -------------------------
         # If pose data is not available: set row to false
         if any([list_missing_pose_data_bool[r] for r in list_selected_rows]):
-
             # ammend list of selected rows
             list_selected_rows = [
                 r
@@ -518,7 +517,6 @@ def get_callbacks(app: dash.Dash) -> None:
 
             # if rows are selected: export combined dataframe
             else:
-
                 # get list of selected videos
                 list_selected_videos = [
                     videos_table_data[r][
