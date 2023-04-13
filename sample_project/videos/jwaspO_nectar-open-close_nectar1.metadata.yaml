@@ -5,9 +5,9 @@ Subject: O_female
 Treatment: nectar-open-close_nectar1
 Treatment_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
   or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
-Date_start: 10/11/22
+Date_start: '2022-11-10 00:00:00'
 Time_start: '11:46:42'
-Date_end: 10/11/22
+Date_end: '2022-11-10 00:00:00'
 Time_end: '13:48:05'
 Time_recorded: 02:01:23
 Video_length: 02:01:03
@@ -23,8 +23,5 @@ Further_description: 'Jwasp O sourced from on-show display (all others sourced f
   the full condition. I was watching the jwasp during this time and she did not visit
   any ROIs. We''re not really missing anything from that 20-second gap - however this
   explains the wasps movement 31 minutes in. '
-Events:
-  experiment_start: 0
-  box_1_open: 72396
-  box_1_closed: 144792
-  experiment_end: 217187
+Events: ''
+ROIs: ''
