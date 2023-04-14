@@ -308,7 +308,7 @@ def get_callbacks(app: dash.Dash) -> None:
                     ),
                     dbc.Col(
                         dcc.Upload(
-                            id="upload-csv",
+                            id="upload-spreadsheet",
                             children=dbc.Button(
                                 children=(
                                     "Generate yaml files from spreadsheet"
@@ -585,27 +585,27 @@ def get_callbacks(app: dash.Dash) -> None:
         Output("import-message", "is_open"),
         Output("import-message", "children"),
         Output("import-message", "color"),
-        Input("upload-csv", "contents"),
-        State("upload-csv", "filename"),
+        Input("upload-spreadsheet", "contents"),
+        State("upload-spreadsheet", "filename"),
         State("import-message", "is_open"),
         State("session-storage", "data"),
     )
-    def generate_yaml_files_from_csv(
-        csv_uploaded_content: str,
-        csv_filename: str,
+    def generate_yaml_files_from_spreadsheet(
+        spreadsheet_uploaded_content: str,
+        spreadsheet_filename: str,
         import_message_state: bool,
         app_storage: dict,
     ):
-        """Generate yaml files from csv
+        """Generate yaml files from spreadsheet
 
         From example at
         https://dash.plotly.com/dash-core-components/upload#displaying-uploaded-spreadsheet-contents
 
         Parameters
         ----------
-        csv_uploaded_content : str
+        spreadsheet_uploaded_content : str
             _description_
-        csv_filename : str
+        spreadsheet_filename : str
             _description_
         import_message_state : bool
             _description_
@@ -619,15 +619,15 @@ def get_callbacks(app: dash.Dash) -> None:
         import_message_color = "warning"
 
         # if data is uploaded: read uploaded content as a dataframe
-        if csv_uploaded_content is not None:
-            _, content_string = csv_uploaded_content.split(",")
+        if spreadsheet_uploaded_content is not None:
+            _, content_string = spreadsheet_uploaded_content.split(",")
             decoded = base64.b64decode(content_string)
             try:
                 # as csv
-                if "csv" in pl.Path(csv_filename).suffix:
+                if "csv" in pl.Path(spreadsheet_filename).suffix:
                     df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
                 # as xls(x)
-                elif "xls" in pl.Path(csv_filename).suffix:
+                elif "xls" in pl.Path(spreadsheet_filename).suffix:
                     df = pd.read_excel(io.BytesIO(decoded))
                 else:
                     import_message_state = True
