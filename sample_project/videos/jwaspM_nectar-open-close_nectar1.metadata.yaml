@@ -5,9 +5,9 @@ Subject: M_female
 Treatment: nectar-open-close_nectar1
 Treatment_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
   or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
-Date_start: '2022-08-16 00:00:00'
+Date_start: 16/8/22
 Time_start: '11:52:14'
-Date_end: '2022-08-16 00:00:00'
+Date_end: 16/8/22
 Time_end: '13:55:03'
 Time_recorded: 02:02:49
 Video_length: 02:02:49
@@ -17,5 +17,8 @@ Software_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\Lon
   or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
 Further_description: 'Jwasp M was sourced from the on-show display (all others sourced
   from upstairs BUGS holding room besides jwaspO). '
-Events: ''
-ROIs: ''
+Events:
+  experiment_start: 0
+  box_1_open: 97637
+  box_1_closed: 195275
+  experiment_end: 292912

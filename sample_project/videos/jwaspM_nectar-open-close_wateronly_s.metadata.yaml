@@ -1,0 +1,24 @@
+File: jwaspM_nectar-open-close_wateronly_s.avi
+Species_name: Ampulex_compressa
+Common_name: jewel_wasp
+Subject: M_female
+Treatment: nectar-open-close_wateronly
+Treatment_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Date_start: 16/8/22
+Time_start: '10:47:42'
+Date_end: 16/8/22
+Time_end: '11:20:43'
+Time_recorded: 00:33:01
+Video_length: 00:33:01
+Hardware_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Software_description: Reference 'nectar-open-close.pdf' on ceph (in \zoo\raw\LondonZoo\Experiment-protocols\Jewel-wasp_Ampulex-compressa\)
+  or Google Drive (most up-to-date version if they are different - in Experiment Protocols\jewel-wasp_Ampulex-compressa\)
+Further_description: 'Jwasp M was sourced from the on-show display (all others sourced
+  from upstairs BUGS holding room besides jwaspO). '
+Events:
+  experiment_start: 0
+  box_1_open: 25254
+  box_1_closed: 50508
+  experiment_end: 75762
