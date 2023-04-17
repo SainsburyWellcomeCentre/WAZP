@@ -403,10 +403,8 @@ def get_callbacks(app: dash.Dash) -> None:
         -------
         table_rows : list[dict]
             a list of dictionaries holding the data of each row in the table
-
         n_clicks_add_row_manually : int
             number of clicks on the 'add row manually' button
-
         n_clicks_add_rows_missing : int
             number of clicks on the 'add missing rows' button
         """
@@ -501,7 +499,7 @@ def get_callbacks(app: dash.Dash) -> None:
         Parameters
         ----------
         n_clicks_select_all : int
-            number of clicks on the 'select/unselect all' button
+            number of clicks on the 'select all' button
         n_clicks_export : int
             number of clicks on the 'export' button
         data_previous : list[dict]
@@ -519,8 +517,18 @@ def get_callbacks(app: dash.Dash) -> None:
 
         Returns
         -------
-        tuple[list[int], int, int, bool, str]
-            _description_
+        list_selected_rows : list[int]
+            a list of indices for the currently selected rows
+        n_clicks_select_all : int
+            number of clicks on the 'select all' button
+        n_clicks_unselect_all : int
+            number of clicks on the 'unselect all' button
+        n_clicks_export : int
+            number of clicks on the 'export' button
+        alert_state : bool
+            visibility of the information message
+        alert_message : str
+            text of the information message
         """
         # TODO: select all rows *per page*?
 
@@ -604,16 +612,20 @@ def get_callbacks(app: dash.Dash) -> None:
         Parameters
         ----------
         spreadsheet_uploaded_content : str
-            _description_
+            string holding the uploaded content
         spreadsheet_filename : str
-            _description_
+            name of the uploaded spreadsheet
         import_message_state : bool
-            _description_
+            visibility state of the import message
 
         Returns
         -------
-        _type_
-            _description_
+        import_message_state : bool
+            visibility state of the message to display when import is completed
+        import_message_text : str
+            text of the import message
+        import_message_color : str
+            color of the import message
         """
         import_message_text = ""
         import_message_color = "warning"
