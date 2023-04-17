@@ -24,6 +24,8 @@ dependencies = [
   "opencv-python",
   "PyYAML",
   "shapely",
+  "openpyxl",
+  "defusedxml"
 ]
 
 classifiers = [
