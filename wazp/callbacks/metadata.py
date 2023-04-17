@@ -1,12 +1,13 @@
+import base64
+import io
 import pathlib as pl
-
-# import pdb
 import re
 
 import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import Input, Output, State, dash_table, html
+import yaml
+from dash import Input, Output, State, dash_table, dcc, html
 
 from wazp import utils
 
@@ -212,11 +213,11 @@ def get_callbacks(app: dash.Dash) -> None:
     """
 
     @app.callback(
-        Output("output-metadata", "children"),
-        Input("output-metadata", "children"),
+        Output("metadata-container", "children"),
+        Input("metadata-container", "children"),
         State("session-storage", "data"),
     )
-    def create_metadata_table(
+    def create_metadata_table_and_buttons(
         metadata_output_children: list, app_storage: dict
     ) -> html.Div:
         """Generate html component with a table holding the
@@ -252,52 +253,112 @@ def get_callbacks(app: dash.Dash) -> None:
                 app_storage["config"],
             )
 
-            auxiliary_buttons = html.Div(
+            # TODO: define style of all buttons separately?
+            button_style = {
+                "outline": False,
+                "color": "light",
+                "class_name": "w-100",
+            }
+            auxiliary_buttons_row = dbc.Row(
                 [
-                    html.Button(
-                        children="Check for missing metadata files",
-                        id="add-rows-for-missing-button",
-                        n_clicks=0,
-                        style={"margin-right": "10px"},
+                    dbc.Col(
+                        dbc.Button(
+                            children="Check for missing metadata files",
+                            id="add-rows-for-missing-button",
+                            n_clicks=0,
+                            **button_style,
+                        ),
+                        width="auto",
                     ),
-                    html.Button(
-                        children="Add empty row",
-                        id="add-row-manually-button",
-                        n_clicks=0,
-                        style={"margin-right": "10px"},
+                    dbc.Col(
+                        dbc.Button(
+                            children="Add empty row",
+                            id="add-row-manually-button",
+                            n_clicks=0,
+                            **button_style,  # {"margin-right": "10px"},
+                        ),
+                        width="auto",
                     ),
-                    html.Button(
-                        children="Select all rows",
-                        id="select-all-rows-button",
-                        n_clicks=0,
-                        style={"margin-right": "10px"},
+                    dbc.Col(
+                        dbc.Button(
+                            children="Select all rows",
+                            id="select-all-rows-button",
+                            n_clicks=0,
+                            **button_style,  # {"margin-right": "10px"},
+                        ),
+                        width="auto",
                     ),
-                    html.Button(
-                        children="Unselect all rows",
-                        id="unselect-all-rows-button",
-                        n_clicks=0,
-                        style={"margin-right": "10px"},
+                    dbc.Col(
+                        dbc.Button(
+                            children="Unselect all rows",
+                            id="unselect-all-rows-button",
+                            n_clicks=0,
+                            **button_style,  # {"margin-right": "10px"},
+                        ),
+                        width="auto",
                     ),
-                    html.Button(
-                        children="Export selected rows as yaml",
-                        id="export-selected-rows-button",
-                        n_clicks=0,
-                        style={"margin-right": "10px"},
+                    dbc.Col(
+                        dbc.Button(
+                            children="Export selected rows as yaml",
+                            id="export-selected-rows-button",
+                            n_clicks=0,
+                            **button_style,  # {"margin-right": "10px"},
+                        ),
+                        width="auto",
                     ),
-                    dbc.Alert(
-                        children="",
-                        id="alert",
-                        dismissable=True,
-                        fade=False,
-                        is_open=False,
+                    dbc.Col(
+                        dcc.Upload(
+                            id="upload-spreadsheet",
+                            children=dbc.Button(
+                                children=(
+                                    "Generate yaml files from spreadsheet"
+                                ),
+                                id="generate-yaml-files-button",
+                                n_clicks=0,
+                                **button_style,  # {"margin-right": "10px"},
+                            ),
+                            contents=None,
+                            multiple=False,
+                        ),
+                        width="auto",
                     ),
-                ]
+                ],
+                justify="start",
+            )
+
+            alert_message_row = dbc.Row(
+                dbc.Alert(
+                    children="",
+                    id="alert",
+                    dismissable=True,
+                    fade=False,
+                    is_open=False,
+                ),
+            )
+
+            import_message_row = dbc.Row(
+                dbc.Alert(
+                    children="",
+                    id="import-message",
+                    dismissable=True,
+                    fade=False,
+                    is_open=False,
+                ),
+            )
+
+            generate_yaml_tooltip = dbc.Tooltip(
+                "Generate YAML files for each row in the selected spreadsheet "
+                "and save them in the videos directory",
+                target="generate-yaml-files-button",
             )
 
             return html.Div(
                 [
                     metadata_table,
-                    auxiliary_buttons,
+                    auxiliary_buttons_row,
+                    alert_message_row,
+                    import_message_row,
+                    generate_yaml_tooltip,
                 ]
             )
 
@@ -342,10 +403,8 @@ def get_callbacks(app: dash.Dash) -> None:
         -------
         table_rows : list[dict]
             a list of dictionaries holding the data of each row in the table
-
         n_clicks_add_row_manually : int
             number of clicks on the 'add row manually' button
-
         n_clicks_add_rows_missing : int
             number of clicks on the 'add missing rows' button
         """
@@ -440,7 +499,7 @@ def get_callbacks(app: dash.Dash) -> None:
         Parameters
         ----------
         n_clicks_select_all : int
-            number of clicks on the 'select/unselect all' button
+            number of clicks on the 'select all' button
         n_clicks_export : int
             number of clicks on the 'export' button
         data_previous : list[dict]
@@ -458,8 +517,18 @@ def get_callbacks(app: dash.Dash) -> None:
 
         Returns
         -------
-        tuple[list[int], int, int, bool, str]
-            _description_
+        list_selected_rows : list[int]
+            a list of indices for the currently selected rows
+        n_clicks_select_all : int
+            number of clicks on the 'select all' button
+        n_clicks_unselect_all : int
+            number of clicks on the 'unselect all' button
+        n_clicks_export : int
+            number of clicks on the 'export' button
+        alert_state : bool
+            visibility of the information message
+        alert_message : str
+            text of the information message
         """
         # TODO: select all rows *per page*?
 
@@ -518,4 +587,128 @@ def get_callbacks(app: dash.Dash) -> None:
             n_clicks_export,
             alert_state,
             alert_message,
+        )
+
+    @app.callback(
+        Output("import-message", "is_open"),
+        Output("import-message", "children"),
+        Output("import-message", "color"),
+        Input("upload-spreadsheet", "contents"),
+        State("upload-spreadsheet", "filename"),
+        State("import-message", "is_open"),
+        State("session-storage", "data"),
+    )
+    def generate_yaml_files_from_spreadsheet(
+        spreadsheet_uploaded_content: str,
+        spreadsheet_filename: str,
+        import_message_state: bool,
+        app_storage: dict,
+    ):
+        """Generate yaml files from spreadsheet
+
+        From example at
+        https://dash.plotly.com/dash-core-components/upload#displaying-uploaded-spreadsheet-contents
+
+        Parameters
+        ----------
+        spreadsheet_uploaded_content : str
+            string holding the uploaded content
+        spreadsheet_filename : str
+            name of the uploaded spreadsheet
+        import_message_state : bool
+            visibility state of the import message
+
+        Returns
+        -------
+        import_message_state : bool
+            visibility state of the message to display when import is completed
+        import_message_text : str
+            text of the import message
+        import_message_color : str
+            color of the import message
+        """
+        import_message_text = ""
+        import_message_color = "warning"
+
+        # if data is uploaded: read uploaded content as a dataframe
+        if spreadsheet_uploaded_content is not None:
+            _, content_string = spreadsheet_uploaded_content.split(",")
+            decoded = base64.b64decode(content_string)
+            try:
+                # as csv
+                if "csv" in pl.Path(spreadsheet_filename).suffix:
+                    df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
+                # as xls(x)
+                elif "xls" in pl.Path(spreadsheet_filename).suffix:
+                    df = pd.read_excel(io.BytesIO(decoded))
+                else:
+                    import_message_state = True
+                    import_message_text = "Only csv or xls(x) files accepted"
+                    import_message_color = "warning"
+
+                    return (
+                        import_message_state,
+                        import_message_text,
+                        import_message_color,
+                    )
+
+            except Exception as e:
+                print(e)
+                import_message_state = True
+                import_message_text = (
+                    "There was an error reading" f" this file ({e})."
+                )
+                import_message_color = "danger"
+
+            # convert all fields in dataframe to strings
+            # (otherwise datetime fields are not encoded correctly in the YAML)
+            # TODO: is it better to use to_json instead?
+            # if so I think date encodes in
+            # epoch milliseconds
+            # list_dict_per_row = df.to_json('records')
+            df = df.applymap(str)
+
+            # check if columns match metadata file: if not
+            # add missing columns
+            list_columns = df.columns.tolist()
+            list_metadata_fields = list(app_storage["metadata_fields"].keys())
+            list_columns_to_add = [
+                f for f in list_metadata_fields if f not in list_columns
+            ]
+            # TODO: use sets instead? (more efficient?
+            # not symmetric diff though)
+            # TODO: warn/break if columns only in spreadsheet?
+            for col in list_columns_to_add:
+                df[col] = ""
+
+            # convert to list of dictionaries, one per row
+            list_dict_per_row = df.to_dict("records")
+
+            # dump each row as a yaml
+            video_dir = app_storage["config"]["videos_dir_path"]
+            field_to_use_as_filename = app_storage["config"][
+                "metadata_key_field_str"
+            ]
+            for row in list_dict_per_row:
+                yaml_filename = (
+                    pl.Path(row[field_to_use_as_filename]).stem
+                    + ".metadata.yaml"
+                )
+
+                with open(pl.Path(video_dir) / yaml_filename, "w") as yamlf:
+                    yaml.dump(row, yamlf, sort_keys=False)
+
+            # update message
+            import_message_text = (
+                f"{len(list_dict_per_row)} YAML files"
+                f" generated in video directory: {video_dir}."
+                " Please refresh the page to update the metadata table."
+            )
+            import_message_color = "success"
+            import_message_state = True
+
+        return (
+            import_message_state,
+            import_message_text,
+            import_message_color,
         )
