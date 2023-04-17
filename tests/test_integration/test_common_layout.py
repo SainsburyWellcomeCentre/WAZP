@@ -8,6 +8,13 @@ from wazp.app import app
 
 @pytest.fixture
 def map_page_name_to_title():
+    """Map page names to page head titles
+
+    Returns
+    -------
+    dict
+        dictionary with page names as keys, and page titles as values
+    """
     return {
         "Home": "Home",
         "01 metadata": "Metadata",
@@ -17,7 +24,6 @@ def map_page_name_to_title():
     }
 
 
-# Q for review: is this overkill?
 @pytest.fixture()
 def timeout():
     """Maximum time to wait for a component
@@ -28,11 +34,9 @@ def timeout():
     timeout : float
         maximum time to wait in seconds
     """
-    return 4
+    return 4  # Q for review: is this overkill?
 
 
-# NOTE: pass the 'no_cover' fixture to allow debugging in VSCode?
-# @pytest.mark.no_cover
 def test_components_created(
     dash_duo: DashComposite,
     timeout: float,
@@ -80,6 +84,7 @@ def test_components_created(
         "warnings should show in pages that are not Home"
     ),
     strict=True,
+    # with strict=True
     # if the test passes unexpectedly,
     # it will fail the test suite
 )
@@ -125,13 +130,14 @@ def test_sidebar_links(
             )
 
         # click back to home
-        # TODO: to make starting point consistent...but is it required?
+        # Q for review: I do this to make the starting point consistent...
+        # but is it required? should I use fixtures instead?
         dash_duo.find_element("#sidebar #link-Home").click()
 
-        # TODO: if no config file has been loaded, check warning is shown?
+        # TODO: if no config file has been loaded, check a warning is shown?
         # ...
 
-    # NOTE: this will now fail
+    # NOTE: this is expected to fail
     assert (
         dash_duo.get_logs() == []
     ), "There are errors in the browser console!"
