@@ -54,6 +54,7 @@ sidebar = html.Div(
         dbc.Nav(
             children=[
                 dcc.Link(
+                    id="link-" + page["name"].replace(" ", "-"),
                     children=f"{page['name']}",
                     href=page["relative_path"],  # url of each page
                 )
@@ -64,6 +65,7 @@ sidebar = html.Div(
         ),
     ],
     style=SIDEBAR_STYLE,
+    id="sidebar",
 )
 
 # Main content style
