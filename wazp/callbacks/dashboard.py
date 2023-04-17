@@ -5,6 +5,8 @@ import re
 import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objs as go
 from dash import Input, Output, State, dash_table, dcc, html
 
 from wazp import utils
@@ -215,33 +217,31 @@ def create_buttons_and_message() -> html.Div:
         html Div component wrapping the buttons
         and messages
     """
+    buttons_css_style = {
+        "margin-right": "0px",
+        "margin-left": "10px",
+        "margin-top": "60px",
+    }
+
     select_all_videos_button = html.Button(
         children="Select all rows",
         id="select-all-videos-button",
         n_clicks=0,
-        style={
-            "margin-right": "10px",
-            "margin-left": "10px",
-            "margin-top": "60px",
-        },
+        style=buttons_css_style,
     )
 
     unselect_all_videos_button = html.Button(
         children="Unselect all rows",
         id="unselect-all-videos-button",
         n_clicks=0,
-        style={
-            "margin-right": "10px",
-            "margin-left": "10px",
-            "margin-top": "60px",
-        },
+        style=buttons_css_style,
     )
 
     export_button = html.Button(
         children="Export selected data",  # csv? h5?
         id="export-dataframe-button",
         n_clicks=0,
-        style={"margin-right": "10px", "margin-left": "10px"},
+        style=buttons_css_style,
     )
 
     clipboard = dcc.Clipboard(
@@ -264,26 +264,38 @@ def create_buttons_and_message() -> html.Div:
         style={"display": "inline-block"},  # hidden
     )
 
-    export_message = dbc.Alert(
-        children=["Data export message", clipboard_wrapper],
-        id="export-message",
-        dismissable=True,
-        fade=False,
-        is_open=False,
-        color="success",  # warning or danger
-        style={
-            "margin-right": "0px",
-            "margin-left": "10px",
-            "margin-top": "5px",
-        },
+    export_message = html.Div(
+        [
+            html.Br(),
+            dbc.Alert(
+                children=["", clipboard_wrapper],
+                id="export-message",
+                dismissable=True,
+                fade=False,
+                is_open=False,
+                color="success",  # warning or danger
+                style={
+                    "margin-right": "0px",
+                    "margin-left": "10px",
+                    "margin-top": "5px",
+                },
+            ),
+        ],
+        style={"display": "float"},  # hidden
     )
 
     return html.Div(
         [
-            select_all_videos_button,
-            unselect_all_videos_button,
-            export_button,
-            export_message,
+            dbc.Row(
+                [
+                    dbc.Col(select_all_videos_button, width="auto"),
+                    dbc.Col(unselect_all_videos_button, width="auto"),
+                    dbc.Col(export_button, width="auto"),
+                ],
+                align="start",
+                justify="start",
+            ),
+            dbc.Row(export_message),
         ]
     )
 
@@ -308,6 +320,129 @@ def create_pose_data_unavailable_popup() -> dcc.ConfirmDialog:
     )
 
 
+def create_tabs():
+    """Create header with tabs
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+    return dbc.Tabs(
+        [
+            dbc.Tab(
+                label="Trajectories",
+                tab_id="trajectories-tab",
+                children=[],
+                style={"margin-top": "0px", "margin-bottom": "0px"},
+            ),
+            dbc.Tab(
+                label="Heatmaps",
+                tab_id="heatmaps-tab",
+                children=[],
+                disabled=True,
+                style={"margin-top": "0px", "margin-bottom": "0px"},
+            ),
+            dbc.Tab(
+                label="ROIs barplots",
+                tab_id="rois-tab",
+                disabled=True,
+                style={"margin-top": "0px", "margin-bottom": "0px"},
+            ),
+        ],
+        id="tabs",
+        active_tab="trajectories-tab",
+        style={"margin-top": "0px", "margin-bottom": "0px"},
+    )
+
+
+def create_tabs_content():
+    """Create container for tabs content
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+    return html.Div(
+        id="tabs-content",
+        style={"margin-top": "0px", "margin-bottom": "0px"},
+    )
+
+
+def create_trajectories_tab_content():
+    """Create content to display when trajectories tab is selected
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+    return html.Div(
+        id="trajectories-tabs-content",
+        children=[
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dcc.Loading(dcc.Graph(id="trajectories-plot")),
+                        style={"margin-top": "0px", "margin-bottom": "0px"},
+                    ),
+                    dbc.Col(
+                        [
+                            html.P("Color by:"),
+                            dcc.Dropdown(
+                                id="color-dropdown",
+                                options=[
+                                    "model_str",
+                                    "video_file",
+                                    #  'individual', # TODO: fix if individual
+                                    # not present!
+                                    "frame",
+                                    "bodypart",
+                                    "likelihood",
+                                    "ROI_tag",
+                                    "event_tag",
+                                ],
+                                value="video_file",
+                            ),
+                            html.Br(),
+                            html.P("Likelihood (DLC p-cutoff):"),
+                            dcc.Slider(
+                                id="pcutoff-slider",
+                                value=0.5,
+                                min=0.0,
+                                max=1.0,
+                                step=0.05,
+                                marks={i / 10: f"{i/10}" for i in range(11)},
+                                # TODO: why start/end marks not showing?
+                                tooltip={
+                                    "placement": "top",
+                                    "always_visible": True,
+                                },
+                            ),
+                        ],
+                        style={
+                            "margin-top": "35px",
+                        },
+                    ),
+                ],
+            )
+        ],
+        style={"margin-top": "0px"},
+    )
+
+
+def create_heatmaps_tab_content():
+    """Create content to display when heatmaps tab is selected
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+    return (dcc.Graph(id="heatmap-plot"),)
+
+
 #############################
 # Callbacks
 ###########################
@@ -321,11 +456,11 @@ def get_callbacks(app: dash.Dash) -> None:
     """
 
     @app.callback(
-        Output("input-data-container", "children"),
-        Input("input-data-container", "children"),
+        Output("export-data-container", "children"),
+        Input("export-data-container", "children"),
         State("session-storage", "data"),
     )
-    def create_dashboard_and_data_export_components(
+    def create_export_components(
         input_data_container_children: list, app_storage: dict
     ) -> list:
         """Create components for the main data container
@@ -356,13 +491,75 @@ def get_callbacks(app: dash.Dash) -> None:
 
         if not input_data_container_children:
             input_data_container_children = [
-                create_video_data_table(app_storage),
-                create_time_slider(app_storage),
-                create_buttons_and_message(),
+                dbc.Row(create_video_data_table(app_storage)),
+                dbc.Row(create_time_slider(app_storage)),
+                dbc.Row(create_buttons_and_message()),
                 create_pose_data_unavailable_popup(),
+                # create_dashboard_storage(),
             ]
-
         return input_data_container_children
+
+    @app.callback(
+        Output("plots-container", "children"),
+        Input("plots-container", "children"),
+    )
+    def create_plot_components(
+        plot_container_children: list,
+    ) -> list:
+        """Create components for the main data container
+        in the dashboard tab layout
+
+        Returns a list with the following components:
+        - video data table
+        - time slider for event tags
+        - buttons and messages for (un)selecting and exporting
+          data
+        - popup message for when pose data is unavailable for
+          a selected video
+
+        Parameters
+        ----------
+        input_data_container_children : list
+            children of the input data container
+        app_storage : dict
+            data held in temporary memory storage,
+            accessible to all tabs in the app
+
+        Returns
+        -------
+        list
+            components to pass as children of the main data container
+            in the dashboard tab layout
+        """
+
+        if not plot_container_children:
+            plot_container_children = [
+                create_tabs(),
+                create_tabs_content(),
+            ]
+        return plot_container_children
+
+    @app.callback(
+        Output("tabs-content", "children"), Input("tabs", "active_tab")
+    )
+    def update_tab_content(tab_id):
+        """Update content based on selected tab
+
+        Parameters
+        ----------
+        tab_id : string
+            ID of the selected tab
+
+        Returns
+        -------
+        _type_
+            a single or list of html / dbc components
+        """
+        if tab_id == "trajectories-tab":
+            return create_trajectories_tab_content()
+        elif tab_id == "heatmaps-tab":
+            return create_heatmaps_tab_content()
+        return html.P("Select a tab to display the data")
 
     # -----------------------
     @app.callback(
@@ -376,6 +573,8 @@ def get_callbacks(app: dash.Dash) -> None:
         Output("export-message", "is_open"),
         Output("export-message", "color"),
         Input("video-data-table", "selected_rows"),
+        # Input("dashboard-storage", "data"), #dashboard storage changes
+        # if selected rows or timeline changes!
         Input("select-all-videos-button", "n_clicks"),
         Input("unselect-all-videos-button", "n_clicks"),
         Input("export-dataframe-button", "n_clicks"),
@@ -403,12 +602,12 @@ def get_callbacks(app: dash.Dash) -> None:
         export_message_state: bool,
         export_message_color,
         app_storage: dict,
-    ) -> tuple[list, int, int, int, str, bool, list, bool, str]:
+    ):  # -> tuple[list, int, int, int, str, bool, list, bool, str]:
         """Modify the selection status of the rows in the videos' table.
 
         A row's selection status (i.e., its checkbox) is modified if:
         (1) the 'select/unselect' all button is clicked,
-        (2) the user selects a row whiose video has no pose data
+        (2) the user selects a row whose video has no pose data
             available. In that case, its checkbox is set to False,
         (3) the export button is clicked. In that case the selected rows
             are reset to False.
@@ -549,6 +748,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 # and event_tags columns for all video dataframes
                 # with empty strings (then ROIs and events are only assigned
                 # if defined for a video)
+                # TODO: check if it exists in cache for figure?
                 df = pd.concat(list_df_to_export)
 
                 # ---------
@@ -650,3 +850,123 @@ def get_callbacks(app: dash.Dash) -> None:
             n_clicks_clipboard = 0
 
         return (clipboard_content, n_clicks_clipboard)
+
+    @app.callback(
+        Output("trajectories-plot", "figure"),
+        Input("video-data-table", "selected_rows"),
+        Input("time-slider", "value"),
+        State(
+            "color-dropdown", "value"
+        ),  # TODO: fix, why not Input? (gives odd errors)
+        State("video-data-table", "data"),
+        State("time-slider", "marks"),
+        State("pcutoff-slider", "value"),  # TODO: this should also be Input
+        State("session-storage", "data"),
+    )
+    def update_trajectory_plot(
+        list_selected_rows: list[int],
+        slider_start_end_idcs: list,
+        color_by_str: str,
+        videos_table_data: list[dict],
+        slider_marks: dict,
+        pcutoff_value: float,
+        app_storage: dict,
+    ):
+        # initialise figure's layout
+        fig_layout = {
+            "margin": {"l": 20, "b": 20, "t": 40, "r": 20},
+            "legend": {
+                "orientation": "v",
+                "yanchor": "top",
+                "y": 1.00,
+                "xanchor": "left",
+                "x": 0.01,
+            },
+            "xaxis": {
+                "anchor": "y",
+                "title": {"text": "x (pixels)"},
+                # "range": [0, 1500],
+            },
+            "yaxis": {
+                "anchor": "x",
+                "title": {"text": "y (pixels)"},
+                "scaleanchor": "x",
+                "scaleratio": 1,
+            },
+        }
+
+        # trigger = dash.callback_context.triggered[0]["prop_id"]
+
+        # fill figure with data
+        if list_selected_rows:
+
+            # ammend list of selected rows
+            list_missing_pose_data_bool = [
+                videos_table_data[r][POSE_DATA_STR] == FALSE_EMOJI
+                for r in range(len(videos_table_data))
+            ]
+            list_selected_rows = [
+                r
+                for r in list_selected_rows
+                if not list_missing_pose_data_bool[r]
+            ]
+
+            # get list of selected videos
+            list_selected_videos = [
+                videos_table_data[r][
+                    app_storage["config"]["metadata_key_field_str"]
+                ]
+                for r in list_selected_rows
+            ]
+
+            # get slider labels
+            slider_start_end_labels = [
+                slider_marks[str(x)]["label"] for x in slider_start_end_idcs
+            ]
+
+            # get list of dataframes to combine
+            # - one dataframe per selected video
+            # - we add the fields 'video_file', 'event_tag' and 'ROI'
+            # - we select only the frames within the interval
+            #   set by the slider
+            list_df_to_export = utils.get_dataframes_to_combine(
+                list_selected_videos,
+                slider_start_end_labels,
+                app_storage,
+            )
+
+            # concatenate all dataframes
+            # NOTE: we explicitly initialise ROI_tags
+            # and event_tags columns for all video dataframes
+            # with empty strings (then ROIs and events are only assigned
+            # if defined for a video)
+            # TODO: check if it exists in cache for figure?
+            df = pd.concat(list_df_to_export)
+
+            # keep only datapoints with likelihood above threshold
+            df = df[df["likelihood"] >= pcutoff_value]
+
+            # plot
+            # | 'model_str' | 'video_file' | 'individual'* | 'frame'
+            # | 'bodypart' | 'x' | 'y' | 'likelihood' | 'ROI_tag'
+            # | 'event_tag' |
+            fig = px.scatter(
+                df,
+                x="x",
+                y="y",
+                color=color_by_str,
+            )
+            fig.update_layout(fig_layout)
+            return fig
+
+        # if no data selected: return empty figure
+        else:
+            # TODO: set xlim, ylim from image size
+            fig_layout["xaxis"].update({"range": [0, 1500]})  # type: ignore
+            fig_layout["yaxis"].update({"range": [0, 1500]})  # type: ignore
+            fig_layout.update({"width": 800, "height": 800})
+
+            return go.Figure(
+                data=[],
+                layout=fig_layout,
+            )

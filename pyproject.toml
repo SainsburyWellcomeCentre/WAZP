@@ -24,6 +24,7 @@ dependencies = [
   "opencv-python",
   "PyYAML",
   "shapely",
+  "flask_caching"
 ]
 
 classifiers = [
@@ -133,5 +134,6 @@ module = [
   "plotly.*",
   "cv2.*",
   "shapely.*",
+  "flask_caching.*",
 ]
 ignore_missing_imports = true
