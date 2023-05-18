@@ -63,20 +63,14 @@ unloaded_config_xfail = pytest.mark.xfail(
 @pytest.mark.parametrize(
     ("page_name_and_title"),
     [
-        "home_page_name_and_title",
-        pytest.param(
-            "metadata_page_name_and_title", marks=unloaded_config_xfail
-        ),
-        pytest.param("roi_page_name_and_title", marks=unloaded_config_xfail),
-        (
-            "pose_estimation_page_name_and_title"
-        ),  # passes for now because not implemented yet :P
-        pytest.param(
-            "dashboard_page_name_and_title", marks=unloaded_config_xfail
-        ),
-        #
-        # pytest.param(k, v, marks=unloaded_config_xfail)
-        # for k,v in map_page_name_to_title.items()
+        pytest.param(fx, marks=mark)
+        for fx, mark in [
+            ("home_page_name_and_title", []),
+            ("metadata_page_name_and_title", unloaded_config_xfail),
+            ("roi_page_name_and_title", unloaded_config_xfail),
+            ("pose_estimation_page_name_and_title", []),
+            ("dashboard_page_name_and_title", unloaded_config_xfail),
+        ]
     ],
 )
 def test_sidebar_links(
