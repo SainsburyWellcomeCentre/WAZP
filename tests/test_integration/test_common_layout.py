@@ -79,7 +79,6 @@ unloaded_config_xfail = pytest.mark.xfail(
 def test_sidebar_links(
     dash_duo: DashComposite,
     page_name_and_title: str,
-    # page_title: str,
     timeout: float,
     request,
 ) -> None:
