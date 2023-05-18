@@ -346,6 +346,15 @@ def get_callbacks(app: dash.Dash) -> None:
                 ),
             )
 
+            # check for missing metadata files
+            check_missing_files_tooltip = dbc.Tooltip(
+                "Check which videos in the "
+                "video directory have a missing YAML file "
+                "and add a row for each of them. Note that "
+                "this won't generate any YAML files.",
+                target="add-rows-for-missing-button",
+            )
+
             generate_yaml_tooltip = dbc.Tooltip(
                 "Generate YAML files from a selected spreadsheet. "
                 "Only rows with a corresponding video (or symlink) "
@@ -361,6 +370,7 @@ def get_callbacks(app: dash.Dash) -> None:
                     auxiliary_buttons_row,
                     alert_message_row,
                     import_message_row,
+                    check_missing_files_tooltip,
                     generate_yaml_tooltip,
                 ]
             )
