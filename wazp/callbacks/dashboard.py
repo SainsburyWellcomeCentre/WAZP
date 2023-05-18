@@ -506,7 +506,9 @@ def get_callbacks(app: dash.Dash) -> None:
 
                 # get list of selected videos
                 list_selected_videos = [
-                    videos_table_data[r][app_storage["config"]["metadata_key_field_str"]]
+                    videos_table_data[r][
+                        app_storage["config"]["metadata_key_field_str"]
+                    ]
                     for r in list_selected_rows
                 ]
 
@@ -570,7 +572,9 @@ def get_callbacks(app: dash.Dash) -> None:
                         f"exported successfully at: '{h5_file_path}'",
                     )
                 )  # this is because max line length in linter
-                export_message_children[1]["props"]["style"] = {"display": "inline-block"}
+                export_message_children[1]["props"]["style"] = {
+                    "display": "inline-block"
+                }
                 export_message_color = "success"
                 export_message_state = True
 

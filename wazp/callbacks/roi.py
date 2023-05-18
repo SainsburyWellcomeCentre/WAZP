@@ -128,7 +128,9 @@ def get_callbacks(app: dash.Dash) -> None:
                 stored_roi_names = [
                     shape["roi_name"] for shape in roi_storage[video_name]["shapes"]
                 ]
-                options = [opt for opt in options if opt["value"] not in stored_roi_names]
+                options = [
+                    opt for opt in options if opt["value"] not in stored_roi_names
+                ]
 
             # If there are no ROIs to draw
             if len(options) == 0:
@@ -447,7 +449,9 @@ def get_callbacks(app: dash.Dash) -> None:
                 ]
                 stored_shapes = roi_storage[video_name]["shapes"]
                 roi_storage[video_name]["shapes"] = [
-                    sh for sh in stored_shapes if sh["roi_name"] not in deleted_roi_names
+                    sh
+                    for sh in stored_shapes
+                    if sh["roi_name"] not in deleted_roi_names
                 ]
                 # Clear the row selection
                 roi_table_selected_rows = []

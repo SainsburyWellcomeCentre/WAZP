@@ -139,7 +139,9 @@ save_rois_button = dbc.Button(
     download="rois.yaml",
     **disabled_button_style,
 )
-load_rois_button = dbc.Button("Load all", id="load-rois-button", **disabled_button_style)
+load_rois_button = dbc.Button(
+    "Load all", id="load-rois-button", **disabled_button_style
+)
 delete_rois_button = dbc.Button(
     "Delete selected", id="delete-rois-button", **disabled_button_style
 )

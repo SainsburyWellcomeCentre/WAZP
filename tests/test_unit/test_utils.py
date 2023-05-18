@@ -38,7 +38,9 @@ def test_df_from_metadata_yaml_no_metadata() -> None:
     """
     metadata_fields = get_sample_project_metadata_fields()
     with tempfile.TemporaryDirectory() as empty_existing_directory:
-        df_output = df_from_metadata_yaml_files(empty_existing_directory, metadata_fields)
+        df_output = df_from_metadata_yaml_files(
+            empty_existing_directory, metadata_fields
+        )
 
     assert df_output.shape == (1, len(metadata_fields))
 
