@@ -59,7 +59,6 @@ dev = [
     "ruff",
     "mypy",
     "pre-commit",
-    "flake8",
     "setuptools-scm",
     "types-PyYAML",
     "pandas-stubs",
@@ -125,7 +124,6 @@ ignore = [
     "tests/test_integration/*",
     "docs/",
     "docs/source/",
-    ".flake8"
 ]
 
 [[tool.mypy.overrides]]
