@@ -76,25 +76,34 @@ Write your test methods and classes in the `test` folder.
 The integration tests start a server and browse with chrome(ium),
 so you will need to download and install Google chrome or chromium (if you don't already use one of them).
 You will then need to download a [compatible version of `chromedriver`](https://chromedriver.chromium.org/downloads).
-Once downloaded put the `chromedriver` binary in your `PATH` and check that you can run the integration tests.
+Depending on your OS you may also need to ***trust*** the executable.
 
-```bash
+<details>
+<summary>MacOS</summary>
+There is also a [homebrew cask](https://formulae.brew.sh/cask/chromedriver) for `chromedriver` so instead of going to the web and downloading you should be able to:
+
+```sh
+brew install chromedriver
+brew info chromedriver
+```
+And take note of the installation path.
+(It's probably something like `/opt/homebrew/Caskroom/chromedriver/<version>`).
+
+However you obtained `chomedriver`, you can trust the executable via the security settings and/or keychain GUI or just:
+
+```sh
+cd /place/where/your/chromedriver/is
+xattr -d com.apple.quarantine chromedriver
+```
+
+</details>
+
+Once downloaded, make sure the `chromedriver` binary in your `PATH` and check that you can run the integration tests.
+
+```sh
 export PATH=$PATH:/place/where/your/chromedriver/is/chromedriver
 pytest # in the root of the repository
 ```
-
-<details>
-  <summary>MacOS with homebrew</summary>
-
-  MacOS users can use homebrew which symlinks the binary to your `PATH`.
-  So you can simply:
-
-  ```bash
-  brew install chromium chromedriver
-  pytest # in the root of the repository
-  ```
-
-</details>
 
 It's a good idea to test locally before pushing. Pytest will run all tests and also report test coverage.
 
