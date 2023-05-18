@@ -9,24 +9,6 @@ def pytest_setup_options():
     return options
 
 
-# @pytest.fixture
-# def map_page_name_to_title() -> dict:
-#     """Map page names to page head titles
-
-#     Returns
-#     -------
-#     dict
-#         dictionary with page names as keys, and page titles as values
-#     """
-#     return {
-#         "Home": "Home",
-#         "01 metadata": "Metadata",
-#         "02 roi": "ROI definition",
-#         "03 pose estimation": "Pose estimation inference",
-#         "04 dashboard": "Dashboard & data export",
-#     }
-
-
 @pytest.fixture
 def home_page_name_and_title():
     return ("Home", "Home")

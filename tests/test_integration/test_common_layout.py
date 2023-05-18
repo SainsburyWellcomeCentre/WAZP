@@ -60,6 +60,9 @@ unloaded_config_xfail = pytest.mark.xfail(
 )
 
 
+# Q for review: is there a way to have this with
+# one fixture only?
+# https://docs.pytest.org/en/latest/how-to/skipping.html#skip-xfail-with-parametrize
 @pytest.mark.parametrize(
     ("page_name_and_title"),
     [
