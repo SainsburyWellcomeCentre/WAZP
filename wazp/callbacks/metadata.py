@@ -347,8 +347,11 @@ def get_callbacks(app: dash.Dash) -> None:
             )
 
             generate_yaml_tooltip = dbc.Tooltip(
-                "Generate YAML files for each row in the selected spreadsheet "
-                "and save them in the videos directory",
+                "Generate YAML files from a selected spreadsheet. "
+                "Only rows with a corresponding video (or symlink) "
+                "in the video directory will be considered. "
+                "ATTENTION! This will overwrite any existing YAML files with "
+                "the same name!",
                 target="generate-yaml-files-button",
             )
 
@@ -662,21 +665,15 @@ def get_callbacks(app: dash.Dash) -> None:
 
             # convert all fields in dataframe to strings
             # (otherwise datetime fields are not encoded correctly in the YAML)
-            # TODO: is it better to use to_json instead?
-            # if so I think date encodes in
-            # epoch milliseconds
-            # list_dict_per_row = df.to_json('records')
             df = df.applymap(str)
 
-            # check if columns match metadata file: if not
-            # add missing columns
+            # check if columns in spreadsheet match metadata file:
+            # if not, add missing columns
             list_columns = df.columns.tolist()
             list_metadata_fields = list(app_storage["metadata_fields"].keys())
             list_columns_to_add = [
                 f for f in list_metadata_fields if f not in list_columns
             ]
-            # TODO: use sets instead? (more efficient?
-            # not symmetric diff though)
             # TODO: warn/break if columns only in spreadsheet?
             for col in list_columns_to_add:
                 df[col] = ""
@@ -684,11 +681,27 @@ def get_callbacks(app: dash.Dash) -> None:
             # convert to list of dictionaries, one per row
             list_dict_per_row = df.to_dict("records")
 
-            # dump each row as a yaml
+            # exclude rows that do not exist as a video file or a symlink
+            # in the video dir
+            # TODO: select whether to overwrite existing YAML?
             video_dir = app_storage["config"]["videos_dir_path"]
             field_to_use_as_filename = app_storage["config"][
                 "metadata_key_field_str"
             ]
+
+            list_filepaths_to_check = [
+                pl.Path(video_dir, row[field_to_use_as_filename])
+                for row in list_dict_per_row
+            ]
+            list_dict_per_row = [
+                row
+                for row, fpath in zip(
+                    list_dict_per_row, list_filepaths_to_check
+                )
+                if pl.Path(fpath).is_file() or pl.Path(fpath).is_symlink()
+            ]
+
+            # dump as yaml files
             for row in list_dict_per_row:
                 yaml_filename = (
                     pl.Path(row[field_to_use_as_filename]).stem
