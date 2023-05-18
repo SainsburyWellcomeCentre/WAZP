@@ -56,10 +56,9 @@ dev = [
     "dash[testing]",
     "tox",
     "black",
-    "isort",
+    "ruff",
     "mypy",
     "pre-commit",
-    "flake8",
     "setuptools-scm",
     "types-PyYAML",
     "pandas-stubs",
@@ -108,9 +107,11 @@ exclude = '''
 )
 '''
 
-[tool.isort]
-profile = "black"
-line_length = 90
+[tool.ruff]
+line-length = 79
+exclude = ["__init__.py","build",".eggs"]
+select = ["I", "E", "F"]
+fix = true
 
 [tool.setuptools_scm]
 
@@ -123,7 +124,6 @@ ignore = [
     "tests/test_integration/*",
     "docs/",
     "docs/source/",
-    ".flake8"
 ]
 
 [[tool.mypy.overrides]]

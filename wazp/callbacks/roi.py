@@ -81,10 +81,16 @@ def get_callbacks(app: dash.Dash) -> None:
             Output("roi-select", "value"),
             Output("roi-colors-storage", "data"),
         ],
-        Input("session-storage", "data"),
+        [
+            Input("session-storage", "data"),
+            Input("roi-storage", "data"),
+            Input("video-select", "value"),
+        ],
     )
     def update_roi_select_options(
         app_storage: dict,
+        roi_storage: dict,
+        video_path: str,
     ) -> Optional[tuple[list[dict], str, dict]]:
         """Update the options of the ROI select dropdown.
         Parameters
@@ -92,6 +98,10 @@ def get_callbacks(app: dash.Dash) -> None:
         app_storage : dict
             data held in temporary memory storage,
             accessible to all tabs in the app
+        roi_storage : dict
+            Dictionary storing ROI data for each video.
+        video_path : str
+            Path to the video file.
         Returns
         -------
         list[dict]
@@ -108,12 +118,28 @@ def get_callbacks(app: dash.Dash) -> None:
             config = app_storage["config"]
             roi_names = config["ROI_tags"]
             options = [{"label": r, "value": r} for r in roi_names]
-            value = roi_names[0]
 
             # Get ROI-to-color mapping
             roi_color_mapping = utils.assign_roi_colors(roi_names, cmap=ROI_CMAP)
 
+            video_name = pl.Path(video_path).name
+            # restrict ROI options to the ones not already stored
+            if video_name in roi_storage.keys():
+                stored_roi_names = [
+                    shape["roi_name"] for shape in roi_storage[video_name]["shapes"]
+                ]
+                options = [opt for opt in options if opt["value"] not in stored_roi_names]
+
+            # If there are no ROIs to draw
+            if len(options) == 0:
+                # Display a message in the ROI dropdown
+                options = [{"label": "All ROIs have been drawn.", "value": "none"}]
+
+            # Set the value to the first ROI in the list
+            value = options[0]["value"]
+
             return options, value, roi_color_mapping
+
         else:
             return dash.no_update, dash.no_update, dash.no_update
 
@@ -513,19 +539,25 @@ def get_callbacks(app: dash.Dash) -> None:
                 utils.shape_drop_custom_keys(shape) for shape in stored_shapes
             ]
         # Get the color for the next ROI
-        next_shape_color = roi_color_mapping["roi2color"][roi_name]
+        if roi_name == "none":
+            # if it's none, don't allow drawing
+            # and set the color to transparent
+            next_shape_color = "rgba(0,0,0,0)"
+            drag_mode = False  # type: ignore
+        else:
+            next_shape_color = roi_color_mapping["roi2color"][roi_name]
+            drag_mode = "drawclosedpath"  # type: ignore
+
+        current_fig["layout"]["newshape"]["line"]["color"] = next_shape_color
+        current_fig["layout"]["dragmode"] = drag_mode
+        current_fig["layout"]["shapes"] = graph_shapes
 
         trigger = dash.callback_context.triggered[0]["prop_id"]
-        # If triggered by an update of the roi-storage
-        # maintain the current figure and only update the shapes
-        if trigger == "roi-storage.data":
+        # If triggered by an update of the roi-storage or of the
+        # roi-dropdown, maintain the current figure with updated
+        # shapes, next shape color and drag mode
+        if (trigger == "roi-storage.data") or (trigger == "roi-select.value"):
             current_fig["layout"]["shapes"] = graph_shapes
-            return current_fig, dash.no_update, dash.no_update, dash.no_update
-
-        # If triggered by a change in the ROI dropdown
-        # maintain the current figure and only update the new shape color
-        elif trigger == "roi-select.value":
-            current_fig["layout"]["newshape"]["line"]["color"] = next_shape_color
             return current_fig, dash.no_update, dash.no_update, dash.no_update
 
         # If triggered by a change in the video or frame
@@ -542,7 +574,7 @@ def get_callbacks(app: dash.Dash) -> None:
             new_fig.update_layout(
                 shapes=graph_shapes,
                 newshape_line_color=next_shape_color,
-                dragmode="drawclosedpath",
+                dragmode=drag_mode,
                 margin=dict(l=0, r=0, t=0, b=0),
                 yaxis={"visible": False, "showticklabels": False},
                 xaxis={"visible": False, "showticklabels": False},
