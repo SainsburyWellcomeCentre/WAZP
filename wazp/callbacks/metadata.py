@@ -356,10 +356,9 @@ def get_callbacks(app: dash.Dash) -> None:
             )
 
             generate_yaml_tooltip = dbc.Tooltip(
-                "Generate YAML files from a selected spreadsheet. "
-                "Only rows with a corresponding video (or symlink) "
-                "in the video directory will be considered. "
-                "ATTENTION! This will overwrite any existing YAML files with "
+                "Generate metadata files from a selected spreadsheet. "
+                "Rows in the spreadsheet that do not correspond to a video will be ignored."
+                "WARNING! This will overwrite any existing metadata files with "
                 "the same name!",
                 target="generate-yaml-files-button",
             )
