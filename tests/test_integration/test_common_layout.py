@@ -90,10 +90,8 @@ def test_sidebar_links(
     Parameters:
         dash_duo : DashComposite
             Default fixture for Dash Python integration tests.
-        page_name : str
-            name of the page in the dash registry
-        page_title: str
-            main title shown for a page
+        page_name_and_title : tuple(str)
+            name of the page in the dash registry and the main title shown on the page
         timeout : float
             maximum time to wait in seconds for a component
     """
