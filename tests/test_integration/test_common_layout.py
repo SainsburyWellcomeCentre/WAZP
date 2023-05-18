@@ -6,45 +6,15 @@ from dash.testing.composite import DashComposite
 from wazp.app import app
 
 
-@pytest.fixture
-def map_page_name_to_title():
-    """Map page names to page head titles
-
-    Returns
-    -------
-    dict
-        dictionary with page names as keys, and page titles as values
-    """
-    return {
-        "Home": "Home",
-        "01 metadata": "Metadata",
-        "02 roi": "ROI definition",
-        "03 pose estimation": "Pose estimation inference",
-        "04 dashboard": "Dashboard & data export",
-    }
-
-
-@pytest.fixture()
-def timeout():
-    """Maximum time to wait for a component
-    to be located in layout
-
-    Returns
-    -------
-    timeout : float
-        maximum time to wait in seconds
-    """
-    return 4  # Q for review: is this overkill?
-
-
 def test_components_created(
     dash_duo: DashComposite,
     timeout: float,
 ) -> None:
-    """Check that the components common to all pages are created.
+    """Check that the components that are common to all pages are created.
 
-    The components common to all pages are the page content container and
-    the sidebar.
+    The components common to all pages are:
+    - the page content container, and
+    - the sidebar.
 
     Parameters:
         dash_duo : DashComposite
@@ -56,7 +26,7 @@ def test_components_created(
     # start server
     dash_duo.start_server(app)
 
-    # wait for main content to be rendered
+    # wait for main content container to be rendered
     try:
         dash_duo.wait_for_element("#page-content", timeout=timeout)
     except selenium.common.exceptions.TimeoutException:
@@ -73,7 +43,8 @@ def test_components_created(
     # check there are no errors in browser console
     assert (
         dash_duo.get_logs() == []
-    ), "There are errors in the browser console!"
+    ), f"There are {len(dash_duo.get_logs())} errors"
+    " in the browser console!"
 
 
 @pytest.mark.xfail(
@@ -130,8 +101,7 @@ def test_sidebar_links(
             )
 
         # click back to home
-        # Q for review: I do this to make the starting point consistent...
-        # but is it required? should I use fixtures instead?
+        # NOTE: consider doing this via test parametrisation
         dash_duo.find_element("#sidebar #link-Home").click()
 
         # TODO: if no config file has been loaded, check a warning is shown?
