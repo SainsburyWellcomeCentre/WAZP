@@ -81,7 +81,7 @@ Depending on your OS you may also need to ***trust*** the executable.
 <details>
 <summary>Ubuntu</summary>
 
-Installing chromium and chromedriver is a one-liner (tested in Ubuntu 22.04).
+Installing chromium and chromedriver is a one-liner (tested in Ubuntu 20.04 and 22.04).
 
 ```sh
 sudo apt install chromium-chromedriver
