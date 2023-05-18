@@ -46,7 +46,7 @@ def test_components_created(
     " in the browser console!"
 
 
-config_xfail = pytest.mark.xfail(
+unloaded_config_xfail = pytest.mark.xfail(
     raises=AssertionError,
     reason=(
         "Feature not yet implemented:"
@@ -61,20 +61,30 @@ config_xfail = pytest.mark.xfail(
 
 
 @pytest.mark.parametrize(
-    "page_name",
+    ("page_name_and_title"),
     [
-        "Home",
-        pytest.param("01 metadata", marks=config_xfail),
-        pytest.param("02 roi", marks=config_xfail),
-        "03 pose estimation",  # passes for now because not implemented yet :P
-        pytest.param("04 dashboard", marks=config_xfail),
+        "home_page_name_and_title",
+        pytest.param(
+            "metadata_page_name_and_title", marks=unloaded_config_xfail
+        ),
+        pytest.param("roi_page_name_and_title", marks=unloaded_config_xfail),
+        (
+            "pose_estimation_page_name_and_title"
+        ),  # passes for now because not implemented yet :P
+        pytest.param(
+            "dashboard_page_name_and_title", marks=unloaded_config_xfail
+        ),
+        #
+        # pytest.param(k, v, marks=unloaded_config_xfail)
+        # for k,v in map_page_name_to_title.items()
     ],
 )
 def test_sidebar_links(
     dash_duo: DashComposite,
-    page_name: str,
-    map_page_name_to_title: dict,
+    page_name_and_title: str,
+    # page_title: str,
     timeout: float,
+    request,
 ) -> None:
     """Check the sidebar links take to the corresponding pages
     and that no errors occur in the browser console
@@ -84,13 +94,16 @@ def test_sidebar_links(
     Parameters:
         dash_duo : DashComposite
             Default fixture for Dash Python integration tests.
-        page : str
-            .
-        map_page_name_to_title: dictionary : dict
-            dictionary with page names as keys, and page titles as values
+        page_name : str
+            name of the page in the dash registry
+        page_title: str
+            main title shown for a page
         timeout : float
             maximum time to wait in seconds for a component
     """
+
+    # get fixture value
+    (page_name, page_title) = request.getfixturevalue(page_name_and_title)
 
     # start server
     dash_duo.start_server(app)
@@ -102,15 +115,13 @@ def test_sidebar_links(
 
     # check page title is expected
     try:
-        dash_duo.wait_for_text_to_equal(
-            "h1", map_page_name_to_title[page_name], timeout=timeout
-        )
+        dash_duo.wait_for_text_to_equal("h1", page_title, timeout=timeout)
 
     except selenium.common.exceptions.TimeoutException:
         pytest.fail(
             f"Timeout waiting for page {page_name} "
             "to show a title with the text: "
-            f"{map_page_name_to_title[page_name]}"
+            f"{page_title}"
         )
 
     dash_duo.find_element("#sidebar #link-Home").click()
