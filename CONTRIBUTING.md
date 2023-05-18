@@ -45,15 +45,13 @@ In all cases, please submit code to the main repository via a pull request. We r
 ### Formatting and pre-commit hooks
 
 Running `pre-commit install` will set up [pre-commit hooks](https://pre-commit.com/) to ensure a consistent formatting style. Currently, these are:
-* [isort](https://pycqa.github.io/isort/) for sorting import statements
-* [flake8](https://flake8.pycqa.org/en/latest/) for linting
+* [ruff](https://github.com/charliermarsh/ruff) does a number of jobs, including enforcing PEP8 and sorting imports
 * [black](https://black.readthedocs.io/en/stable/) for auto-formatting
 * [mypy](https://mypy.readthedocs.io/en/stable/index.html) as a static type checker
 
 These will prevent code from being committed if any of these hooks fail. To run them individually (from the root of the repository), you can use:
 ```sh
-isort .
-flake8
+ruff .
 black ./
 mypy -p wazp
 ```
