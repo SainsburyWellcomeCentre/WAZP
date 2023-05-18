@@ -15,11 +15,12 @@ def test_components_created(
     - the page content container, and
     - the sidebar.
 
-    Parameters:
-        dash_duo : DashComposite
-            Default fixture for Dash Python integration tests.
-        timeout : float
-            maximum time to wait in seconds for a component
+    Parameters
+    ----------
+    dash_duo : DashComposite
+        Default fixture for Dash Python integration tests.
+    timeout : float
+        maximum time to wait in seconds for a component
     """
 
     # start server
@@ -87,20 +88,22 @@ def test_sidebar_links(
 
     The pages are checked via their title.
 
-    Parameters:
-        dash_duo : DashComposite
-            Default fixture for Dash Python integration tests.
-        page_name_and_title : tuple[str]
-            name of the page in the dash registry and the main title shown on
-            the page
-        timeout : float
-            maximum time to wait in seconds for a component
-        request : pytest.FixtureRequest
-            a special fixture providing information of the requesting test
-            function. See `pytest docs`_
+    Parameters
+    ----------
+    dash_duo : DashComposite
+        Default fixture for Dash Python integration tests.
+    page_name_and_title : tuple[str]
+        name of the page in the dash registry and the main title shown on
+        the page
+    timeout : float
+        maximum time to wait in seconds for a component
+    request : pytest.FixtureRequest
+        a special fixture providing information of the requesting test
+        function. See [1]_
 
-    .. _pytest docs:
-        https://docs.pytest.org/en/6.2.x/reference.html#std-fixture-request
+    References
+    ----------
+    .. [1] https://docs.pytest.org/en/6.2.x/reference.html#std-fixture-request
     """
 
     # get fixture value
