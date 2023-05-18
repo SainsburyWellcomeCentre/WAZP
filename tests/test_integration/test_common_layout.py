@@ -78,9 +78,9 @@ unloaded_config_xfail = pytest.mark.xfail(
 )
 def test_sidebar_links(
     dash_duo: DashComposite,
-    page_name_and_title: tuple(str),
+    page_name_and_title: tuple[str],
     timeout: float,
-    request,
+    request: pytest.FixtureRequest,
 ) -> None:
     """Check the sidebar links take to the corresponding pages
     and that no errors occur in the browser console
@@ -90,10 +90,17 @@ def test_sidebar_links(
     Parameters:
         dash_duo : DashComposite
             Default fixture for Dash Python integration tests.
-        page_name_and_title : tuple(str)
-            name of the page in the dash registry and the main title shown on the page
+        page_name_and_title : tuple[str]
+            name of the page in the dash registry and the main title shown on
+            the page
         timeout : float
             maximum time to wait in seconds for a component
+        request : pytest.FixtureRequest
+            a special fixture providing information of the requesting test
+            function. See `pytest docs`_
+
+    .. _pytest docs:
+        https://docs.pytest.org/en/6.2.x/reference.html#std-fixture-request
     """
 
     # get fixture value
