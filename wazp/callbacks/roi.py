@@ -562,10 +562,10 @@ def get_callbacks(app: dash.Dash) -> None:
             # if it's none, don't allow drawing
             # and set the color to transparent
             next_shape_color = "rgba(0,0,0,0)"
-            drag_mode = False
+            drag_mode = False  # type: ignore
         else:
             next_shape_color = roi_color_mapping["roi2color"][roi_name]
-            drag_mode = "drawclosedpath"
+            drag_mode = "drawclosedpath"  # type: ignore
 
         current_fig["layout"]["newshape"]["line"]["color"] = next_shape_color
         current_fig["layout"]["dragmode"] = drag_mode
