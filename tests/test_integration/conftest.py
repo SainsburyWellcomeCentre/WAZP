@@ -19,23 +19,23 @@ class Helpers:
     """
 
     @staticmethod
-    def debug_screenshot(dash_duo: DashComposite, name: str = "") -> None:
+    def debug_screenshot(dash_duo: DashComposite, subdir: str = "") -> None:
         """Save a screenshot of the current state of the testing server.
 
         Useful for debugging and developing tests.
         Saves to .test_debug_screenshots or
-        .test_debug_screenshots/<name> if `name` is provided.
+        .test_debug_screenshots/<subdir> if `subdir` is provided.
 
         Parameters
         ----------
             dash_duo : DashComposite
                 The current dash_duo fixture.
-            name: str, optional
+            subdir: str, optional
                 A subdirectory name (to help you find the screenshots.)
         """
         screenshots_dirname = Path(".test_helper_screenshots")
-        if name:
-            screenshots_dirname /= name
+        if subdir:
+            screenshots_dirname /= subdir
         screenshots_dirname.mkdir(exist_ok=True)  # mkdir -p
         filename = screenshots_dirname / f"test-{dash_duo.session_id}.png"
         dash_duo.driver.save_screenshot(filename.as_posix())
