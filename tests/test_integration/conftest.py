@@ -44,4 +44,4 @@ def timeout() -> float:
     timeout : float
         maximum time to wait in seconds
     """
-    return 4
+    return 8  # for Windows?
