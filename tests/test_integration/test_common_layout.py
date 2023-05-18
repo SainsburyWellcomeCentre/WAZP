@@ -46,38 +46,28 @@ def test_components_created(
     " in the browser console!"
 
 
-# @pytest.mark.xfail(
-#     raises=AssertionError,
-#     reason=(
-#         "Feature not yet implemented:"
-#         "When config has not been loaded, "
-#         "warnings should show in pages that are not Home"
-#     ),
-#     strict=True,
-#     # with strict=True
-#     # if the test passes unexpectedly,
-#     # it will fail the test suite
-# )
+config_xfail = pytest.mark.xfail(
+    raises=AssertionError,
+    reason=(
+        "Feature not yet implemented:"
+        "When config has not been loaded, "
+        "warnings should show in pages that are not Home"
+    ),
+    strict=True,
+    # with strict=True
+    # if the test passes unexpectedly,
+    # it will fail the test suite
+)
+
+
 @pytest.mark.parametrize(
     "page_name",
     [
-        pytest.param(
-            name,
-            marks=pytest.mark.xfail(
-                reason=(
-                    "Feature not yet implemented:"
-                    "When config has not been loaded, "
-                    "warnings should show in pages that are not Home"
-                )
-            ),
-        )
-        for name in [
-            "Home",
-            "01 metadata",
-            "02 roi",
-            "03 pose estimation",
-            "04 dashboard",
-        ]
+        "Home",
+        pytest.param("01 metadata", marks=config_xfail),
+        pytest.param("02 roi", marks=config_xfail),
+        "03 pose estimation",  # passes for now because not implemented yet :P
+        pytest.param("04 dashboard", marks=config_xfail),
     ],
 )
 def test_sidebar_links(
@@ -86,14 +76,16 @@ def test_sidebar_links(
     map_page_name_to_title: dict,
     timeout: float,
 ) -> None:
-    """Check the sidebar links take to pages with the expected title
+    """Check the sidebar links take to the corresponding pages
     and that no errors occur in the browser console
+
+    The pages are checked via their title.
 
     Parameters:
         dash_duo : DashComposite
             Default fixture for Dash Python integration tests.
         page : str
-            ....
+            .
         map_page_name_to_title: dictionary : dict
             dictionary with page names as keys, and page titles as values
         timeout : float
@@ -103,15 +95,12 @@ def test_sidebar_links(
     # start server
     dash_duo.start_server(app)
 
-    # click through links in sidebar
-    # for page in dash.page_registry.values():
-
-    # click thru each page
+    # click sidebar link
     dash_duo.find_element(
         "#sidebar #link-" + page_name.replace(" ", "-"),
     ).click()
 
-    # check page title
+    # check page title is expected
     try:
         dash_duo.wait_for_text_to_equal(
             "h1", map_page_name_to_title[page_name], timeout=timeout
@@ -124,6 +113,7 @@ def test_sidebar_links(
             f"{map_page_name_to_title[page_name]}"
         )
 
+    dash_duo.find_element("#sidebar #link-Home").click()
     # TODO: if no config file has been loaded, check a warning is shown?
     # ...
 
