@@ -43,24 +43,18 @@ def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
         app_storage["config"]["videos_dir_path"],
         app_storage["metadata_fields"],
     )
-    df_metadata = df_metadata[
-        [app_storage["config"]["metadata_key_field_str"]]
-    ]
+    df_metadata = df_metadata[[app_storage["config"]["metadata_key_field_str"]]]
 
     # list of metadata files
     list_videos_w_metadata = [
         pl.Path(v).stem
-        for v in df_metadata[
-            app_storage["config"]["metadata_key_field_str"]
-        ].tolist()
+        for v in df_metadata[app_storage["config"]["metadata_key_field_str"]].tolist()
     ]
 
     # list of videos w/ h5 files
     # TODO for refactoring: have this in utils?
     list_videos_w_pose_results = []
-    for f in pl.Path(
-        app_storage["config"]["pose_estimation_results_path"]
-    ).iterdir():
+    for f in pl.Path(app_storage["config"]["pose_estimation_results_path"]).iterdir():
         if str(f).endswith(".h5"):
             list_videos_w_pose_results.append(re.sub("DLC.*$", "", f.stem))
 
@@ -123,9 +117,7 @@ def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
             },
             {
                 "if": {
-                    "column_id": app_storage["config"][
-                        "metadata_key_field_str"
-                    ],
+                    "column_id": app_storage["config"]["metadata_key_field_str"],
                     "row_index": "odd",
                 },
                 # count starts with 0 (even) at first row with data
@@ -134,9 +126,7 @@ def create_video_data_table(app_storage: dict) -> dash_table.DataTable:
             },
             {
                 "if": {
-                    "column_id": app_storage["config"][
-                        "metadata_key_field_str"
-                    ],
+                    "column_id": app_storage["config"]["metadata_key_field_str"],
                     "row_index": "even",
                 },
                 "backgroundColor": "rgb(235, 235, 255)",
@@ -490,15 +480,12 @@ def get_callbacks(app: dash.Dash) -> None:
 
             # ammend list of selected rows
             list_selected_rows = [
-                r
-                for r in list_selected_rows
-                if not list_missing_pose_data_bool[r]
+                r for r in list_selected_rows if not list_missing_pose_data_bool[r]
             ]
 
             # show popup message
             pose_unavail_message_str = (
-                "WARNING: Pose data unavailable "
-                "for one or more selected videos"
+                "WARNING: Pose data unavailable " "for one or more selected videos"
             )
             pose_unavail_message_state = True
 
@@ -510,9 +497,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 n_clicks_export = 0
 
                 export_message_children[0] = "No data to export"
-                export_message_children[1]["props"]["style"] = {
-                    "display": "none"
-                }
+                export_message_children[1]["props"]["style"] = {"display": "none"}
                 export_message_color = "warning"
                 export_message_state = True
 
@@ -521,16 +506,13 @@ def get_callbacks(app: dash.Dash) -> None:
 
                 # get list of selected videos
                 list_selected_videos = [
-                    videos_table_data[r][
-                        app_storage["config"]["metadata_key_field_str"]
-                    ]
+                    videos_table_data[r][app_storage["config"]["metadata_key_field_str"]]
                     for r in list_selected_rows
                 ]
 
                 # get slider labels
                 slider_start_end_labels = [
-                    slider_marks[str(x)]["label"]
-                    for x in slider_start_end_idcs
+                    slider_marks[str(x)]["label"] for x in slider_start_end_idcs
                 ]
 
                 # get list of dataframes to combine
@@ -559,9 +541,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 # if not specified in config, use dir where
                 # server was launched from
                 output_path = pl.Path(
-                    app_storage["config"].get(
-                        "dashboard_export_data_path", "."
-                    )
+                    app_storage["config"].get("dashboard_export_data_path", ".")
                 )
 
                 # If output directory does not exist,
@@ -590,9 +570,7 @@ def get_callbacks(app: dash.Dash) -> None:
                         f"exported successfully at: '{h5_file_path}'",
                     )
                 )  # this is because max line length in linter
-                export_message_children[1]["props"]["style"] = {
-                    "display": "inline-block"
-                }
+                export_message_children[1]["props"]["style"] = {"display": "inline-block"}
                 export_message_color = "success"
                 export_message_state = True
 
@@ -643,9 +621,7 @@ def get_callbacks(app: dash.Dash) -> None:
         if n_clicks_clipboard > 0:
             # extract strings between single quotes (first match)
             # TODO: is single quotes requirement limiting?
-            relative_path = re.findall(
-                r"\'([^]]*)\'", export_message_children[0]
-            )[0]
+            relative_path = re.findall(r"\'([^]]*)\'", export_message_children[0])[0]
             clipboard_content = str(pl.Path(relative_path).resolve())
             n_clicks_clipboard = 0
 

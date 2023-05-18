@@ -36,9 +36,7 @@ def df_from_metadata_yaml_files(
 
     # List of metadata files in parent directory
     list_metadata_files = [
-        str(f)
-        for f in pl.Path(parent_dir).iterdir()
-        if str(f).endswith(".metadata.yaml")
+        str(f) for f in pl.Path(parent_dir).iterdir() if str(f).endswith(".metadata.yaml")
     ]
 
     # If there are no metadata (yaml) files:
@@ -297,9 +295,7 @@ def get_dataframes_to_combine(
             metadata = yaml.safe_load(yf)
 
         # Extract frame start/end using info from slider
-        frame_start_end = [
-            metadata["Events"][x] for x in slider_start_end_labels
-        ]
+        frame_start_end = [metadata["Events"][x] for x in slider_start_end_labels]
 
         # -----------------------------
 
@@ -311,8 +307,7 @@ def get_dataframes_to_combine(
         # Extract subset of rows based on events slider
         # (frame numbers from slider, both inclusive)
         df = df.loc[
-            (df["frame"] >= frame_start_end[0])
-            & (df["frame"] <= frame_start_end[1]),
+            (df["frame"] >= frame_start_end[0]) & (df["frame"] <= frame_start_end[1]),
             :,
         ]
 
@@ -333,8 +328,7 @@ def get_dataframes_to_combine(
             # TODO: should I do case insensitive?
             # if "rois" in [ky.lower() for ky in metadata.keys()]:
             ROIs_as_polygons = {
-                el["name"]: svg_path_to_polygon(el["path"])
-                for el in metadata["ROIs"]
+                el["name"]: svg_path_to_polygon(el["path"]) for el in metadata["ROIs"]
             }
             df = add_ROIs_to_video_dataframe(df, ROIs_as_polygons, app_storage)
 
@@ -478,9 +472,7 @@ def add_ROIs_to_video_dataframe(
         select_rows_w_empty_str = df["ROI_tag"] == ""
 
         # assign ROI
-        df.loc[
-            select_rows_in_ROI & select_rows_w_empty_str, "ROI_tag"
-        ] = ROI_str
+        df.loc[select_rows_in_ROI & select_rows_w_empty_str, "ROI_tag"] = ROI_str
 
     return df
 
@@ -543,8 +535,7 @@ def get_num_frames(video_path) -> int:
     num_frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
     if num_frames < 1:
         raise RuntimeError(
-            f"Could not read from '{video_path}'. "
-            "Is this a valid video file?"
+            f"Could not read from '{video_path}'. " "Is this a valid video file?"
         )
     return num_frames
 
@@ -571,9 +562,7 @@ def extract_frame(video_path: str, frame_idx: int, output_path: str) -> None:
         cv2.imwrite(output_path, image)
         print(f"Saved frame {frame_idx} to {output_path}")
     else:
-        raise RuntimeError(
-            f"Could not extract frame {frame_idx} from {video_path}."
-        )
+        raise RuntimeError(f"Could not extract frame {frame_idx} from {video_path}.")
 
 
 def cache_frame(
@@ -603,14 +592,10 @@ def cache_frame(
     """
 
     cache_dir.mkdir(parents=True, exist_ok=True)
-    frame_filepath = (
-        cache_dir / f"{video_path.stem}_frame-{frame_idx}.{frame_suffix}"
-    )
+    frame_filepath = cache_dir / f"{video_path.stem}_frame-{frame_idx}.{frame_suffix}"
     # Extract frame if it is not already cached
     if not frame_filepath.exists():
-        extract_frame(
-            video_path.as_posix(), frame_idx, frame_filepath.as_posix()
-        )
+        extract_frame(video_path.as_posix(), frame_idx, frame_filepath.as_posix())
     # Remove old frames from cache
     remove_old_frames_from_cache(cache_dir, frame_suffix=frame_suffix, keep_last_days=1)
 

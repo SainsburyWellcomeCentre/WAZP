@@ -61,17 +61,14 @@ def get_callbacks(app: dash.Dash) -> None:
             # get all videos in the videos directory
             video_paths = []
             for video_type in VIDEO_TYPES:
-                video_paths += [
-                    p for p in pl.Path(videos_dir).glob(f"*{video_type}")
-                ]
+                video_paths += [p for p in pl.Path(videos_dir).glob(f"*{video_type}")]
             video_paths.sort()
             video_names = [p.name for p in video_paths]
             video_paths_str = [p.absolute().as_posix() for p in video_paths]
             # Video names become the labels and video paths the values
             # of the video select dropdown
             options = [
-                {"label": v, "value": p}
-                for v, p in zip(video_names, video_paths_str)
+                {"label": v, "value": p} for v, p in zip(video_names, video_paths_str)
             ]
             value = video_paths_str[0]
             return options, value
@@ -114,9 +111,7 @@ def get_callbacks(app: dash.Dash) -> None:
             value = roi_names[0]
 
             # Get ROI-to-color mapping
-            roi_color_mapping = utils.assign_roi_colors(
-                roi_names, cmap=ROI_CMAP
-            )
+            roi_color_mapping = utils.assign_roi_colors(roi_names, cmap=ROI_CMAP)
 
             return options, value, roi_color_mapping
         else:
@@ -210,9 +205,7 @@ def get_callbacks(app: dash.Dash) -> None:
             Input("roi-storage", "data"),
         ],
     )
-    def update_roi_table(
-        video_path: str, roi_storage: dict
-    ) -> Optional[list[dict]]:
+    def update_roi_table(video_path: str, roi_storage: dict) -> Optional[list[dict]]:
         """
         Update the ROI table with the ROI names and
         their corresponding colors.
@@ -244,9 +237,7 @@ def get_callbacks(app: dash.Dash) -> None:
         Input("roi-table", "data"),
         State("roi-colors-storage", "data"),
     )
-    def set_roi_color_in_table(
-        roi_table: list, roi_color_mapping: dict
-    ) -> list:
+    def set_roi_color_in_table(roi_table: list, roi_color_mapping: dict) -> list:
         """
         Set the color of the ROI names in the ROI table
         based on the color assigned to that ROI shape.
@@ -426,14 +417,11 @@ def get_callbacks(app: dash.Dash) -> None:
         elif trigger == "delete-rois-button.n_clicks":
             if delete_clicks > 0 and roi_table_selected_rows:
                 deleted_roi_names = [
-                    roi_table_rows[idx]["name"]
-                    for idx in roi_table_selected_rows
+                    roi_table_rows[idx]["name"] for idx in roi_table_selected_rows
                 ]
                 stored_shapes = roi_storage[video_name]["shapes"]
                 roi_storage[video_name]["shapes"] = [
-                    sh
-                    for sh in stored_shapes
-                    if sh["roi_name"] not in deleted_roi_names
+                    sh for sh in stored_shapes if sh["roi_name"] not in deleted_roi_names
                 ]
                 # Clear the row selection
                 roi_table_selected_rows = []
@@ -537,18 +525,14 @@ def get_callbacks(app: dash.Dash) -> None:
         # If triggered by a change in the ROI dropdown
         # maintain the current figure and only update the new shape color
         elif trigger == "roi-select.value":
-            current_fig["layout"]["newshape"]["line"][
-                "color"
-            ] = next_shape_color
+            current_fig["layout"]["newshape"]["line"]["color"] = next_shape_color
             return current_fig, dash.no_update, dash.no_update, dash.no_update
 
         # If triggered by a change in the video or frame
         # Load the frame into a new figure
         else:
             try:
-                frame_filepath = utils.cache_frame(
-                    video_path_pl, shown_frame_idx
-                )
+                frame_filepath = utils.cache_frame(video_path_pl, shown_frame_idx)
             except RuntimeError as e:
                 return dash.no_update, str(e), "danger", True
 
@@ -611,8 +595,7 @@ def get_callbacks(app: dash.Dash) -> None:
             # Add the ROI shapes to the metadata and save
             with open(metadata_filepath, "w") as yaml_file:
                 metadata["ROIs"] = [
-                    utils.stored_shape_to_yaml_entry(shape)
-                    for shape in rois_in_app
+                    utils.stored_shape_to_yaml_entry(shape) for shape in rois_in_app
                 ]
                 yaml.safe_dump(metadata, yaml_file, sort_keys=False)
 
@@ -692,9 +675,7 @@ def get_callbacks(app: dash.Dash) -> None:
         if not rois_in_app:
             alert_color = "light"
             if rois_in_file:
-                alert_msg = (
-                    f"Found {len(rois_in_file)} ROIs in '{metadata_path.name}'"
-                )
+                alert_msg = f"Found {len(rois_in_file)} ROIs in '{metadata_path.name}'"
             else:
                 alert_msg = "No ROIs defined in the metadata file."
 
@@ -705,9 +686,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 if trigger == "roi-storage.data":
                     alert_msg = f"Loaded ROIs from '{metadata_path.name}'"
                 else:
-                    alert_msg = (
-                        f"Shown ROIs match those in '{metadata_path.name}'"
-                    )
+                    alert_msg = f"Shown ROIs match those in '{metadata_path.name}'"
 
             else:
                 alert_color = "warning"

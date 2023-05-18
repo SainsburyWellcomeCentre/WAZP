@@ -40,9 +40,7 @@ def create_metadata_table_component_from_df(
     # datetime
     # (this is to allow sorting in the Dash table)
     # TODO: review this, is there a more failsafe way?
-    list_date_columns = [
-        col for col in df.columns.tolist() if "date" in col.lower()
-    ]
+    list_date_columns = [col for col in df.columns.tolist() if "date" in col.lower()]
     for col in list_date_columns:
         df[col] = pd.to_datetime(df[col]).dt.strftime("%Y-%m-%d")
 
@@ -56,9 +54,7 @@ def create_metadata_table_component_from_df(
             {
                 "id": c,
                 "name": c,
-                "hideable": (
-                    True if c != config["metadata_key_field_str"] else False
-                ),
+                "hideable": (True if c != config["metadata_key_field_str"] else False),
                 "editable": (
                     True
                     if c
@@ -310,9 +306,7 @@ def get_callbacks(app: dash.Dash) -> None:
                         dcc.Upload(
                             id="upload-spreadsheet",
                             children=dbc.Button(
-                                children=(
-                                    "Generate yaml files from spreadsheet"
-                                ),
+                                children=("Generate yaml files from spreadsheet"),
                                 id="generate-yaml-files-button",
                                 n_clicks=0,
                                 **button_style,  # {"margin-right": "10px"},
@@ -421,8 +415,7 @@ def get_callbacks(app: dash.Dash) -> None:
 
             # List of files currently shown in table
             list_files_in_table = [
-                d[app_storage["config"]["metadata_key_field_str"]]
-                for d in table_rows
+                d[app_storage["config"]["metadata_key_field_str"]] for d in table_rows
             ]
 
             # List of videos w/o metadata and not in table
@@ -430,9 +423,7 @@ def get_callbacks(app: dash.Dash) -> None:
             list_metadata_files = []
             for f in pl.Path(video_dir).iterdir():
                 if str(f).endswith(".metadata.yaml"):
-                    list_metadata_files.append(
-                        re.sub(".metadata$", "", f.stem)
-                    )
+                    list_metadata_files.append(re.sub(".metadata$", "", f.stem))
                 elif any(v in str(f) for v in VIDEO_TYPES):
                     list_video_files.append(f)  # list of PosixPaths
             list_videos_wo_metadata = [
@@ -447,8 +438,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 table_rows.append(
                     {
                         c["id"]: vid
-                        if c["id"]
-                        == app_storage["config"]["metadata_key_field_str"]
+                        if c["id"] == app_storage["config"]["metadata_key_field_str"]
                         else ""
                         for c in table_columns
                     }
@@ -655,9 +645,7 @@ def get_callbacks(app: dash.Dash) -> None:
             except Exception as e:
                 print(e)
                 import_message_state = True
-                import_message_text = (
-                    "There was an error reading" f" this file ({e})."
-                )
+                import_message_text = "There was an error reading" f" this file ({e})."
                 import_message_color = "danger"
 
             # convert all fields in dataframe to strings
@@ -686,13 +674,10 @@ def get_callbacks(app: dash.Dash) -> None:
 
             # dump each row as a yaml
             video_dir = app_storage["config"]["videos_dir_path"]
-            field_to_use_as_filename = app_storage["config"][
-                "metadata_key_field_str"
-            ]
+            field_to_use_as_filename = app_storage["config"]["metadata_key_field_str"]
             for row in list_dict_per_row:
                 yaml_filename = (
-                    pl.Path(row[field_to_use_as_filename]).stem
-                    + ".metadata.yaml"
+                    pl.Path(row[field_to_use_as_filename]).stem + ".metadata.yaml"
                 )
 
                 with open(pl.Path(video_dir) / yaml_filename, "w") as yamlf:
