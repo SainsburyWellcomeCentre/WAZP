@@ -79,6 +79,18 @@ You will then need to download a [compatible version of `chromedriver`](https://
 Depending on your OS you may also need to ***trust*** the executable.
 
 <details>
+<summary>Ubuntu</summary>
+
+Installing chromium and chromedriver is a one-liner (tested in Ubuntu 22.04).
+
+```sh
+sudo apt install chromium-chromedriver
+pytest # in the root of the repository
+```
+
+</details>
+
+<details>
 <summary>MacOS</summary>
 There is also a [homebrew cask](https://formulae.brew.sh/cask/chromedriver) for `chromedriver` so instead of going to the web and downloading you should be able to:
 
@@ -96,14 +108,15 @@ cd /place/where/your/chromedriver/is
 xattr -d com.apple.quarantine chromedriver
 ```
 
-</details>
-
 Once downloaded, make sure the `chromedriver` binary in your `PATH` and check that you can run the integration tests.
 
 ```sh
 export PATH=$PATH:/place/where/your/chromedriver/is/chromedriver
 pytest # in the root of the repository
 ```
+
+</details>
+
 
 It's a good idea to test locally before pushing. Pytest will run all tests and also report test coverage.
 
