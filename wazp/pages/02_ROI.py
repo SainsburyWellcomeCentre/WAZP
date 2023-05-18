@@ -29,18 +29,6 @@ init_roi_storage: dict = {v: {"shapes": []} for v in init_videos}
 # Initialize the ROI status alert
 init_roi_status: dict = {"message": "No ROIs to save.", "color": "light"}
 
-# Instructions for the user
-instructions = (
-    "#### Instructions\n"
-    "1. Select the video from the top dropdown menu. \n"
-    "3. Select an ROI from the right dropdown menu. \n"
-    "4. Draw the ROI on the frame (adjust the shown frame if necessary). \n"
-    "5. You may also select an existing ROI "
-    "to edit it or delete it.\n"
-    "6. Repeat steps 3-5 for each ROI.\n"
-    "7. Save the ROIs and move on to the next video.\n"
-)
-
 
 ###############################
 # Graph showing a video frame #
@@ -113,6 +101,7 @@ roi_table = dash_table.DataTable(
     id="roi-table",
     columns=[dict(name=c, id=c) for c in init_roi_table_columns],
     data=[],
+    selected_rows=[],
     editable=False,
     style_data={"height": 40},
     style_cell={
@@ -123,6 +112,7 @@ roi_table = dash_table.DataTable(
     },
     style_data_conditional=[],
     fill_width=True,
+    row_selectable="multi",
 )
 
 # Dropdown for ROI selection
@@ -135,43 +125,36 @@ roi_dropdown = dcc.Dropdown(
 )
 
 # Buttons for saving/loading ROIs
-roi_save_button = dbc.Button(
-    "Save ROIs",
+disabled_button_style = {
+    "n_clicks": 0,
+    "outline": False,
+    "color": "dark",
+    "disabled": True,
+    "class_name": "w-100",
+}
+
+save_rois_button = dbc.Button(
+    "Save all",
     id="save-rois-button",
     download="rois.yaml",
-    n_clicks=0,
-    outline=False,
-    color="dark",
-    active=True,
+    **disabled_button_style,
 )
-roi_load_button = dbc.Button(
-    "Load ROIs",
-    id="load-rois-button",
-    n_clicks=0,
-    outline=False,
-    color="dark",
-    active=True,
+load_rois_button = dbc.Button(
+    "Load all", id="load-rois-button", **disabled_button_style
 )
-infer_rois_button = dbc.Button(
-    "Infer ROIs",
-    id="infer-rois-button",
-    n_clicks=0,
-    outline=True,
-    color="dark",
-    active=False,
+delete_rois_button = dbc.Button(
+    "Delete selected", id="delete-rois-button", **disabled_button_style
 )
 # Tooltips for ROI buttons
 save_rois_tooltip = dbc.Tooltip(
-    "Save the ROIs to the video's " ".metadata.yaml file",
+    "Save all ROIs to the video's .metadata.yaml file. "
+    "This will overwrite any existing ROIs in the file!",
     target="save-rois-button",
 )
 load_rois_tooltip = dbc.Tooltip(
-    "Load ROIs from the video's metadata.yaml file",
+    "Load all ROIs from the video's metadata.yaml file. "
+    "This will overwrite any existing ROIs in the app!",
     target="load-rois-button",
-)
-infer_rois_tooltip = dbc.Tooltip(
-    "NOT IMPLEMENTED YET! " "Infer ROI positions based on defined ROIs",
-    target="infer-rois-button",
 )
 
 # ROI status alert
@@ -210,49 +193,26 @@ frame_card = dbc.Card(
                         dbc.Col(dcc.Loading(frame_slider), width=9),
                     ]
                 ),
+                dbc.Row(
+                    [
+                        dbc.Col(dcc.Markdown("Draw ROI for"), width=3),
+                        dbc.Col(dcc.Loading(roi_dropdown), width=9),
+                    ]
+                ),
             ]
         ),
         dbc.CardBody(frame_graph),
-        dbc.CardFooter(
-            dbc.Row(
-                [
-                    dcc.Loading(frame_status_alert),
-                    dcc.Markdown(instructions),
-                ],
-            )
-        ),
+        dbc.CardFooter(dcc.Loading(frame_status_alert)),
     ],
 )
 
 # ROI table card
 table_card = dbc.Card(
     [
-        dbc.CardHeader(
-            dbc.Row(
-                [
-                    dbc.Col(roi_save_button, width=4),
-                    dbc.Col(roi_load_button, width=4),
-                    dbc.Col(infer_rois_button, width=4),
-                    save_rois_tooltip,
-                    load_rois_tooltip,
-                    infer_rois_tooltip,
-                ],
-            ),
-        ),
+        dbc.CardHeader(html.H3("Defined ROIs")),
         dbc.CardBody(
             [
-                dbc.Row(dbc.Col(html.H4("Defined ROIs"))),
                 dbc.Row(dbc.Col(roi_table)),
-                dbc.Row(
-                    dbc.Col(
-                        [
-                            html.Br(),
-                            html.H4("Create new ROI for"),
-                            roi_dropdown,
-                        ],
-                        align="center",
-                    )
-                ),
                 dcc.Store(data={}, id="roi-colors-storage"),
                 dcc.Store(
                     id="roi-storage",
@@ -261,7 +221,21 @@ table_card = dbc.Card(
                 ),
             ]
         ),
-        dbc.CardFooter(roi_status_alert),
+        dbc.CardFooter(
+            [
+                dbc.Row(
+                    [
+                        dbc.Col(delete_rois_button, width={"size": "auto"}),
+                        dbc.Col(save_rois_button, width={"size": "auto"}),
+                        dbc.Col(load_rois_button, width={"size": "auto"}),
+                        save_rois_tooltip,
+                        load_rois_tooltip,
+                    ],
+                ),
+                html.Br(),
+                dcc.Loading(dbc.Row(roi_status_alert)),
+            ]
+        ),
     ]
 )
 

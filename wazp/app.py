@@ -4,7 +4,10 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
 
-from wazp import callbacks
+import wazp.callbacks.dashboard as dashboard
+import wazp.callbacks.home as home
+import wazp.callbacks.metadata as metadata
+import wazp.callbacks.roi as roi
 
 #################
 # Initialise app
@@ -100,14 +103,18 @@ app.layout = html.Div(
 ###############
 # Callbacks
 ################
-callbacks.get_home_callbacks(app)
-callbacks.get_metadata_callbacks(app)
-callbacks.get_roi_callbacks(app)
-callbacks.get_dashboard_callbacks(app)
+home.get_callbacks(app)
+metadata.get_callbacks(app)
+roi.get_callbacks(app)
+dashboard.get_callbacks(app)
+
+
+def startwazp():
+    app.run_server(debug=True)
 
 
 ###############
 # Driver
 ################
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    startwazp()

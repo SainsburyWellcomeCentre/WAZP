@@ -63,3 +63,7 @@ Further_description:
     Type: string
     LongName: additional notes about the recorded video
     Description: A text-formatted column to provide space for any additional notes (eg, video playback speed, size). For environmental parameters for each video (ie, temperature, humidity, lux, UVA and UVB), please reference the Environmental-parameters folder.
+Events:
+    Type: dict
+    LongName: event tags and associated frames
+    Description: event tags describe specific events of interest that occur during the video
