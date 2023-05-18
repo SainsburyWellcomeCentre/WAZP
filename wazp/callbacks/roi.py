@@ -84,10 +84,14 @@ def get_callbacks(app: dash.Dash) -> None:
             Output("roi-select", "value"),
             Output("roi-colors-storage", "data"),
         ],
-        Input("session-storage", "data"),
+        [
+            Input("session-storage", "data"),
+            Input("frame-graph", "relayoutData"),
+        ],
     )
     def update_roi_select_options(
         app_storage: dict,
+        graph_relayout: dict,
     ) -> Optional[tuple[list[dict], str, dict]]:
         """Update the options of the ROI select dropdown.
         Parameters
@@ -95,6 +99,9 @@ def get_callbacks(app: dash.Dash) -> None:
         app_storage : dict
             data held in temporary memory storage,
             accessible to all tabs in the app
+        graph_relayout : dict
+            Dictionary with information about the latest
+            changes to the frame graph.
         Returns
         -------
         list[dict]
@@ -117,8 +124,24 @@ def get_callbacks(app: dash.Dash) -> None:
             roi_color_mapping = utils.assign_roi_colors(
                 roi_names, cmap=ROI_CMAP
             )
+            # Stuff to do when a shape is drawn/deleted on the graph
+            trigger = dash.callback_context.triggered[0]["prop_id"]
+            if trigger == "frame-graph.relayoutData":
+                if "shapes" in graph_relayout.keys():
+                    # list of current ROIs on the graph
+                    graph_roi_names = [
+                        roi_color_mapping["color2roi"][shape["line"]["color"]]
+                        for shape in graph_relayout["shapes"]
+                    ]
+                    # Limit ROI options to those not on the graph
+                    options = [
+                        {"label": r, "value": r} for r in roi_names
+                        if r not in graph_roi_names
+                    ]
+                    value = options[0]["value"]
 
             return options, value, roi_color_mapping
+
         else:
             return dash.no_update, dash.no_update, dash.no_update
 
