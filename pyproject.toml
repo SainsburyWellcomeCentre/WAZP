@@ -56,7 +56,7 @@ dev = [
     "dash[testing]",
     "tox",
     "black",
-    "isort",
+    "ruff",
     "mypy",
     "pre-commit",
     "flake8",
@@ -108,9 +108,11 @@ exclude = '''
 )
 '''
 
-[tool.isort]
-profile = "black"
-line_length = 79
+[tool.ruff]
+line-length = 79
+exclude = ["__init__.py","build",".eggs"]
+select = ["I", "E", "F"]
+fix = true
 
 [tool.setuptools_scm]
 
