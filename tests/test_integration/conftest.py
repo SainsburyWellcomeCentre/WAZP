@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import pytest
 from dash.testing.composite import DashComposite
@@ -14,7 +14,7 @@ class Helpers:
     -------
     ```
     def test_my_thing(helpers)
-        helpers.help_me()
+        helpers.debug_screenshot()
     ```
     """
 
@@ -31,14 +31,14 @@ class Helpers:
             dash_duo : DashComposite
                 The current dash_duo fixture.
             name: str, optional
-                A name (to help you find the screenshots.)
+                A subdirectory name (to help you find the screenshots.)
         """
-        screenshots_dirname = ".test_helper_screenshots/"
+        screenshots_dirname = Path(".test_helper_screenshots")
         if name:
-            screenshots_dirname += f"{name}/"
-        os.makedirs(screenshots_dirname, exist_ok=True)  # mkdir -p
-        filename = f"test-{dash_duo.session_id}.png"
-        dash_duo.driver.save_screenshot(f"./{screenshots_dirname}/{filename}")
+            screenshots_dirname /= name
+        screenshots_dirname.mkdir(exist_ok=True)  # mkdir -p
+        filename = screenshots_dirname / f"test-{dash_duo.session_id}.png"
+        dash_duo.driver.save_screenshot(filename.as_posix())
 
 
 @pytest.fixture
