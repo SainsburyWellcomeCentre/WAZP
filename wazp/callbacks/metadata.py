@@ -349,9 +349,9 @@ def get_callbacks(app: dash.Dash) -> None:
             # check for missing metadata files
             check_missing_files_tooltip = dbc.Tooltip(
                 "Check which videos in the "
-                "video directory have a missing YAML file "
-                "and add a row for each of them. Note that "
-                "this won't generate any YAML files.",
+                "video directory are metadata "
+                "and add a row for each of them. Note "
+                "this won't save the metadata.",
                 target="add-rows-for-missing-button",
             )
 
