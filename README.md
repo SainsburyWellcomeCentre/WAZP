@@ -1,5 +1,6 @@
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-orange.svg)](https://opensource.org/licenses/BSD-3-Clause)
 ![CI](https://img.shields.io/github/actions/workflow/status/SainsburyWellcomeCentre/WAZP/test_and_deploy.yml?label=CI)
+[![codecov](https://codecov.io/gh/SainsburyWellcomeCentre/WAZP/branch/main/graph/badge.svg?token=DYQB8EHTJB)](https://codecov.io/gh/SainsburyWellcomeCentre/WAZP)
 [![docs](https://img.shields.io/website?down_color=red&down_message=down&label=docs&up_color=brightgreen&up_message=up&url=https%3A%2F%2Fsainsburywellcomecentre.github.io%2FWAZP%2F)](https://sainsburywellcomecentre.github.io/WAZP/)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
