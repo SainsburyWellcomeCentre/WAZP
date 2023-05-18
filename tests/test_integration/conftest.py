@@ -9,22 +9,47 @@ def pytest_setup_options():
     return options
 
 
-@pytest.fixture
-def map_page_name_to_title() -> dict:
-    """Map page names to page head titles
+# @pytest.fixture
+# def map_page_name_to_title() -> dict:
+#     """Map page names to page head titles
 
-    Returns
-    -------
-    dict
-        dictionary with page names as keys, and page titles as values
-    """
-    return {
-        "Home": "Home",
-        "01 metadata": "Metadata",
-        "02 roi": "ROI definition",
-        "03 pose estimation": "Pose estimation inference",
-        "04 dashboard": "Dashboard & data export",
-    }
+#     Returns
+#     -------
+#     dict
+#         dictionary with page names as keys, and page titles as values
+#     """
+#     return {
+#         "Home": "Home",
+#         "01 metadata": "Metadata",
+#         "02 roi": "ROI definition",
+#         "03 pose estimation": "Pose estimation inference",
+#         "04 dashboard": "Dashboard & data export",
+#     }
+
+
+@pytest.fixture
+def home_page_name_and_title():
+    return ("Home", "Home")
+
+
+@pytest.fixture
+def metadata_page_name_and_title():
+    return ("01 metadata", "Metadata")
+
+
+@pytest.fixture
+def roi_page_name_and_title():
+    return ("02 roi", "ROI definition")
+
+
+@pytest.fixture
+def pose_estimation_page_name_and_title():
+    return ("03 pose estimation", "Pose estimation inference")
+
+
+@pytest.fixture
+def dashboard_page_name_and_title():
+    return ("04 dashboard", "Dashboard & data export")
 
 
 @pytest.fixture
