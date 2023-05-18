@@ -67,11 +67,58 @@ pre-commit run -a  # for all files in the repository
 
 ### Testing
 
-We use [pytest](https://docs.pytest.org/en/latest/) for testing. Please try to ensure that all functions
-are tested, including both unit and integration tests.
+We use [pytest](https://docs.pytest.org/en/latest/) for testing, and our integration tests require Google chrome or chromium and a compatible `chromedriver`.
+Please try to ensure that all functions are tested, including both unit and integration tests.
 Write your test methods and classes in the `test` folder.
 
-Remember to test locally, before pushing, via running `pytest` in the root of the repository. This will run all tests and also report test coverage.
+#### Integration tests with chrome
+
+The integration tests start a server and browse with chrome(ium),
+so you will need to download and install Google chrome or chromium (if you don't already use one of them).
+You will then need to download a [compatible version of `chromedriver`](https://chromedriver.chromium.org/downloads).
+Depending on your OS you may also need to ***trust*** the executable.
+
+<details>
+<summary>Ubuntu</summary>
+
+Installing chromium and chromedriver is a one-liner (tested in Ubuntu 20.04 and 22.04).
+
+```sh
+sudo apt install chromium-chromedriver
+pytest # in the root of the repository
+```
+
+</details>
+
+<details>
+<summary>MacOS</summary>
+There is also a [homebrew cask](https://formulae.brew.sh/cask/chromedriver) for `chromedriver` so instead of going to the web and downloading you should be able to:
+
+```sh
+brew install chromedriver
+brew info chromedriver
+```
+And take note of the installation path.
+(It's probably something like `/opt/homebrew/Caskroom/chromedriver/<version>`).
+
+However you obtained `chomedriver`, you can trust the executable via the security settings and/or keychain GUI or just:
+
+```sh
+cd /place/where/your/chromedriver/is
+xattr -d com.apple.quarantine chromedriver
+```
+
+Once downloaded, make sure the `chromedriver` binary in your `PATH` and check that you can run the integration tests.
+
+```sh
+export PATH=$PATH:/place/where/your/chromedriver/is/chromedriver
+pytest # in the root of the repository
+```
+
+</details>
+
+
+It's a good idea to test locally before pushing. Pytest will run all tests and also report test coverage.
 
 ### Continuous integration
 All pushes and pull requests will be built by [GitHub actions](https://docs.github.com/en/actions). This will usually include linting, testing and deployment.
