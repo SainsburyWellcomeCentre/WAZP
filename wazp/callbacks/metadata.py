@@ -244,7 +244,6 @@ def get_callbacks(app: dash.Dash) -> None:
         """
 
         if not metadata_output_children:
-
             metadata_table = create_metadata_table_component_from_df(
                 utils.df_from_metadata_yaml_files(
                     app_storage["config"]["videos_dir_path"],
@@ -357,9 +356,10 @@ def get_callbacks(app: dash.Dash) -> None:
 
             generate_yaml_tooltip = dbc.Tooltip(
                 "Generate metadata files from a selected spreadsheet. "
-                "Rows in the spreadsheet that do not correspond to a video will be ignored."
-                "WARNING! This will overwrite any existing metadata files with "
-                "the same name!",
+                "Rows in the spreadsheet that do not correspond to a "
+                "video will be ignored."
+                "WARNING! This will overwrite any existing metadata "
+                "files with the same name!",
                 target="generate-yaml-files-button",
             )
 
@@ -558,7 +558,6 @@ def get_callbacks(app: dash.Dash) -> None:
         # If the export button is clicked: export selected rows and unselect
         # TODO: add if not list_selected_rows: message--no data to export
         if (n_clicks_export > 0) and list_selected_rows:
-
             # export yaml files
             utils.export_selected_rows_as_yaml(
                 data, list_selected_rows, app_storage["config"]
