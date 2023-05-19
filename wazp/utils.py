@@ -773,16 +773,15 @@ def load_rois_from_yaml(yaml_path: pl.Path) -> list:
     return shapes_to_store
 
 
-def are_same_shape(shape0: dict, shape1: dict) -> bool:
-    """Checks if two shapes are the same"""
-    same_coords = shape0["path"] == shape1["path"]
+def shapes_same_color(shape0: dict, shape1: dict) -> bool:
+    """Checks if two shapes have the same color"""
     same_color = shape0["line"]["color"] == shape1["line"]["color"]
-    return same_coords and same_color
+    return same_color
 
 
 def shape_in_list(shape_list: list) -> Callable[[dict], bool]:
     """Checks if a shape is already in a list of shapes"""
-    return lambda s: any(are_same_shape(s, s_) for s_ in shape_list)
+    return lambda s: any(shapes_same_color(s, s_) for s_ in shape_list)
 
 
 def shape_drop_custom_keys(shape: dict) -> dict:
