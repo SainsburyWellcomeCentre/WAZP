@@ -105,7 +105,7 @@
   
   
   
-    <p class="title logo__title">wazp v0.2.0</p>
+    <p class="title logo__title">wazp v0.2.1</p>
   
 </a></div>
     
@@ -364,14 +364,12 @@ and its development dependencies.</p>
 <h3>Formatting and pre-commit hooks<a class="headerlink" href="#formatting-and-pre-commit-hooks" title="Permalink to this heading">#</a></h3>
 <p>Running <code class="docutils literal notranslate"><span class="pre">pre-commit</span> <span class="pre">install</span></code> will set up <a class="reference external" href="https://pre-commit.com/">pre-commit hooks</a> to ensure a consistent formatting style. Currently, these are:</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://pycqa.github.io/isort/">isort</a> for sorting import statements</p></li>
-<li><p><a class="reference external" href="https://flake8.pycqa.org/en/latest/">flake8</a> for linting</p></li>
+<li><p><a class="reference external" href="https://github.com/charliermarsh/ruff">ruff</a> does a number of jobs, including enforcing PEP8 and sorting imports</p></li>
 <li><p><a class="reference external" href="https://black.readthedocs.io/en/stable/">black</a> for auto-formatting</p></li>
 <li><p><a class="reference external" href="https://mypy.readthedocs.io/en/stable/index.html">mypy</a> as a static type checker</p></li>
 </ul>
 <p>These will prevent code from being committed if any of these hooks fail. To run them individually (from the root of the repository), you can use:</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>isort<span class="w"> </span>.
-flake8
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>ruff<span class="w"> </span>.
 black<span class="w"> </span>./
 mypy<span class="w"> </span>-p<span class="w"> </span>wazp
 </pre></div>
@@ -384,10 +382,45 @@ pre-commit<span class="w"> </span>run<span class="w"> </span>-a<span class="w"> 
 </section>
 <section id="testing">
 <h3>Testing<a class="headerlink" href="#testing" title="Permalink to this heading">#</a></h3>
-<p>We use <a class="reference external" href="https://docs.pytest.org/en/latest/">pytest</a> for testing. Please try to ensure that all functions
-are tested, including both unit and integration tests.
+<p>We use <a class="reference external" href="https://docs.pytest.org/en/latest/">pytest</a> for testing, and our integration tests require Google chrome or chromium and a compatible <code class="docutils literal notranslate"><span class="pre">chromedriver</span></code>.
+Please try to ensure that all functions are tested, including both unit and integration tests.
 Write your test methods and classes in the <code class="docutils literal notranslate"><span class="pre">test</span></code> folder.</p>
-<p>Remember to test locally, before pushing, via running <code class="docutils literal notranslate"><span class="pre">pytest</span></code> in the root of the repository. This will run all tests and also report test coverage.</p>
+<section id="integration-tests-with-chrome">
+<h4>Integration tests with chrome<a class="headerlink" href="#integration-tests-with-chrome" title="Permalink to this heading">#</a></h4>
+<p>The integration tests start a server and browse with chrome(ium),
+so you will need to download and install Google chrome or chromium (if you don’t already use one of them).
+You will then need to download a <a class="reference external" href="https://chromedriver.chromium.org/downloads">compatible version of <code class="docutils literal notranslate"><span class="pre">chromedriver</span></code></a>.
+Depending on your OS you may also need to <em><strong>trust</strong></em> the executable.</p>
+<details>
+<summary>Ubuntu</summary>
+<p>Installing chromium and chromedriver is a one-liner (tested in Ubuntu 20.04 and 22.04).</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>chromium-chromedriver
+pytest<span class="w"> </span><span class="c1"># in the root of the repository</span>
+</pre></div>
+</div>
+</details>
+<details>
+<summary>MacOS</summary>
+There is also a [homebrew cask](https://formulae.brew.sh/cask/chromedriver) for `chromedriver` so instead of going to the web and downloading you should be able to:
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>brew<span class="w"> </span>install<span class="w"> </span>chromedriver
+brew<span class="w"> </span>info<span class="w"> </span>chromedriver
+</pre></div>
+</div>
+<p>And take note of the installation path.
+(It’s probably something like <code class="docutils literal notranslate"><span class="pre">/opt/homebrew/Caskroom/chromedriver/&lt;version&gt;</span></code>).</p>
+<p>However you obtained <code class="docutils literal notranslate"><span class="pre">chomedriver</span></code>, you can trust the executable via the security settings and/or keychain GUI or just:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/place/where/your/chromedriver/is
+xattr<span class="w"> </span>-d<span class="w"> </span>com.apple.quarantine<span class="w"> </span>chromedriver
+</pre></div>
+</div>
+<p>Once downloaded, make sure the <code class="docutils literal notranslate"><span class="pre">chromedriver</span></code> binary in your <code class="docutils literal notranslate"><span class="pre">PATH</span></code> and check that you can run the integration tests.</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/place/where/your/chromedriver/is/chromedriver
+pytest<span class="w"> </span><span class="c1"># in the root of the repository</span>
+</pre></div>
+</div>
+</details>
+<p>It’s a good idea to test locally before pushing. Pytest will run all tests and also report test coverage.</p>
+</section>
 </section>
 <section id="continuous-integration">
 <h3>Continuous integration<a class="headerlink" href="#continuous-integration" title="Permalink to this heading">#</a></h3>
@@ -507,7 +540,10 @@ sphinx-build<span class="w"> </span>docs/source<span class="w"> </span>docs/buil
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development-guidelines">Development guidelines</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#formatting-and-pre-commit-hooks">Formatting and pre-commit hooks</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#testing">Testing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#testing">Testing</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#integration-tests-with-chrome">Integration tests with chrome</a></li>
+</ul>
+</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#continuous-integration">Continuous integration</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#versioning-and-releases">Versioning and releases</a></li>
 </ul>
@@ -561,7 +597,7 @@ sphinx-build<span class="w"> </span>docs/source<span class="w"> </span>docs/buil
       
         <div class="footer-item">
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.2.1.
     <br/>
   </p>
 </div>
