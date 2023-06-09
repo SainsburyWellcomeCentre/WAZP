@@ -5,6 +5,7 @@ import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html
 
 import wazp.callbacks.dashboard as dashboard
+import wazp.callbacks.events as events
 import wazp.callbacks.home as home
 import wazp.callbacks.metadata as metadata
 import wazp.callbacks.roi as roi
@@ -106,6 +107,7 @@ app.layout = html.Div(
 home.get_callbacks(app)
 metadata.get_callbacks(app)
 roi.get_callbacks(app)
+events.get_callbacks(app)
 dashboard.get_callbacks(app)
 
 

@@ -54,26 +54,14 @@ def get_callbacks(app: dash.Dash) -> None:
         str
             value of the first video in the list
         """
-        if "config" in app_storage.keys():
-            # Get videos directory from stored config
-            config = app_storage["config"]
-            videos_dir = config["videos_dir_path"]
-            # get all videos in the videos directory
-            video_paths = []
-            for video_type in VIDEO_TYPES:
-                video_paths += [
-                    p for p in pl.Path(videos_dir).glob(f"*{video_type}")
-                ]
-            video_paths.sort()
-            video_names = [p.name for p in video_paths]
-            video_paths_str = [p.absolute().as_posix() for p in video_paths]
+        if "video_paths" in app_storage.keys():
             # Video names become the labels and video paths the values
             # of the video select dropdown
             options = [
                 {"label": v, "value": p}
-                for v, p in zip(video_names, video_paths_str)
+                for v, p in app_storage["video_paths"].items()
             ]
-            value = video_paths_str[0]
+            value = options[0]["value"]
             return options, value
         else:
             return dash.no_update, dash.no_update

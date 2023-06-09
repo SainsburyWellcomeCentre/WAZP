@@ -529,6 +529,42 @@ def assign_roi_colors(
     }
 
 
+def get_video_paths_from_folder(
+    folder_path: pl.Path,
+    video_extensions: list[str] = [".mp4", ".avi"],
+) -> list[pl.Path]:
+    """
+    Get the paths to all videos in a folder.
+
+    Parameters
+    ----------
+    folder_path : pathlib.Path
+        Path to the video-containing folder
+    video_extensions : list of str
+        Which video extensions to consider.
+        Defaults to ['.mp4', '.avi'].
+
+    Returns
+    -------
+    list of pathlib.Path
+        List of video paths
+    """
+    video_paths = []
+    for video_extension in video_extensions:
+        video_paths.extend(
+            [
+                pl.Path(video_path)
+                for video_path in folder_path.glob(f"*{video_extension}")
+            ]
+        )
+    if len(video_paths) == 0:
+        raise FileNotFoundError(
+            f"No videos found in folder {folder_path} "
+            f"with extensions {video_extensions}"
+        )
+    return video_paths
+
+
 def get_num_frames(video_path) -> int:
     """
     Get the number of frames in a video.
