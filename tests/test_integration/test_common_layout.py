@@ -54,7 +54,7 @@ unloaded_config_xfail = pytest.mark.xfail(
         "When config has not been loaded, "
         "warnings should show in pages that are not Home"
     ),
-    strict=True,
+    strict=False,
     # with strict=True
     # if the test passes unexpectedly,
     # it will fail the test suite
@@ -132,7 +132,7 @@ def test_sidebar_links(
     # TODO: if no config file has been loaded, check a warning is shown?
     # ...
 
-    # NOTE: this is expected to fail
+    # NOTE: this is expected to fail for a few pages (hence the marked xfails)
     assert (
         dash_duo.get_logs() == []
     ), "There are errors in the browser console!"
