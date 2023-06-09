@@ -240,7 +240,6 @@ def get_callbacks(app: dash.Dash) -> None:
         """
 
         if not metadata_output_children:
-
             metadata_table = create_metadata_table_component_from_df(
                 utils.df_from_metadata_yaml_files(
                     app_storage["config"]["videos_dir_path"],
@@ -340,9 +339,21 @@ def get_callbacks(app: dash.Dash) -> None:
                 ),
             )
 
+            # check for missing metadata files
+            check_missing_files_tooltip = dbc.Tooltip(
+                "Check which videos in the "
+                "video directory are metadata "
+                "and add a row for each of them. Note "
+                "this won't save the metadata.",
+                target="add-rows-for-missing-button",
+            )
+
             generate_yaml_tooltip = dbc.Tooltip(
-                "Generate YAML files for each row in the selected spreadsheet "
-                "and save them in the videos directory",
+                "Generate metadata files from a selected spreadsheet. "
+                "Rows in the spreadsheet that do not correspond to a "
+                "video will be ignored."
+                "WARNING! This will overwrite any existing metadata "
+                "files with the same name!",
                 target="generate-yaml-files-button",
             )
 
@@ -352,6 +363,7 @@ def get_callbacks(app: dash.Dash) -> None:
                     auxiliary_buttons_row,
                     alert_message_row,
                     import_message_row,
+                    check_missing_files_tooltip,
                     generate_yaml_tooltip,
                 ]
             )
@@ -536,7 +548,6 @@ def get_callbacks(app: dash.Dash) -> None:
         # If the export button is clicked: export selected rows and unselect
         # TODO: add if not list_selected_rows: message--no data to export
         if (n_clicks_export > 0) and list_selected_rows:
-
             # export yaml files
             utils.export_selected_rows_as_yaml(
                 data, list_selected_rows, app_storage["config"]
@@ -650,21 +661,15 @@ def get_callbacks(app: dash.Dash) -> None:
 
             # convert all fields in dataframe to strings
             # (otherwise datetime fields are not encoded correctly in the YAML)
-            # TODO: is it better to use to_json instead?
-            # if so I think date encodes in
-            # epoch milliseconds
-            # list_dict_per_row = df.to_json('records')
             df = df.applymap(str)
 
-            # check if columns match metadata file: if not
-            # add missing columns
+            # check if columns in spreadsheet match metadata file:
+            # if not, add missing columns
             list_columns = df.columns.tolist()
             list_metadata_fields = list(app_storage["metadata_fields"].keys())
             list_columns_to_add = [
                 f for f in list_metadata_fields if f not in list_columns
             ]
-            # TODO: use sets instead? (more efficient?
-            # not symmetric diff though)
             # TODO: warn/break if columns only in spreadsheet?
             for col in list_columns_to_add:
                 df[col] = ""
@@ -672,9 +677,25 @@ def get_callbacks(app: dash.Dash) -> None:
             # convert to list of dictionaries, one per row
             list_dict_per_row = df.to_dict("records")
 
-            # dump each row as a yaml
+            # exclude rows that do not exist as a video file or a symlink
+            # in the video dir
+            # TODO: select whether to overwrite existing YAML?
             video_dir = app_storage["config"]["videos_dir_path"]
             field_to_use_as_filename = app_storage["config"]["metadata_key_field_str"]
+
+            list_filepaths_to_check = [
+                pl.Path(video_dir, row[field_to_use_as_filename])
+                for row in list_dict_per_row
+            ]
+            list_dict_per_row = [
+                row
+                for row, fpath in zip(
+                    list_dict_per_row, list_filepaths_to_check
+                )
+                if pl.Path(fpath).is_file() or pl.Path(fpath).is_symlink()
+            ]
+
+            # dump as yaml files
             for row in list_dict_per_row:
                 yaml_filename = (
                     pl.Path(row[field_to_use_as_filename]).stem + ".metadata.yaml"
