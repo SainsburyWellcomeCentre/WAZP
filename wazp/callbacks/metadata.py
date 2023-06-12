@@ -3,6 +3,7 @@ import io
 import pathlib as pl
 import re
 import warnings
+from typing import Union
 
 import dash
 import dash_bootstrap_components as dbc
@@ -220,7 +221,7 @@ def get_callbacks(app: dash.Dash) -> None:
     )
     def create_metadata_table_and_buttons(
         metadata_output_children: list, app_storage: dict
-    ) -> html.Div | None:
+    ) -> Union[html.Div, None]:
         """Generate html component with a table holding the
         metadata per video and with auxiliary buttons for
         common table manipulations.
