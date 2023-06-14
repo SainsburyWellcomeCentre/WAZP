@@ -118,11 +118,7 @@ pytest # in the root of the repository
 <details>
 <summary>Windows</summary>
 
-For Windows, simply download ``chromedriver_win32.zip`` file, extract the executable, and either place it in the directory where you want to run ``pytest`` or add it to your `env:Path` (tested in Windows 10 with PowerShell):
-
-```pwsh
-$env:Path += ";C:\path\to\chromedriver\"
-```
+For Windows, be sure to download the ``chromedriver_win32.zip`` file, extract the executable, and it's probably easiest to simply place it in the directory where you want to run ``pytest``.
 
 </details>
 
