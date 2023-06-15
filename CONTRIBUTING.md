@@ -115,6 +115,12 @@ pytest # in the root of the repository
 
 </details>
 
+<details>
+<summary>Windows</summary>
+
+For Windows, be sure to download the ``chromedriver_win32.zip`` file, extract the executable, and it's probably easiest to simply place it in the directory where you want to run ``pytest``.
+
+</details>
 
 It's a good idea to test locally before pushing. Pytest will run all tests and also report test coverage.
 
