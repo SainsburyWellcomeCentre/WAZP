@@ -251,6 +251,12 @@ def get_callbacks(app: dash.Dash) -> None:
             to the ROI tab, for example).
         """
 
+        # Windows sometimes gives a the State data as an empty _list_ (!) when
+        # there is nothing present, so guard against that here.
+        if isinstance(app_storage, list) and app_storage == []:
+            warnings.warn("Seems there is no data in app storage")
+            app_storage = {}
+
         try:
             app_storage["config"]
         except KeyError:
