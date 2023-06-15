@@ -43,6 +43,13 @@ jobs:
         run: |
           echo "C:\Program Files\Google\Chrome\Application" >> $GITHUB_PATH
 
+      - name: Print chrome version on Windows
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          (Get-Item "C:\Program Files\Google\Chrome\Application\chrome.exe").VersionInfo
+          chromedriver --version
+
       # Run tests
       - uses: neuroinformatics-unit/actions/test@v2.0.0
         with:
