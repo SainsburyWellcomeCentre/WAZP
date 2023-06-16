@@ -12,9 +12,7 @@ import yaml
 from dash import Input, Output, State, dash_table, dcc, html
 
 from wazp import utils
-
-# TODO: other video extensions? have this in project config file instead?
-VIDEO_TYPES = [".avi", ".mp4"]
+from wazp.callbacks._common import NO_CONFIG_MESSAGE, VIDEO_TYPES
 
 
 ##########################
@@ -251,22 +249,11 @@ def get_callbacks(app: dash.Dash) -> None:
             to the ROI tab, for example).
         """
 
-        # Windows sometimes gives a the State data as an empty _list_ (!) when
-        # there is nothing present, so guard against that here.
-        if isinstance(app_storage, list) and app_storage == []:
-            warnings.warn("Seems there is no data in app storage")
-            app_storage = {}
-
-        try:
-            app_storage["config"]
-        except KeyError:
+        if not app_storage:
             # we've likely navigated to the metadata page without an input
             # config yaml file... not necessarily an error
             warnings.warn("Configuration not yet loaded.")
-            return html.Div(
-                children="No configuration loaded. Please add a "
-                "configuration file from the 'Home' page."
-            )
+            return NO_CONFIG_MESSAGE
 
         if not metadata_output_children:
             metadata_table = create_metadata_table_component_from_df(

@@ -13,9 +13,8 @@ from dash import Input, Output, State
 from PIL import Image
 
 from wazp import utils
+from wazp.callbacks._common import VIDEO_TYPES
 
-# TODO: other video extensions? have this in project config file instead?
-VIDEO_TYPES = [".avi", ".mp4"]
 ROI_CMAP = px.colors.qualitative.Dark24
 
 
@@ -536,6 +535,8 @@ def get_callbacks(app: dash.Dash) -> None:
         int
             Maximum frame index (num_frames - 1)
         """
+        if not roi_color_mapping:
+            return dash.no_update, "", "light", False
 
         # If a negative frame index is passed, it means that the video
         # could not be read correctly. So don't update the frame,
