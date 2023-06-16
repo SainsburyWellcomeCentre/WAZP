@@ -86,7 +86,7 @@ content = html.Div(
 storage = dcc.Store(
     id="session-storage",
     storage_type="session",
-    data=tuple(),
+    data={},
 )
 
 ###############
