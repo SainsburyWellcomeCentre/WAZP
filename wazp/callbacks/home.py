@@ -91,9 +91,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 print(e)  # TODO: check this, it prints something odd
                 if not up_message_state:
                     up_message_state = not up_message_state
-                output_message = (
-                    "There was an error processing the config file."
-                )
+                output_message = "There was an error processing the config file."
                 output_color = "danger"
 
         return (data_to_store, up_message_state, output_message, output_color)

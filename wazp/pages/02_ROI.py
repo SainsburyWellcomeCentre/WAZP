@@ -21,9 +21,7 @@ init_roi_names = ["No ROIs defined yet"]
 init_roi_color = px.colors.qualitative.Dark2[0]
 # Initialize the frame slider parameters for each video
 init_frame_slider_params: dict = {"max": 1, "step": 1, "value": 0}
-init_frame_slider_storage: dict = {
-    v: init_frame_slider_params for v in init_videos
-}
+init_frame_slider_storage: dict = {v: init_frame_slider_params for v in init_videos}
 # Columns for ROI table
 init_roi_table_columns = ["name", "on frame", "path"]
 # Initialize the ROI storage dictionary
