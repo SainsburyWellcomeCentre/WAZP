@@ -34,16 +34,12 @@ def test_components_created(
 
     # wait for sidebar to be rendered
     try:
-        dash_duo.wait_for_text_to_equal(
-            "#sidebar h2", "WAZP 🐝", timeout=timeout
-        )
+        dash_duo.wait_for_text_to_equal("#sidebar h2", "WAZP 🐝", timeout=timeout)
     except selenium.common.exceptions.TimeoutException:
         pytest.fail("Sidebar component not generated")
 
     # check there are no errors in browser console
-    assert (
-        dash_duo.get_logs() == []
-    ), f"There are {len(dash_duo.get_logs())} errors"
+    assert dash_duo.get_logs() == [], f"There are {len(dash_duo.get_logs())} errors"
     " in the browser console!"
 
 
@@ -133,6 +129,4 @@ def test_sidebar_links(
     # ...
 
     # NOTE: this is expected to fail for a few pages (hence the marked xfails)
-    assert (
-        dash_duo.get_logs() == []
-    ), "There are errors in the browser console!"
+    assert dash_duo.get_logs() == [], "There are errors in the browser console!"
