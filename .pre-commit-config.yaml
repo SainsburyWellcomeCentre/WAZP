@@ -31,3 +31,8 @@ repos:
                 - types-PyYaML
                 - pandas-stubs
                 - types-Pillow
+    - repo: https://github.com/mgedmin/check-manifest
+      rev: "0.49"
+      hooks:
+          - id: check-manifest
+            additional_dependencies: [setuptools-scm]
