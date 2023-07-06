@@ -1,9 +1,9 @@
-videos_dir_path: ./sample_project/videos
-metadata_fields_file_path: ./sample_project/metadata_fields.yaml
+videos_dir_path: ./videos
+metadata_fields_file_path: ./metadata_fields.yaml
 metadata_key_field_str: File
-pose_estimation_results_path: ./sample_project/pose_estimation_results
+pose_estimation_results_path: ./pose_estimation_results
 model_str: DLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000
-dashboard_export_data_path: ./sample_project/output
+dashboard_export_data_path: ./wazp_output
 ROI_tags:
   - enclosure
   - nectar1_box
