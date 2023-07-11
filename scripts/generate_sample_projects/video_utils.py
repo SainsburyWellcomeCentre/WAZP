@@ -1,23 +1,12 @@
-import pathlib as pl
 import shutil
 import sys
+from pathlib import Path
 from typing import Optional
 
 import cv2
 import ffmpeg
 import yaml
-
-
-def ensure_file_exists(path: pl.Path):
-    """Raise FileNotFoundError if file does not exist."""
-    if not path.is_file():
-        raise FileNotFoundError(f"File not found: {path}")
-
-
-def ensure_file_does_not_exist(path: pl.Path):
-    """Raise FileExistsError if file already exists."""
-    if path.is_file():
-        raise FileExistsError(f"File already exists: {path}")
+from file_utils import check_file_io_safety
 
 
 def ensure_clip_fits_in_video(
@@ -46,8 +35,9 @@ def ensure_clip_fits_in_video(
 
 
 def copy_video_metadata_file(
-    input_video: pl.Path,
-    output_video: pl.Path,
+    input_video: Path,
+    output_video: Path,
+    overwrite: bool = True,
     clear_rois: bool = True,
     clear_events: bool = True,
 ):
@@ -61,44 +51,44 @@ def copy_video_metadata_file(
 
     Parameters
     ----------
-    input_video : pl.Path
+    input_video : pathlib Path
         Path to input video file.
-    output_video : pl.Path
+    output_video : pathlib Path
         Path to output video file.
+    overwrite : bool, optional
+        Whether to overwrite the output metadata file if it already exists,
+        by default True
     clear_rois : bool, optional
         Whether to clear the "ROIs" field in the metadata file, by default True
     clear_events : bool, optional
         Whether to clear the "Events" field in the metadata file, by default True
     """
 
-    # Check if metadata file exists
     input_metadata = input_video.parent / f"{input_video.stem}.metadata.yaml"
-    ensure_file_exists(input_metadata)
-
-    # Copy metadata file
     output_metadata = output_video.parent / f"{output_video.stem}.metadata.yaml"
-    ensure_file_does_not_exist(output_metadata)
-    shutil.copy(input_metadata, output_metadata)
-    print(f"Copied metadata file from {input_metadata} to {output_metadata}")
+    if check_file_io_safety(input_metadata, output_metadata, overwrite=overwrite):
+        shutil.copy(input_metadata, output_metadata)
+        print(f"Copied metadata file from {input_metadata} to {output_metadata}")
 
-    # Update the "File" field in the metadata file if necessary
-    # Also start with clean "ROIs" and "Events" fields
-    if output_video.name != input_video.name:
-        with open(output_metadata, "r") as f:
-            metadata = yaml.safe_load(f)
-        metadata["File"] = output_video.name
-        if clear_rois:
-            metadata["ROIs"] = ""
-        if clear_events:
-            metadata["Events"] = ""
-        with open(output_metadata, "w") as f:
-            yaml.dump(metadata, f)
-        print(f"Updated output metadata file: {output_metadata}")
+        # Update the "File" field in the metadata file if necessary
+        # Also start with clean "ROIs" and "Events" fields
+        if output_video.name != input_video.name:
+            with open(output_metadata, "r") as f:
+                metadata = yaml.safe_load(f)
+            metadata["File"] = output_video.name
+            if clear_rois:
+                metadata["ROIs"] = ""
+            if clear_events:
+                metadata["Events"] = ""
+            with open(output_metadata, "w") as f:
+                yaml.dump(metadata, f, sort_keys=False)
+            print(f"Updated output metadata file: {output_metadata}")
 
 
 def compress_video(
-    input_video: pl.Path,
-    output_video: Optional[pl.Path] = None,
+    input_video: Path,
+    output_video: Optional[Path] = None,
+    overwrite: bool = False,
     codec: str = "libx264",
     crf: int = 23,
     copy_metadata: bool = True,
@@ -107,12 +97,15 @@ def compress_video(
 
     Parameters
     ----------
-    input_video : pl.Path
+    input_video : pathlib Path
         Path to input video file.
-    output_video : pl.Path, optional
+    output_video : pathlib Path, optional
         Path to output video file.
         If not specified, it will be the same as the input file,
         but the suffix will be changed to '.mp4'.
+    overwrite : bool, optional
+        Whether to overwrite the output video file if it already exists,
+        by default False
     codec : str, optional
         ffmpeg video codec to use, by default 'libx264'
         Should be one of the codecs supported by ffmpeg.
@@ -124,33 +117,34 @@ def compress_video(
         video file, by default True.
     """
 
-    ensure_file_exists(input_video)
     if output_video is None:
         output_video = input_video.with_suffix(".mp4")
-    ensure_file_does_not_exist(output_video)
 
-    # Get ffmpeg command
-    process = ffmpeg.input(input_video.as_posix(), y=None).output(
-        output_video.as_posix(), vcodec=codec, crf=crf, y=None
-    )
-    try:
-        process.run()
-    except ffmpeg.Error as e:
-        print(e.stderr.decode(), file=sys.stderr)
-        raise RuntimeError("Error running ffmpeg.") from e
+    if check_file_io_safety(input_video, output_video, overwrite=overwrite):
+        print(f"Compressing video: {input_video}")
 
-    print(f"Compressed video saved to: {output_video}")
+        # Get ffmpeg command
+        process = ffmpeg.input(input_video.as_posix(), y=None).output(
+            output_video.as_posix(), vcodec=codec, crf=crf, y=None
+        )
+        try:
+            process.run()
+        except ffmpeg.Error as e:
+            print(e.stderr.decode(), file=sys.stderr)
+            raise RuntimeError("Error running ffmpeg.") from e
 
-    if copy_metadata:
-        copy_video_metadata_file(input_video, output_video)
+        print(f"Compressed video saved to: {output_video}")
+
+        if copy_metadata:
+            copy_video_metadata_file(input_video, output_video, overwrite=overwrite)
 
 
 def extract_clip_from_video(
-    video_file: pl.Path,
+    input_video: Path,
+    output_clip: Path,
     start_frame: int = 0,
     clip_duration: int = 30,
-    output_dir: Optional[pl.Path] = None,
-    output_filename: Optional[str] = None,
+    overwrite: bool = False,
     copy_metadata: bool = True,
 ):
     """Extract a clip from a video file.
@@ -161,88 +155,101 @@ def extract_clip_from_video(
 
     Parameters
     ----------
-    video_file : pl.Path
-        Path to video file.
+    input_video : pathlib Path
+        Path to the input video file.
+    output_clip : pathlib Path
+        Path to the output clip file.
     start_frame : int, optional
         Starting frame, by default 0
     clip_duration : int, optional
         Clip duration in frames, by default 30
-    output_dir : pl.Path, optional
-        output directory, by default the same directory as the video file.
-        If non-existent, it will be created.
-    output_filename : str, optional
-        output file name, by default the same as the input file name,
-        suffixed with the start and end frame numbers.
+    overwrite : bool, optional
+        Whether to overwrite the output clip file if it already exists,
     copy_metadata : bool, optional
         Whether to copy the metadata from the input video file to the output
         video file, by default True.
     """
 
-    ensure_file_exists(video_file)
+    if check_file_io_safety(input_video, output_clip, overwrite=overwrite):
+        print(f"Extracting clip from {input_video}...")
+        end_frame = start_frame + clip_duration
 
-    print("-" * 80)
-    print(f"Extracting clip from {video_file}...")
-    print(f"Start frame: {start_frame}")
-    print(f"Clip duration: {clip_duration} frames")
-    end_frame = start_frame + clip_duration
-    print(f"End frame: {end_frame}")
+        # initialise capture and videowriter
+        cap = cv2.VideoCapture(str(input_video))
+        fourcc = cv2.VideoWriter_fourcc("m", "p", "4", "v")
+        frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        print(f"Frame width: {frame_width} pixels")
+        print(f"Frame height: {frame_height} pixels")
+        print(f"Frame rate: {fps} fps")
+        videowriter = cv2.VideoWriter(
+            output_clip.as_posix(),
+            fourcc,
+            fps,
+            (frame_width, frame_height),
+        )
 
-    # Get output file directory, name, and path
-    if output_dir is None:
-        output_dir = video_file.parent
-    output_dir.mkdir(exist_ok=True, parents=True)
+        # Ensure that clip fits in video
+        n_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        ensure_clip_fits_in_video(start_frame, end_frame, n_frames)
 
-    if output_filename is None:
-        clip_suffix = f"_clip-{start_frame}-{end_frame}"
-        output_filename = video_file.stem + clip_suffix + video_file.suffix
+        # Set capture to start frame
+        cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
 
-    output_file = output_dir / output_filename
+        # Extract clip
+        count = 0
+        while count < end_frame:
+            # read frame
+            success_frame, frame = cap.read()
+            # if not successfully read, exit
+            if not success_frame:
+                print("Can't receive frame. Exiting ...")
+                break
+                # write frame to video
+            # if frame within clip bounds: write to video
+            if (count >= start_frame) and (count < end_frame):
+                videowriter.write(frame)
+            count += 1
 
-    # initialise capture and videowriter
-    cap = cv2.VideoCapture(str(video_file))
-    fourcc = cv2.VideoWriter_fourcc("m", "p", "4", "v")
-    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    print(f"Frame width: {frame_width} pixels")
-    print(f"Frame height: {frame_height} pixels")
-    print(f"Frame rate: {fps} fps")
-    videowriter = cv2.VideoWriter(
-        output_file.as_posix(),
-        fourcc,
-        fps,
-        (frame_width, frame_height),
-    )
+        # Release everything if job is finished
+        cap.release()
+        videowriter.release()
+        cv2.destroyAllWindows()
 
-    # Ensure that clip fits in video
-    n_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    ensure_clip_fits_in_video(start_frame, end_frame, n_frames)
+        print(f"Saved clip to: {output_clip}")
+        print(f"Clip duration: {clip_duration} frames = {clip_duration / fps:.3f} sec")
 
-    # Set capture to start frame
-    cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+        if copy_metadata:
+            copy_video_metadata_file(input_video, output_clip, overwrite=overwrite)
 
-    # Extract clip
-    count = 0
-    while count < end_frame:
-        # read frame
-        success_frame, frame = cap.read()
-        # if not successfully read, exit
-        if not success_frame:
-            print("Can't receive frame. Exiting ...")
-            break
-            # write frame to video
-        # if frame within clip bounds: write to video
-        if (count >= start_frame) and (count < end_frame):
-            videowriter.write(frame)
-        count += 1
 
-    # Release everything if job is finished
-    cap.release()
-    videowriter.release()
-    cv2.destroyAllWindows()
+def copy_entire_video(
+    input_video: Path,
+    output_video: Path,
+    overwrite: bool = False,
+    copy_metadata: bool = True,
+):
+    """Copy an entire video file.
 
-    print(f"Saved clip to: {output_file}")
-    print(f"Clip duration: {clip_duration} frames = {clip_duration / fps:.3f} seconds")
+    Parameters
+    ----------
+    input_video : pathlib Path
+        Path to input video file.
+    output_video : pathlib Path
+        Path to output video file.
+    overwrite : bool, optional
+        Whether to overwrite the output video file if it already exists,
+        by default False.
+    copy_metadata : bool, optional
+        Whether to copy the metadata from the input video file to the output
+        video file, by default True.
+    """
 
-    if copy_metadata:
-        copy_video_metadata_file(video_file, output_file)
+    if check_file_io_safety(input_video, output_video, overwrite=overwrite):
+        shutil.copy(input_video, output_video)
+        msg = f"Copied {input_video} to: {output_video}"
+        if copy_metadata:
+            copy_video_metadata_file(input_video, output_video, overwrite=overwrite)
+            msg += ", including the metadata file."
+        print(msg)
