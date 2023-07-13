@@ -1,22 +1,32 @@
 import glob
 import tempfile
+from pathlib import Path
 
 import pytest
 import yaml
 
+from wazp.datasets import get_sample_dataset
 from wazp.utils import df_from_metadata_yaml_files
 
 
-def get_sample_project_metadata_fields() -> dict:
+# Pytest fixture for getting a sample dataset
+@pytest.fixture(scope="session")
+def sample_project() -> Path:
+    """Get the sample project for testing."""
+    return get_sample_dataset("jewel-wasp", "short-clips_compressed", progressbar=True)
+
+
+@pytest.fixture
+def metadata_fields(sample_project) -> dict:
     """Get the metadata dictionary from the sample project for testing."""
-    with open("sample_project/metadata_fields.yaml") as fi:
+    fields_file = sample_project / "metadata_fields_template.yaml"
+    with open(fields_file) as fi:
         metadata_fields = yaml.safe_load(fi)
     return metadata_fields
 
 
-def test_columns_names_and_nrows_in_df_from_metadata() -> None:
+def test_columns_names_and_nrows_in_df_from_metadata(metadata_fields) -> None:
     """Normal operation: test we can read the sample project metadata."""
-    metadata_fields = get_sample_project_metadata_fields()
     df_output = df_from_metadata_yaml_files("sample_project/videos", metadata_fields)
 
     fields_from_yaml = set(metadata_fields)
@@ -31,12 +41,11 @@ def test_columns_names_and_nrows_in_df_from_metadata() -> None:
     assert nrows == nfiles, "Number of rows in df != number of yaml files."
 
 
-def test_df_from_metadata_yaml_no_metadata() -> None:
+def test_df_from_metadata_yaml_no_metadata(metadata_fields) -> None:
     """
     Test with no metadata files (expect just to create an empty dataframe with
     metadata_fields column headers).
     """
-    metadata_fields = get_sample_project_metadata_fields()
     with tempfile.TemporaryDirectory() as empty_existing_directory:
         df_output = df_from_metadata_yaml_files(
             empty_existing_directory, metadata_fields
