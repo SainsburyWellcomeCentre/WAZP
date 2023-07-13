@@ -19,15 +19,17 @@ def sample_project() -> Path:
 @pytest.fixture
 def metadata_fields(sample_project) -> dict:
     """Get the metadata dictionary from the sample project for testing."""
-    fields_file = sample_project / "metadata_fields_template.yaml"
+    fields_file = sample_project / "metadata_fields.yaml"
     with open(fields_file) as fi:
         metadata_fields = yaml.safe_load(fi)
     return metadata_fields
 
 
-def test_columns_names_and_nrows_in_df_from_metadata(metadata_fields) -> None:
+def test_columns_names_and_nrows_in_df_from_metadata(
+    sample_project, metadata_fields
+) -> None:
     """Normal operation: test we can read the sample project metadata."""
-    df_output = df_from_metadata_yaml_files("sample_project/videos", metadata_fields)
+    df_output = df_from_metadata_yaml_files(sample_project / "videos", metadata_fields)
 
     fields_from_yaml = set(metadata_fields)
     df_columns = set(df_output.columns)
