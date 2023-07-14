@@ -1,4 +1,4 @@
-"""Module for fetching and loading datasets.
+"""Module for fetching and loading sample datasets.
 
 This module provides functions for fetching and loading data used in tests,
 examples, and tutorials. The data are stored in a remote repository on GIN
@@ -17,9 +17,9 @@ DATA_URL = "https://gin.g-node.org/SainsburyWellcomeCentre/WAZP/raw/master"
 LOCAL_DATA_DIR = Path("~", ".WAZP", "sample_data").expanduser()
 LOCAL_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-# A pooch download manager that keeps track of available datasets.
+# A pooch download manager that keeps track of available sample projects.
 # The path to each file is "base_url + registry_key"
-sample_datasets = pooch.create(
+sample_projects = pooch.create(
     path=LOCAL_DATA_DIR,
     base_url=f"{DATA_URL}/",
     registry={
@@ -31,54 +31,54 @@ sample_datasets = pooch.create(
 )
 
 
-def find_sample_datasets(registry: pooch.Pooch = sample_datasets) -> dict:
-    """Find all available datasets in the remote data repository.
+def find_sample_projects(registry: pooch.Pooch = sample_projects) -> dict:
+    """Find all available projects in the remote data repository.
 
     Parameters
     ----------
     registry : pooch.Pooch
-        A pooch download manager object that keeps track of available datasets.
-        Default: wazp.datasets.sample_datasets
+        A pooch download manager object that keeps track of available projects.
+        Default: wazp.datasets.sample_projects
 
     Returns
     -------
     dict
-        A dictionary with species names as keys and a list of available datasets
+        A dictionary with species names as keys and a list of available projects
         as values.
     """
-    datasets_per_species = {}
+    projects_per_species = {}
     for key in registry.registry.keys():
         species, kind = key.split("/")
         kind = kind.split(".")[0]
-        if species not in datasets_per_species:
-            datasets_per_species[species] = [kind]
+        if species not in projects_per_species:
+            projects_per_species[species] = [kind]
         else:
-            if kind not in datasets_per_species[species]:
-                datasets_per_species[species].append(kind)
+            if kind not in projects_per_species[species]:
+                projects_per_species[species].append(kind)
 
-    return datasets_per_species
+    return projects_per_species
 
 
-def get_sample_dataset(
+def get_sample_project(
     species_name: str = "jewel-wasp",
-    dataset_kind: str = "short-clips_compressed",
+    project_name: str = "short-clips_compressed",
     progressbar: bool = True,
 ) -> Path:
-    """Return the local path to a sample dataset.
+    """Return the local path to a sample sample project.
 
-    The dataset is downloaded from the remote data repository on GIN, unzipped
-    and cached under ~/.WAZP/sample_data. If the dataset has already been
+    The project is downloaded from the remote data repository on GIN, unzipped
+    and cached under ~/.WAZP/sample_data. If the project has already been
     downloaded, the cached version is used. The paths in the WAZP project config
-    file are updated to point to the downloaded dataset.
+    file are updated to point to the downloaded project.
 
     Parameters
     ----------
     species_name : str
         Name of the species to download. Currently only "jewel-wasp" is available.
         Default: "jewel-wasp".
-    dataset_kind : str
-        Which kind of dataset to download. You can find the available datasets
-        per species by calling `wazp.datasets.find_sample_datasets()`.
+    project_name : str
+        Name of the project to download. You can find the available projects
+        per species by calling `wazp.datasets.find_sample_projects()`.
         Default: "short-clips_compressed".
     progressbar : bool
         Whether to show a progress bar while downloading the data. Default: True.
@@ -86,60 +86,60 @@ def get_sample_dataset(
     Returns
     -------
     pathlib.Path
-        Path to the downloaded dataset (unzipped folder)
+        Path to the downloaded project (unzipped folder)
     """
 
-    datasets_per_species = find_sample_datasets(sample_datasets)
-    if species_name not in datasets_per_species.keys():
+    projects_per_species = find_sample_projects(sample_projects)
+    if species_name not in projects_per_species.keys():
         raise ValueError(
             f"Species {species_name} not found. "
-            f"Available species: {datasets_per_species.keys()}"
+            f"Available species: {projects_per_species.keys()}"
         )
-    if dataset_kind not in datasets_per_species[species_name]:
+    if project_name not in projects_per_species[species_name]:
         raise ValueError(
-            f"Dataset kind {dataset_kind} not found for species {species_name}. "
-            f"Available dataset kinds: {datasets_per_species[species_name]}"
+            f"Project name {project_name} not found for species {species_name}. "
+            f"Available project names: {projects_per_species[species_name]}"
         )
 
-    full_dataset_name = f"{species_name}/{dataset_kind}.zip"
-    sample_datasets.fetch(
-        full_dataset_name,
+    species_project_name = f"{species_name}/{project_name}.zip"
+    sample_projects.fetch(
+        species_project_name,
         progressbar=progressbar,
         processor=pooch.Unzip(extract_dir=LOCAL_DATA_DIR / species_name),
     )
 
-    dataset_path = LOCAL_DATA_DIR / species_name / dataset_kind
-    _update_paths_in_project_config(dataset_path)
-    return dataset_path
+    project_path = LOCAL_DATA_DIR / species_name / project_name
+    _update_paths_in_project_config(project_path)
+    return project_path
 
 
 def _update_paths_in_project_config(
-    sample_dataset_path: Path,
+    sample_project_path: Path,
 ):
     """Update the paths in the WAZP project config file to point to the downloaded
-    dataset on the local machine.
+    project on the local machine.
 
     Parameters
     ----------
-    sample_dataset_path : pathlib Path
-        Path to the downloaded dataset (unzipped folder) on the local machine.
+    sample_project_path : pathlib Path
+        Path to the downloaded project (unzipped folder) on the local machine.
     """
-    config_file = sample_dataset_path / "WAZP_config.yaml"
+    config_file = sample_project_path / "WAZP_config.yaml"
 
     with open(config_file, "r") as f:
         yaml_dict = yaml.safe_load(f)
 
     yaml_dict["videos_dir_path"] = (
-        (sample_dataset_path / "videos").absolute().as_posix()
+        (sample_project_path / "videos").absolute().as_posix()
     )
     yaml_dict["pose_estimation_results_path"] = (
-        (sample_dataset_path / "pose_estimation_results").absolute().as_posix()
+        (sample_project_path / "pose_estimation_results").absolute().as_posix()
     )
     yaml_dict["metadata_fields_file_path"] = (
-        (sample_dataset_path / "metadata_fields.yaml").absolute().as_posix()
+        (sample_project_path / "metadata_fields.yaml").absolute().as_posix()
     )
     yaml_dict["dashboard_export_data_path"] = (
-        (sample_dataset_path / "wazp_output").absolute().as_posix()
+        (sample_project_path / "wazp_output").absolute().as_posix()
     )
 
     with open(config_file, "w") as f:

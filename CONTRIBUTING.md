@@ -125,7 +125,9 @@ For Windows, be sure to download the ``chromedriver_win32.zip`` file, extract th
 It's a good idea to test locally before pushing. Pytest will run all tests and also report test coverage.
 
 #### Test data
-For some tests, you will need to use real experimental data. We store some sample datasets in an external data repository. See [sample datasets](#sample-datasets) for more information.
+For some tests, you will need to use real experimental data.
+We store some sample projects in an external data repository.
+See [sample projects](#sample-projects) for more information.
 
 
 ### Continuous integration
@@ -199,15 +201,15 @@ rm -rf docs/build
 sphinx-build docs/source docs/build
 ```
 
-## Sample datasets
+## Sample projects
 
-We maintain some sample WAZP datasets to be used for testing, examples and tutorials on an [external data repository](https://gin.g-node.org/SainsburyWellcomeCentre/WAZP).
+We maintain some sample WAZP projects to be used for testing, examples and tutorials on an [external data repository](https://gin.g-node.org/SainsburyWellcomeCentre/WAZP).
 Our hosting platform of choice is called [GIN](https://gin.g-node.org/) and is maintained by the [German Neuroinformatics Node](https://www.g-node.org/).
 GIN has a GitHub-like interface and git-like [CLI](https://gin.g-node.org/G-Node/Info/wiki/GIN+CLI+Setup#quickstart) functionalities.
 
-### Dataset organisation
+### Project organisation
 
-The datasets are stored in folders named after the species - e.g. `jewel-wasp` (*Ampulex compressa*).
+The projects are stored in folders named after the species - e.g. `jewel-wasp` (*Ampulex compressa*).
 Each species folder may contain various WAZP sample projects as zipped archives. For example, the `jewel-wasp` folder contains the following projects:
 - `short-clips_raw.zip` - a project containing short ~10 second clips extracted from raw .avi files.
 - `short-clips_compressed.zip` - same as above, but compressed using the H.264 codec and saved as .mp4 files.
@@ -232,42 +234,43 @@ Each WAZP sample project has the following structure:
 ```
 To learn more about how the sample projects were generated, see `scripts/generate_sample_projects` in the [WAZP GitHub repository](https://github.com/SainsburyWellcomeCentre/WAZP).
 
-### Fetching datasets
+### Fetching projects
 To fetch the data from GIN, we use the [pooch](https://www.fatiando.org/pooch/latest/index.html) Python package, which can download data from pre-specified URLs and store them locally for all subsequent uses. It also provides some nice utilities, like verification of sha256 hashes and decompression of archives.
 
 The relevant funcitonality is implemented in the `wazp.datasets.py` module. The most important parts of this module are:
 
-1. The `sample_datasets` registry, which contains a list of the zipped dataset files and their known hashes.
-2. The `find_sample_datasets()` function, which returns the names of available datasets per species, in the form of a dictionary.
-3. The `get_sample_dataset()` function, which downloads a dataset (if not already cached locally), unzips it, and returns the path to the unzipped folder.
+1. The `sample_projects` registry, which contains a list of the zipped projects and their known hashes.
+2. The `find_sample_projects()` function, which returns the names of available projects per species, in the form of a dictionary.
+3. The `get_sample_project()` function, which downloads a project (if not already cached locally), unzips it, and returns the path to the unzipped folder.
 
 Example usage:
 ```python
->>> from wazp.datasets import find_sample_datasets, get_sample_dataset
+>>> from wazp.datasets import find_sample_projects, get_sample_project
 
->>> datasets_per_species = find_sample_datasets()
->>> print(datasets_per_species)
+>>> projects_per_species = find_sample_projects()
+>>> print(projects_per_species)
 {'jewel-wasp': ['short-clips_raw', 'short-clips_compressed', 'entire-video_raw', 'entire-video_compressed']}
 
->>> dataset_path = get_sample_dataset('jewel-wasp', 'short-clips_raw')
->>> print(dataset_path)
+>>> project_path = get_sample_project('jewel-wasp', 'short-clips_raw')
+>>> print(project_path)
 /home/user/.WAZP/sample_data/jewel-wasp/short-clips_raw
 ```
 
 ### Local storage
-By default, the datasets are stored in the `~/.WAZP/sample_data` folder. This can be changed by setting the `LOCAL_DATA_DIR` variable in the `wazp.datasets.py` module.
+By default, the projects are stored in the `~/.WAZP/sample_data` folder. This can be changed by setting the `LOCAL_DATA_DIR` variable in the `wazp.datasets.py` module.
 
-### Adding new datasets
-Only core WAZP developers may add new datasets to the external data repository. To add a new dataset, you will need to:
+### Adding new projects
+Only core WAZP developers may add new projects to the external data repository.
+To add a new poject, you will need to:
 
 1. Create a [GIN](https://gin.g-node.org/) account
 2. Ask to be added as a collaborator on the [WAZP data repository](https://gin.g-node.org/SainsburyWellcomeCentre/WAZP) (if not already)
 3. Download the [GIN CLI](https://gin.g-node.org/G-Node/Info/wiki/GIN+CLI+Setup#quickstart) and set it up with your GIN credentials, by running `gin login` in a terminal.
 4. Clone the WAZP data repository to your local machine, by running `gin get SainsburyWellcomeCentre/WAZP` in a terminal.
-5. Add your new datasets, followed by `git add`, and `git commit`, just like you would with a GitHub repository. Make sure to follow the [dataset organisation](#dataset-organisation) described above. Don't forget to modify the README file accordingly.
+5. Add your new projects, followed by `git add`, and `git commit`, just like you would with a GitHub repository. Make sure to follow the [project ornanisation](#project-organisation) as described above. Don't forget to modify the README file accordingly.
 6. Upload the commited changes to the GIN repository, by running `gin upload`. Latest changes to the repository can be pulled via `gin download`. `gin sync` will synchronise the latest changes bidirectionally.
-7. Determine the sha256 checksum hash of each new dataset file, by running `sha256sum {dataset-file}` in a terminal. Alternatively, you can use `pooch` to do this for you: `python -c "import pooch; pooch.file_hash('/path/to/file.zip')"`. If you wish to generate a text file containing the hashes of all the files in a given folder, you can use `python -c "import pooch; pooch.make_registry('/path/to/folder', 'hash_registry.txt')`.
-8. Update the `wazp.datasets.py` module on the [WAZP GitHub repository](https://github.com/SainsburyWellcomeCentre/WAZP) by adding the new datasets to the `sample_datasets` registry. Make sure to include the correct sha256 hash, as determined in the previous step. Follow all the usual [guidelines for contributing code](#contributing-code). Additionally, you may want to update the scripts in `scripts/generate_sample_projects`, depending on how you generated the new datasets. Make sure to test whether the new datasets can be fetched successfully (see [fetching datasets](#fetching-datasets) above) before submitting your pull request.
+7. Determine the sha256 checksum hash of each new project archive, by running `sha256sum {project-name.zip}` in a terminal. Alternatively, you can use `pooch` to do this for you: `python -c "import pooch; pooch.file_hash('/path/to/file.zip')"`. If you wish to generate a text file containing the hashes of all the files in a given folder, you can use `python -c "import pooch; pooch.make_registry('/path/to/folder', 'hash_registry.txt')`.
+8. Update the `wazp.datasets.py` module on the [WAZP GitHub repository](https://github.com/SainsburyWellcomeCentre/WAZP) by adding the new projects to the `sample_projects` registry. Make sure to include the correct sha256 hash, as determined in the previous step. Follow all the usual [guidelines for contributing code](#contributing-code). Additionally, you may want to update the scripts in `scripts/generate_sample_projects`, depending on how you generated the new projects. Make sure to test whether the new projects can be fetched successfully (see [fetching projects](#fetching-projects) above) before submitting your pull request.
 
 You can also perform steps 3-6 via the GIN web interface, if you prefer to avoid using the CLI.
 
