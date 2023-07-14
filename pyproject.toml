@@ -26,7 +26,8 @@ dependencies = [
   "shapely",
   "openpyxl",
   "defusedxml",
-  "pooch"
+  "pooch",
+  "tqdm",
 ]
 
 classifiers = [
