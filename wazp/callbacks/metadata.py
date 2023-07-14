@@ -2,6 +2,8 @@ import base64
 import io
 import pathlib as pl
 import re
+import warnings
+from typing import Union
 
 import dash
 import dash_bootstrap_components as dbc
@@ -10,9 +12,7 @@ import yaml
 from dash import Input, Output, State, dash_table, dcc, html
 
 from wazp import utils
-
-# TODO: other video extensions? have this in project config file instead?
-VIDEO_TYPES = [".avi", ".mp4"]
+from wazp.callbacks._common import NO_CONFIG_MESSAGE, VIDEO_TYPES
 
 
 ##########################
@@ -215,7 +215,7 @@ def get_callbacks(app: dash.Dash) -> None:
     )
     def create_metadata_table_and_buttons(
         metadata_output_children: list, app_storage: dict
-    ) -> html.Div:
+    ) -> Union[html.Div, None]:
         """Generate html component with a table holding the
         metadata per video and with auxiliary buttons for
         common table manipulations.
@@ -237,7 +237,19 @@ def get_callbacks(app: dash.Dash) -> None:
         html.Div
             html component holding the metadata dash_table and
             the auxiliary buttons for common table manipulations
+
+        Warns
+        -----
+        UserWarning
+            If no configuration is found (from navigating directly
+            to the ROI tab, for example).
         """
+
+        if not app_storage:
+            # we've likely navigated to the metadata page without an input
+            # config yaml file... not necessarily an error
+            warnings.warn("Configuration not yet loaded.")
+            return NO_CONFIG_MESSAGE
 
         if not metadata_output_children:
             metadata_table = create_metadata_table_component_from_df(
@@ -367,6 +379,7 @@ def get_callbacks(app: dash.Dash) -> None:
                     generate_yaml_tooltip,
                 ]
             )
+        return None
 
     @app.callback(
         Output("metadata-table", "data"),
