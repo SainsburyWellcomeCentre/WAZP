@@ -23,10 +23,10 @@ sample_datasets = pooch.create(
     path=LOCAL_DATA_DIR,
     base_url=f"{DATA_URL}/",
     registry={
-        "jewel-wasp/short-clips_raw.zip": None,  # noqa: E501
-        "jewel-wasp/short-clips_compressed.zip": None,  # noqa: E501
-        "jewel-wasp/entire-video_raw.zip": None,  # noqa: E501
-        "jewel-wasp/entire-video_compressed.zip": None,  # noqa: E501
+        "jewel-wasp/short-clips_raw.zip": "7fab80e68af5b90a4633e886b06bebefd7d400c5d8acc23e1693ecfd8d344f0d",  # noqa: E501
+        "jewel-wasp/short-clips_compressed.zip": "2b4a6a4b00c6a41eae71d10e74dff61d5a2bb7d2b627db6edb59abae0e18aaee",  # noqa: E501
+        "jewel-wasp/entire-video_raw.zip": "f587c8e60b9df3b4664a6587a624abdcf401263b86ba0268c0b5a0f8e89f5167",  # noqa: E501
+        "jewel-wasp/entire-video_compressed.zip": "d2c5d4e4febc9eca1d523cb113b004fe6368a3d63bde5206cef04ef576c6a042",  # noqa: E501
     },
 )
 
