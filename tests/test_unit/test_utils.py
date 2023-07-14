@@ -1,19 +1,10 @@
 import glob
 import tempfile
-from pathlib import Path
 
 import pytest
 import yaml
 
-from wazp.datasets import get_sample_project
 from wazp.utils import df_from_metadata_yaml_files
-
-
-# Pytest fixture for getting a sample project
-@pytest.fixture(scope="session")
-def sample_project() -> Path:
-    """Get the sample project for testing."""
-    return get_sample_project("jewel-wasp", "short-clips_compressed", progressbar=True)
 
 
 @pytest.fixture
