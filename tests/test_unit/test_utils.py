@@ -34,11 +34,15 @@ def test_columns_names_and_nrows_in_df_from_metadata(
     fields_from_yaml = set(metadata_fields)
     df_columns = set(df_output.columns)
     diff = fields_from_yaml.symmetric_difference(df_columns)
+    # Ignore the "ROIs" column, which is absent from the metadata_fields.yaml
+    if diff == {"ROIs"}:
+        diff = set()
     assert (
-        fields_from_yaml == df_columns
+        not diff
     ), f"Metadata fields and df columns differ in the following fields: {diff}"
 
-    nfiles = len(glob.glob("sample_project/videos/*.yaml"))
+    glob_pattern = (sample_project / "videos" / "*.yaml").as_posix()
+    nfiles = len(glob.glob(glob_pattern))
     nrows, _ = df_output.shape
     assert nrows == nfiles, "Number of rows in df != number of yaml files."
 
