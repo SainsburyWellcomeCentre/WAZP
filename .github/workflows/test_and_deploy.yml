@@ -36,6 +36,15 @@ jobs:
         - os: windows-latest
           python-version: "3.10"
     steps:
+      # Cache the test data to avoid re-downloading
+      - name: Cache Test Data
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.WAZP/*
+          key: cached-test-data
+          enableCrossOsArchive: true
+
       # A hack because chrome isn't in the PATH on Windows
       - name: Fix Chrome application path on Windows
         if: matrix.os == 'windows-latest'
