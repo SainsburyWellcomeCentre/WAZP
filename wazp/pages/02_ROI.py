@@ -53,6 +53,8 @@ fig_config = {
     "displayModeBar": True,  # mode bar always visible
     "showAxisDragHandles": True,  # show axis drag handles
     "modeBarButtonsToAdd": [
+        "drawrect",
+        "drawcircle",
         "drawclosedpath",
         "eraseshape",
     ],
