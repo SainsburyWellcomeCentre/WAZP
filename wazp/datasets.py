@@ -64,7 +64,7 @@ def get_sample_project(
     project_name: str = "short-clips_compressed",
     progressbar: bool = True,
 ) -> Path:
-    """Return the local path to a sample sample project.
+    """Return the local path to a sample project.
 
     The project is downloaded from the remote data repository on GIN, unzipped
     and cached under ~/.WAZP/sample_data. If the project has already been
