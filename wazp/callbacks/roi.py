@@ -381,8 +381,12 @@ def get_callbacks(app: dash.Dash) -> None:
             if "shapes" in graph_relayout.keys():
                 # this means that whole shapes have been created or deleted
 
-                # Get the shapes from the graph
-                graph_shapes = graph_relayout["shapes"]
+                # Convert all shapes to path shapes
+                graph_shapes = [
+                    utils.convert_shape_to_path(shape)
+                    for shape in graph_relayout["shapes"]
+                ]
+
                 # Get the stored shapes for the video
                 stored_shapes = roi_storage[video_name]["shapes"]
 

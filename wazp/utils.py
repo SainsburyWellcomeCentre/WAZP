@@ -1,6 +1,7 @@
+import math
 import pathlib as pl
 from datetime import datetime, timedelta
-from typing import Callable
+from typing import Callable, Literal, Optional
 
 import cv2
 import pandas as pd
@@ -289,7 +290,6 @@ def get_dataframes_to_combine(
     # Read the dataframe for each video and h5 file
     list_df_to_export = []
     for h5, video in zip(list_h5_file_paths, list_selected_videos):
-
         # Get the metadata file for this video
         # (built from video filename)
         yaml_filename = pl.Path(app_storage["config"]["videos_dir_path"]) / (
@@ -429,7 +429,6 @@ def add_ROIs_to_video_dataframe(
     # Use order of ROIs in the project config file
     # as hierarchy if required
     if flag_use_ROI_custom_order:
-
         # sort pairs of ROI tags and polygons
         # in the same order as the ROI tags appear in
         # the config file
@@ -774,3 +773,178 @@ def shape_drop_custom_keys(shape: dict) -> dict:
     for k in shape.keys() - {"drawn_on_frame", "roi_name"}:
         new_shape[k] = shape[k]
     return new_shape
+
+
+def convert_shape_to_path(shape: dict) -> dict:
+    """Ensures that the dash shape type is 'path' by adding
+    an SVG path string to the shape dictionary's "path" key.
+
+    The calculation of the SVG path string depends on the shape type:
+    If the shape type is 'path', the svg path stays the same.
+    If the shape type is 'rect' or `circle, the SVG path is derived from
+    the bounding box of the shape ('x0', 'y0', 'x1', 'y1').
+
+    Parameters
+    ----------
+    shape : dict
+        Shape dictionary for a single ROI.
+        Must be one of the following types: 'path', 'rect' or 'circle'
+
+    Returns
+    -------
+    dict
+        Shape dictionary for a single ROI with the "path" key added.
+        The shape "type" is 'path'.
+        The "path" key contains the SVG path string.
+        The "x0", "y0", "x1", "y1" keys are removed, if present.
+        All other keys are preserved.
+    """
+
+    if shape["type"] == "path":
+        new_shape = shape
+
+    elif shape["type"] in ["rect", "circle"]:
+        bbox_coords = ["x0", "y0", "x1", "y1"]
+        if not all(key in shape.keys() for key in bbox_coords):
+            raise ValueError(
+                f"Shape is missing some of the required keys: {bbox_coords}"
+            )
+
+        new_shape = {
+            k: v for k, v in shape.items() if k not in ["x0", "y0", "x1", "y1"]
+        }
+        new_shape["type"] = "path"
+        new_shape["path"] = _bbox_to_svg_path(
+            bbox=tuple([shape[key] for key in bbox_coords]),
+            shape_type=shape["type"],
+        )
+
+    else:
+        raise ValueError(
+            f"Shape type '{shape['type']}' not supported",
+            "Valid types are 'path', 'rect' and 'circle'",
+        )
+    return new_shape
+
+
+def _bbox_to_svg_path(
+    bbox: tuple, shape_type: Literal["rect", "circle"]
+) -> Optional[str]:
+    """
+    Derives the SVG path string given a bounding box `bbox` and a shape type.
+
+    Parameters
+    ----------
+    bbox : tuple
+        A tuple of 4 floats, (x0, y0, x1, y1) representing
+        the coordinates of the top left and bottom right corners.
+    shape_type : Literal["rect", "circle"], optional
+        One of 'rect' or 'circle', by default "rect"
+        If the shape type is 'rect', the derived SVG path string links 4 corner points
+        (`x0`,`y0`), (`x1`,`y0`), (`x1`,`y1`), (`x0`,`y1`) as well as
+        the 4 midpoints along the edges of the rectangle.
+        If the shape type is 'circle', the SVG path links equally sampled points
+        around the circle with center ((`x0`+`x1`)/2, (`y0`+`y1`)/2))
+        and radii (|(`x0`+`x1`)/2 - `x0`|, |(`y0`+`y1`)/2 -`y0`)|).
+
+    Returns
+    -------
+    str
+        SVG path string representing the shape. The string starts with 'M',
+        indicates end of intermediate line segments with 'L' and marks the end
+        of the path with 'Z' (see [1]).
+
+    References
+    ----------
+    [1] "SVG Path",
+        https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
+    """
+    if shape_type == "rect":
+        points = _get_points_on_rectangle(bbox)
+    elif shape_type == "circle":
+        x0, y0, x1, y1 = bbox
+        center = ((x0 + x1) / 2, (y0 + y1) / 2)
+        radius = (abs((x0 + x1) / 2 - x0), abs((y0 + y1) / 2 - y0))
+        points = _get_points_on_circle(center, radius)
+    else:
+        raise ValueError(
+            f"Shape type '{shape_type}' not supported",
+            "Valid types are 'rect' and 'circle'",
+        )
+
+    # Convert the points to an SVG path
+    svg_path = f"M{points[0][0]},{points[0][1]}"
+    for point in points[1:]:
+        svg_path += f"L{point[0]},{point[1]}"
+    svg_path += "Z"
+    return svg_path
+
+
+def _get_points_on_rectangle(bbox: tuple) -> list[tuple[float, float]]:
+    """
+    Returns the coordinates of the corners and midpoints of a rectangle
+    defined by a bounding box.
+
+    Parameters
+    ----------
+    bbox : tuple
+        A tuple of 4 floats, (x0, y0, x1, y1) representing
+        the coordinates of the top left and bottom right corners.
+
+    Returns
+    -------
+    list[tuple[float, float]]
+        Coordinates of the corners and midpoints of the rectangle.
+        They start with the top left corner and go clockwise.
+    """
+    x0, y0, x1, y1 = bbox
+
+    # The 4 corners
+    corners = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+    # Find 4 midpoints along the edges of the rectangle
+    midpoints = [
+        ((x0 + x1) / 2, y0),
+        (x1, (y0 + y1) / 2),
+        ((x0 + x1) / 2, y1),
+        (x0, (y0 + y1) / 2),
+    ]
+    # Interleave the corners and midpoints
+    return [val for pair in zip(corners, midpoints) for val in pair]
+
+
+def _get_points_on_circle(
+    center: tuple[float, float], radius: tuple[float, float]
+) -> list[tuple[float, float]]:
+    """
+    Returns the coordinates of n points equally spaced on a circle.
+    The angle between two points is 2*pi/n radians. The number of points n
+    is at least 8, and is chosen proportional to the mean radius of the circle.
+
+    Parameters
+    ----------
+    center : tuple[float, float]
+        Coordinates of the center of the circle
+    radius : tuple[float, float]
+        Radius of the circle
+
+    Returns
+    -------
+    list[tuple[float, float]]
+        Coordinates of the points on the circle
+
+    Note
+    ----
+    Although dash calls the shape type 'circle', geometrically it is an ellipse,
+    as evidenced by the radius being a tuple of two floats (x-radius, y-radius).
+    """
+    mean_radius = (radius[0] + radius[1]) / 2
+    n = 2 * math.floor(mean_radius / 200) + 8
+    angle = 2 * math.pi / n
+    x, y = center
+    points = []
+    for i in range(n):
+        theta = angle * i
+        x_i = x + radius[0] * math.cos(theta)
+        y_i = y + radius[1] * math.sin(theta)
+        points.append((x_i, y_i))
+    return points
