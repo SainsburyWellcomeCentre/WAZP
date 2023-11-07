@@ -622,7 +622,7 @@ def stored_shape_to_table_row(shape: dict) -> dict:
         - path: SVG path for the ROI
     """
     return {
-        "name": shape["roi_name"],
+        "name": shape["name"],
         "on frame": shape["drawn_on_frame"],
         "path": shape["path"],
     }
@@ -648,7 +648,7 @@ def stored_shape_to_yaml_entry(shape: dict) -> dict:
         - path: SVG path for the ROI
     """
     return {
-        "name": shape["roi_name"],
+        "name": shape["name"],
         "drawn_on_frame": shape["drawn_on_frame"],
         "line_color": shape["line"]["color"],
         "path": shape["path"],
@@ -689,7 +689,7 @@ def yaml_entry_to_stored_shape(roi_entry: dict) -> dict:
         "type": "path",
         "path": roi_entry["path"],
         "drawn_on_frame": roi_entry["drawn_on_frame"],
-        "roi_name": roi_entry["name"],
+        "name": roi_entry["name"],
     }
 
 
@@ -741,7 +741,7 @@ def shape_drop_custom_keys(shape: dict) -> dict:
     keys in the shape dictionary, so we remove them here
     """
     new_shape = dict()
-    for k in shape.keys() - {"drawn_on_frame", "roi_name"}:
+    for k in shape.keys() - {"drawn_on_frame"}:
         new_shape[k] = shape[k]
     return new_shape
 

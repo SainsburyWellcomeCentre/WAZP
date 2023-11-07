@@ -126,7 +126,7 @@ def get_callbacks(app: dash.Dash) -> None:
             # restrict ROI options to the ones not already stored
             if video_name in roi_storage.keys():
                 stored_roi_names = [
-                    shape["roi_name"] for shape in roi_storage[video_name]["shapes"]
+                    shape["name"] for shape in roi_storage[video_name]["shapes"]
                 ]
                 options = [
                     opt for opt in options if opt["value"] not in stored_roi_names
@@ -411,7 +411,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 # Add the frame number and the ROI name to the new shapes
                 for shape in new_graph_shapes:
                     shape["drawn_on_frame"] = frame_num
-                    shape["roi_name"] = roi_color_mapping["color2roi"][
+                    shape["name"] = roi_color_mapping["color2roi"][
                         shape["line"]["color"]
                     ]
                 # Pass the new shapes to the storage
@@ -453,9 +453,7 @@ def get_callbacks(app: dash.Dash) -> None:
                 ]
                 stored_shapes = roi_storage[video_name]["shapes"]
                 roi_storage[video_name]["shapes"] = [
-                    sh
-                    for sh in stored_shapes
-                    if sh["roi_name"] not in deleted_roi_names
+                    sh for sh in stored_shapes if sh["name"] not in deleted_roi_names
                 ]
                 # Clear the row selection
                 roi_table_selected_rows = []
