@@ -621,10 +621,11 @@ def stored_shape_to_table_row(shape: dict) -> dict:
         - on frame: frame number on which the ROI was last edited
         - path: SVG path for the ROI
     """
+    poly = svg_path_to_polygon(shape["path"])
     return {
         "name": shape["name"],
         "on frame": shape["drawn_on_frame"],
-        "path": shape["path"],
+        "area (px)": poly.area,
     }
 
 

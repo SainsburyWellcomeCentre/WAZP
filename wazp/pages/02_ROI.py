@@ -2,6 +2,7 @@ import dash
 import dash_bootstrap_components as dbc
 import plotly.express as px
 from dash import dash_table, dcc, html
+from dash.dash_table.Format import Format, Scheme
 from PIL import Image
 
 ###############################
@@ -23,7 +24,7 @@ init_roi_color = px.colors.qualitative.Dark2[0]
 init_frame_slider_params: dict = {"max": 1, "step": 1, "value": 0}
 init_frame_slider_storage: dict = {v: init_frame_slider_params for v in init_videos}
 # Columns for ROI table
-init_roi_table_columns = ["name", "on frame", "path"]
+init_roi_table_columns = ["name", "on frame", "area (px)"]
 # Initialize the ROI storage dictionary
 init_roi_storage: dict = {v: {"shapes": []} for v in init_videos}
 # Initialize the ROI status alert
@@ -99,9 +100,15 @@ frame_status_alert = dbc.Alert(
 # Table of ROIs               #
 ###############################
 
+table_columns = [dict(name=c, id=c) for c in init_roi_table_columns]
+for i, c in enumerate(table_columns):
+    if "area" in c["name"]:
+        table_columns[i]["type"] = "numeric"
+        table_columns[i]["format"] = Format(precision=0, scheme=Scheme.decimal_integer)
+
 roi_table = dash_table.DataTable(
     id="roi-table",
-    columns=[dict(name=c, id=c) for c in init_roi_table_columns],
+    columns=table_columns,
     data=[],
     selected_rows=[],
     editable=False,
