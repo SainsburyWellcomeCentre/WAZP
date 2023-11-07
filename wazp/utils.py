@@ -351,35 +351,6 @@ def get_dataframes_to_combine(
     return list_df_to_export
 
 
-def svg_path_to_polygon(svg_path: str) -> Polygon:
-    """Converts an SVG Path that describes a closed
-    polygon into a Shapely polygon.
-
-    The svg_path string starts with 'M' (initial point),
-    indicates end of intermediate line segments with 'L'
-    and marks the end of the string with 'Z' (end of path)
-    (see [1]).
-
-    Based on original function by @niksirbi
-
-    References
-    ----------
-    [1] "SVG Path",
-        https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
-    """
-
-    # strip svg_path of initial and end marks
-    svg_path_no_ends = svg_path.lstrip("M").rstrip("Z")
-
-    # extract points as x,y tuples
-    list_points = [
-        tuple(float(s) for s in tuple_str.split(","))
-        for tuple_str in svg_path_no_ends.split("L")
-    ]
-
-    return Polygon(list_points)
-
-
 def add_ROIs_to_video_dataframe(
     df: pd.DataFrame, ROIs_as_polygons: dict, app_storage: dict
 ) -> pd.DataFrame:
@@ -948,3 +919,30 @@ def _get_points_on_circle(
         y_i = y + radius[1] * math.sin(theta)
         points.append((x_i, y_i))
     return points
+
+
+def svg_path_to_polygon(svg_path: str) -> Polygon:
+    """Converts an SVG Path that describes a closed
+    polygon into a Shapely polygon.
+
+    The svg_path string starts with 'M', indicates end of intermediate line
+    segments with 'L' and marks the end of the path with 'Z' (see [1]).
+
+    Based on original function by @niksirbi
+
+    References
+    ----------
+    [1] "SVG Path",
+        https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
+    """
+
+    # strip svg_path of initial and end marks
+    svg_path_no_ends = svg_path.lstrip("M").rstrip("Z")
+
+    # extract points as x,y tuples
+    list_points = [
+        tuple(float(s) for s in tuple_str.split(","))
+        for tuple_str in svg_path_no_ends.split("L")
+    ]
+
+    return Polygon(list_points)
