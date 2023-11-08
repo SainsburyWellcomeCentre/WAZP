@@ -46,6 +46,7 @@ fig.update_layout(
     margin=dict(l=0, r=0, t=0, b=0),
     yaxis={"visible": False, "showticklabels": False},
     xaxis={"visible": False, "showticklabels": False},
+    height=800,
 )
 
 # figure configuration
@@ -257,8 +258,8 @@ layout = dbc.Container(
         html.H1(children="ROI definition"),
         dbc.Row(
             [
-                dbc.Col(frame_card, width=7),
-                dbc.Col(table_card, width=5),
+                dbc.Col(frame_card, width=8),
+                dbc.Col(table_card, width=4),
             ],
         ),
     ],
