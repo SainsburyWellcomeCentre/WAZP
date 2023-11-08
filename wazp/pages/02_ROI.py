@@ -219,7 +219,19 @@ frame_card = dbc.Card(
 # ROI table card
 table_card = dbc.Card(
     [
-        dbc.CardHeader(html.H3("Defined ROIs")),
+        dbc.CardHeader(
+            [
+                dbc.Row(
+                    [
+                        dbc.Col(delete_rois_button, width={"size": "auto"}),
+                        dbc.Col(save_rois_button, width={"size": "auto"}),
+                        dbc.Col(load_rois_button, width={"size": "auto"}),
+                        save_rois_tooltip,
+                        load_rois_tooltip,
+                    ],
+                ),
+            ]
+        ),
         dbc.CardBody(
             [
                 dbc.Row(dbc.Col(roi_table)),
@@ -231,21 +243,7 @@ table_card = dbc.Card(
                 ),
             ]
         ),
-        dbc.CardFooter(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(delete_rois_button, width={"size": "auto"}),
-                        dbc.Col(save_rois_button, width={"size": "auto"}),
-                        dbc.Col(load_rois_button, width={"size": "auto"}),
-                        save_rois_tooltip,
-                        load_rois_tooltip,
-                    ],
-                ),
-                html.Br(),
-                dcc.Loading(dbc.Row(roi_status_alert)),
-            ]
-        ),
+        dbc.CardFooter(dcc.Loading(dbc.Row(roi_status_alert))),
     ]
 )
 
