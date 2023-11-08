@@ -24,7 +24,7 @@ init_roi_color = px.colors.qualitative.Dark2[0]
 init_frame_slider_params: dict = {"max": 1, "step": 1, "value": 0}
 init_frame_slider_storage: dict = {v: init_frame_slider_params for v in init_videos}
 # Columns for ROI table
-init_roi_table_columns = ["name", "on frame", "area (px)"]
+init_roi_table_columns = ["name", "area (px)"]
 # Initialize the ROI storage dictionary
 init_roi_storage: dict = {v: {"shapes": []} for v in init_videos}
 # Initialize the ROI status alert
