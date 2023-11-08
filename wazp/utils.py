@@ -691,6 +691,11 @@ def yaml_entry_to_stored_shape(roi_entry: dict) -> dict:
         "path": roi_entry["path"],
         "drawn_on_frame": roi_entry["drawn_on_frame"],
         "name": roi_entry["name"],
+        "label": dict(
+            text=roi_entry["name"],
+            textposition="top left",
+            font=dict(color=roi_entry["line_color"], size=18),
+        ),
     }
 
 

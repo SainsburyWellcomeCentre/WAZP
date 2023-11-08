@@ -411,9 +411,13 @@ def get_callbacks(app: dash.Dash) -> None:
                 # Add the frame number and the ROI name to the new shapes
                 for shape in new_graph_shapes:
                     shape["drawn_on_frame"] = frame_num
-                    shape["name"] = roi_color_mapping["color2roi"][
-                        shape["line"]["color"]
-                    ]
+                    roi_name = roi_color_mapping["color2roi"][shape["line"]["color"]]
+                    shape["name"] = roi_name
+                    shape["label"] = dict(
+                        text=roi_name,
+                        textposition="top left",
+                        font=dict(color=shape["line"]["color"], size=18),
+                    )
                 # Pass the new shapes to the storage
                 roi_storage[video_name]["shapes"] += new_graph_shapes
 
