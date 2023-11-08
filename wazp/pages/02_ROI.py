@@ -18,6 +18,8 @@ dash.register_page(__name__)
 init_videos = ["No videos found yet"]
 # Get initial set of ROIs to initialize dropdown
 init_roi_names = ["No ROIs defined yet"]
+# Initial value for copy ROIs dropdown
+init_copy_rois_video = ["No videos with defined ROIs yet"]
 # Default color for ROI drawing
 init_roi_color = px.colors.qualitative.Dark2[0]
 # Initialize the frame slider parameters for each video
@@ -134,6 +136,15 @@ roi_dropdown = dcc.Dropdown(
     clearable=False,
 )
 
+# Dropdown for selecting the video to copy ROIs from
+copy_rois_dropdown = dcc.Dropdown(
+    id="copy-rois-video-select",
+    placeholder="Select video to copy ROIs from",
+    options=[{"label": v, "value": v} for v in init_copy_rois_video],
+    value=init_copy_rois_video[0],
+    clearable=False,
+)
+
 # Buttons for saving/loading ROIs
 disabled_button_style = {
     "n_clicks": 0,
@@ -142,6 +153,13 @@ disabled_button_style = {
     "disabled": True,
     "class_name": "w-100",
 }
+
+# Button for copying ROIs
+copy_rois_button = dbc.Button(
+    "Copy from",
+    id="copy-rois-button",
+    **disabled_button_style,
+)
 
 save_rois_button = dbc.Button(
     "Save all",
@@ -221,6 +239,13 @@ table_card = dbc.Card(
     [
         dbc.CardHeader(
             [
+                dbc.Row(
+                    [
+                        dbc.Col(copy_rois_button, width=3),
+                        dbc.Col(dcc.Loading(copy_rois_dropdown), width=9),
+                    ]
+                ),
+                html.Br(),
                 dbc.Row(
                     [
                         dbc.Col(delete_rois_button, width={"size": "auto"}),
