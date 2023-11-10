@@ -85,7 +85,6 @@ exclude_patterns = [
 
 # Don't check the anchors for the following URLs during linkcheck
 linkcheck_anchors_ignore_for_url = [
-    "https://github.com/pypa/setuptools_scm/",
     "https://gin.g-node.org/G-Node/Info/wiki/",
 ]
 
