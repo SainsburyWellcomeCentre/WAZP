@@ -893,7 +893,7 @@ def _get_points_on_circle(
     """
     Returns the coordinates of n points equally spaced on a circle.
     The angle between two points is 2*pi/n radians. The number of points n
-    is at least 8, and is chosen proportional to the mean radius of the circle.
+    is at least 12, and is chosen proportional to the mean radius of the circle.
 
     Parameters
     ----------
@@ -913,7 +913,7 @@ def _get_points_on_circle(
     as evidenced by the radius being a tuple of two floats (x-radius, y-radius).
     """
     mean_radius = (radius[0] + radius[1]) / 2
-    n = 2 * math.floor(mean_radius / 200) + 8
+    n = 2 * math.floor(mean_radius / 150) + 12
     angle = 2 * math.pi / n
     x, y = center
     points = []
