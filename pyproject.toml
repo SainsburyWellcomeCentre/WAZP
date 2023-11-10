@@ -25,7 +25,9 @@ dependencies = [
   "PyYAML",
   "shapely",
   "openpyxl",
-  "defusedxml"
+  "defusedxml",
+  "pooch",
+  "tqdm",
 ]
 
 classifiers = [

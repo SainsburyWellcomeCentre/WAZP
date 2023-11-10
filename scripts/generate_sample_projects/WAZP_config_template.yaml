@@ -1,0 +1,20 @@
+videos_dir_path: /path/to/videos
+metadata_fields_file_path: /path/to/metadata_fields.yaml
+metadata_key_field_str: File
+pose_estimation_results_path: /path/to/pose_estimation_results
+model_str: DLC_resnet50_jwasp_femaleandmaleSep12shuffle1_1000000
+dashboard_export_data_path: /path/to/wazp_output
+ROI_tags:
+  - enclosure
+  - nectar1_box
+  - control_box
+  - water_only_box
+  - nectar2_box
+  - tube
+event_tags:
+  - experiment_start
+  - box_1_open
+  - box_1_closed
+  - experiment_end
+use_ROIs_order_as_hierarchy: False
+buffer_around_ROIs_boundaries: 1e-09
