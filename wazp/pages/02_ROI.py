@@ -160,7 +160,6 @@ copy_rois_button = dbc.Button(
     id="copy-rois-button",
     **disabled_button_style,
 )
-
 save_rois_button = dbc.Button(
     "Save all",
     id="save-rois-button",
@@ -174,6 +173,11 @@ delete_rois_button = dbc.Button(
     "Delete selected", id="delete-rois-button", **disabled_button_style
 )
 # Tooltips for ROI buttons
+copy_rois_tooltip = dbc.Tooltip(
+    "Copy all ROIs from the selected video to the current video. "
+    "This will overwrite any existing ROIs in the current video!",
+    target="copy-rois-button",
+)
 save_rois_tooltip = dbc.Tooltip(
     "Save all ROIs to the video's .metadata.yaml file. "
     "This will overwrite any existing ROIs in the file!",
@@ -243,6 +247,7 @@ table_card = dbc.Card(
                     [
                         dbc.Col(copy_rois_button, width=3),
                         dbc.Col(dcc.Loading(copy_rois_dropdown), width=9),
+                        copy_rois_tooltip,
                     ]
                 ),
                 html.Br(),
