@@ -42,7 +42,7 @@ from video_utils import compress_video, copy_entire_video, extract_clip_from_vid
 
 # Path to the local data repository
 # This should be a clone of https://gin.g-node.org/SainsburyWellcomeCentre/WAZP
-DATA_REPO_LOCAL = Path("/home/nsirmpilatze/Code/Data/WAZP/")
+DATA_REPO_LOCAL = Path.home() / "WAZP_sample_data"
 # Shorthand for the species/experiment
 SPECIES = "jewel-wasp"
 
