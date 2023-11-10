@@ -525,6 +525,9 @@ def get_callbacks(app: dash.Dash) -> None:
                 roi_storage[video_name]["shapes"] = roi_storage[video_to_copy_from][
                     "shapes"
                 ]
+                # change the "drawn_on_frame" attribute to the current frame
+                for shape in roi_storage[video_name]["shapes"]:
+                    shape["drawn_on_frame"] = frame_num
 
         return roi_storage, roi_table_selected_rows
 
@@ -770,7 +773,7 @@ def get_callbacks(app: dash.Dash) -> None:
             alert_msg = f"Could not find {metadata_path.name}"
             alert_color = "danger"
             return alert_msg, alert_color, True
-        except KeyError:
+        except KeyError:  # if the file has no "ROIs" key, assume no ROIs are saved
             rois_in_file = []
 
         # Get the app's ROI shapes for this video
