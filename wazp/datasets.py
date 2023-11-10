@@ -144,3 +144,24 @@ def _update_paths_in_project_config(
 
     with open(config_file, "w") as f:
         yaml.dump(yaml_dict, f, sort_keys=False)
+
+
+def download_all_sample_projects(
+    progressbar: bool = True,
+):
+    """Download all available sample projects. This is mostly meant as a convenience
+    function for developers.
+
+    Parameters
+    ----------
+    progressbar : bool
+        Whether to show a progress bar while downloading the data. Default: True.
+    """
+    projects_per_species = find_sample_projects(sample_projects)
+    for species_name, project_names in projects_per_species.items():
+        for project_name in project_names:
+            get_sample_project(
+                species_name=species_name,
+                project_name=project_name,
+                progressbar=progressbar,
+            )

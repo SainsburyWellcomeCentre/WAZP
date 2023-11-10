@@ -145,7 +145,7 @@ We use [semantic versioning](https://semver.org/), which includes `MAJOR`.`MINOR
 * MINOR = new feature
 * MAJOR = breaking change
 
-We use [`setuptools_scm`](https://github.com/pypa/setuptools_scm) to automatically version WAZP. It has been pre-configured in the `pyproject.toml` file. [`setuptools_scm` will automatically infer the version using git](https://github.com/pypa/setuptools_scm#default-versioning-scheme). To manually set a new semantic version, create a tag and make sure the tag is pushed to GitHub. Make sure you commit any changes you wish to be included in this version. E.g. to bump the version to `1.0.0`:
+We use [`setuptools_scm`](https://github.com/pypa/setuptools_scm) to automatically version WAZP. It has been pre-configured in the `pyproject.toml` file. `setuptools_scm` will automatically infer the version using git. To manually set a new semantic version, create a tag and make sure the tag is pushed to GitHub. Make sure you commit any changes you wish to be included in this version. E.g. to bump the version to `1.0.0`:
 
 ```sh
 git add .

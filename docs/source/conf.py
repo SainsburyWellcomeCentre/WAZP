@@ -83,12 +83,17 @@ exclude_patterns = [
     "**/includes/**",
 ]
 
+# Don't check the anchors for the following URLs during linkcheck
+linkcheck_anchors_ignore_for_url = [
+    "https://gin.g-node.org/G-Node/Info/wiki/",
+]
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 html_theme = "pydata_sphinx_theme"
 html_title = "wazp"
 
-# Cutomize the theme
+# Customize the theme
 html_theme_options = {
     "icon_links": [
         {
