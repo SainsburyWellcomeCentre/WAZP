@@ -950,3 +950,44 @@ def svg_path_to_polygon(svg_path: str) -> Polygon:
     ]
 
     return Polygon(list_points)
+
+
+def lists_contain_same_rois(
+    roi_list1: list[dict],
+    roi_list2: list[dict],
+) -> bool:
+    """Check if the ROI shape dictionaries in two lists are the same.
+
+    They are considered to be the same if they have the same names and
+    SVG paths (with a tolerance of 1e-2 for the point coordinates).
+
+    Parameters
+    ----------
+    roi_list1 : list of dict
+        List of ROI shape dictionaries
+    roi_list2 : list of dict
+        List of ROI shape dictionaries to compare with
+
+    Returns
+    -------
+    bool
+        True if the lists contain the same ROIs, False otherwise
+    """
+
+    if len(roi_list1) != len(roi_list2):
+        return False
+
+    names_equal = all(
+        [roi1["name"] == roi2["name"] for roi1, roi2 in zip(roi_list1, roi_list2)]
+    )
+
+    # Compare SVG paths to a 1e-2 tolerance, by first converting them to polygons
+    paths_equal = all(
+        [
+            svg_path_to_polygon(roi1["path"]).equals_exact(
+                svg_path_to_polygon(roi2["path"]), tolerance=1e-2
+            )
+            for roi1, roi2 in zip(roi_list1, roi_list2)
+        ]
+    )
+    return names_equal and paths_equal

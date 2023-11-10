@@ -790,7 +790,7 @@ def get_callbacks(app: dash.Dash) -> None:
 
         else:
             # Some ROIs exist in the app
-            if rois_in_app == rois_in_file:
+            if utils.lists_contain_same_rois(rois_in_file, rois_in_app):
                 alert_color = "success"
                 if trigger == "roi-storage.data":
                     alert_msg = f"Loaded ROIs from '{metadata_path.name}'"
