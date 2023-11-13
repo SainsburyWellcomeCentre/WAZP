@@ -2,6 +2,7 @@ import dash
 import dash_bootstrap_components as dbc
 import plotly.express as px
 from dash import dash_table, dcc, html
+from dash.dash_table.Format import Format, Scheme
 from PIL import Image
 
 ###############################
@@ -17,13 +18,15 @@ dash.register_page(__name__)
 init_videos = ["No videos found yet"]
 # Get initial set of ROIs to initialize dropdown
 init_roi_names = ["No ROIs defined yet"]
+# Initial value for copy ROIs dropdown
+init_copy_rois_video = ["No videos with defined ROIs yet"]
 # Default color for ROI drawing
 init_roi_color = px.colors.qualitative.Dark2[0]
 # Initialize the frame slider parameters for each video
 init_frame_slider_params: dict = {"max": 1, "step": 1, "value": 0}
 init_frame_slider_storage: dict = {v: init_frame_slider_params for v in init_videos}
 # Columns for ROI table
-init_roi_table_columns = ["name", "on frame", "path"]
+init_roi_table_columns = ["name", "area (px)"]
 # Initialize the ROI storage dictionary
 init_roi_storage: dict = {v: {"shapes": []} for v in init_videos}
 # Initialize the ROI status alert
@@ -45,6 +48,7 @@ fig.update_layout(
     margin=dict(l=0, r=0, t=0, b=0),
     yaxis={"visible": False, "showticklabels": False},
     xaxis={"visible": False, "showticklabels": False},
+    height=800,
 )
 
 # figure configuration
@@ -53,6 +57,8 @@ fig_config = {
     "displayModeBar": True,  # mode bar always visible
     "showAxisDragHandles": True,  # show axis drag handles
     "modeBarButtonsToAdd": [
+        "drawrect",
+        "drawcircle",
         "drawclosedpath",
         "eraseshape",
     ],
@@ -97,9 +103,15 @@ frame_status_alert = dbc.Alert(
 # Table of ROIs               #
 ###############################
 
+table_columns = [dict(name=c, id=c) for c in init_roi_table_columns]
+for i, c in enumerate(table_columns):
+    if "area" in c["name"]:
+        table_columns[i]["type"] = "numeric"
+        table_columns[i]["format"] = Format(precision=0, scheme=Scheme.decimal_integer)
+
 roi_table = dash_table.DataTable(
     id="roi-table",
-    columns=[dict(name=c, id=c) for c in init_roi_table_columns],
+    columns=table_columns,
     data=[],
     selected_rows=[],
     editable=False,
@@ -124,6 +136,15 @@ roi_dropdown = dcc.Dropdown(
     clearable=False,
 )
 
+# Dropdown for selecting the video to copy ROIs from
+copy_rois_dropdown = dcc.Dropdown(
+    id="copy-rois-video-select",
+    placeholder="Select video to copy ROIs from",
+    options=[{"label": v, "value": v} for v in init_copy_rois_video],
+    value=init_copy_rois_video[0],
+    clearable=False,
+)
+
 # Buttons for saving/loading ROIs
 disabled_button_style = {
     "n_clicks": 0,
@@ -133,6 +154,12 @@ disabled_button_style = {
     "class_name": "w-100",
 }
 
+# Button for copying ROIs
+copy_rois_button = dbc.Button(
+    "Copy from",
+    id="copy-rois-button",
+    **disabled_button_style,
+)
 save_rois_button = dbc.Button(
     "Save all",
     id="save-rois-button",
@@ -146,6 +173,11 @@ delete_rois_button = dbc.Button(
     "Delete selected", id="delete-rois-button", **disabled_button_style
 )
 # Tooltips for ROI buttons
+copy_rois_tooltip = dbc.Tooltip(
+    "Copy all ROIs from the selected video to the current video. "
+    "This will overwrite any existing ROIs in the current video!",
+    target="copy-rois-button",
+)
 save_rois_tooltip = dbc.Tooltip(
     "Save all ROIs to the video's .metadata.yaml file. "
     "This will overwrite any existing ROIs in the file!",
@@ -209,7 +241,27 @@ frame_card = dbc.Card(
 # ROI table card
 table_card = dbc.Card(
     [
-        dbc.CardHeader(html.H3("Defined ROIs")),
+        dbc.CardHeader(
+            [
+                dbc.Row(
+                    [
+                        dbc.Col(copy_rois_button, width=3),
+                        dbc.Col(dcc.Loading(copy_rois_dropdown), width=9),
+                        copy_rois_tooltip,
+                    ]
+                ),
+                html.Br(),
+                dbc.Row(
+                    [
+                        dbc.Col(delete_rois_button, width={"size": "auto"}),
+                        dbc.Col(save_rois_button, width={"size": "auto"}),
+                        dbc.Col(load_rois_button, width={"size": "auto"}),
+                        save_rois_tooltip,
+                        load_rois_tooltip,
+                    ],
+                ),
+            ]
+        ),
         dbc.CardBody(
             [
                 dbc.Row(dbc.Col(roi_table)),
@@ -221,21 +273,7 @@ table_card = dbc.Card(
                 ),
             ]
         ),
-        dbc.CardFooter(
-            [
-                dbc.Row(
-                    [
-                        dbc.Col(delete_rois_button, width={"size": "auto"}),
-                        dbc.Col(save_rois_button, width={"size": "auto"}),
-                        dbc.Col(load_rois_button, width={"size": "auto"}),
-                        save_rois_tooltip,
-                        load_rois_tooltip,
-                    ],
-                ),
-                html.Br(),
-                dcc.Loading(dbc.Row(roi_status_alert)),
-            ]
-        ),
+        dbc.CardFooter(dcc.Loading(dbc.Row(roi_status_alert))),
     ]
 )
 
@@ -248,8 +286,8 @@ layout = dbc.Container(
         html.H1(children="ROI definition"),
         dbc.Row(
             [
-                dbc.Col(frame_card, width=7),
-                dbc.Col(table_card, width=5),
+                dbc.Col(frame_card, width=8),
+                dbc.Col(table_card, width=4),
             ],
         ),
     ],

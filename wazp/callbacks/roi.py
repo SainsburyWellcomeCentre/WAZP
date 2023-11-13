@@ -126,7 +126,7 @@ def get_callbacks(app: dash.Dash) -> None:
             # restrict ROI options to the ones not already stored
             if video_name in roi_storage.keys():
                 stored_roi_names = [
-                    shape["roi_name"] for shape in roi_storage[video_name]["shapes"]
+                    shape["name"] for shape in roi_storage[video_name]["shapes"]
                 ]
                 options = [
                     opt for opt in options if opt["value"] not in stored_roi_names
@@ -144,6 +144,53 @@ def get_callbacks(app: dash.Dash) -> None:
 
         else:
             return dash.no_update, dash.no_update, dash.no_update
+
+    @app.callback(
+        [
+            Output("copy-rois-video-select", "options"),
+            Output("copy-rois-video-select", "value"),
+        ],
+        [
+            Input("roi-storage", "data"),
+            Input("video-select", "value"),
+        ],
+    )
+    def update_copy_rois_from_video_select_options(
+        roi_storage, video_path
+    ) -> Optional[tuple[list[dict], str]]:
+        """Update the options of the video select dropdown for copying ROIs.
+
+        Parameters
+        ----------
+        roi_storage : dict
+            Dictionary storing ROI data for each video.
+        video_path : str
+            Path to the current video file.
+
+        Returns
+        -------
+        list[dict]
+            list of dictionaries with keys 'label' and 'value'
+        str
+            value of the first video in the list
+        """
+        current_video_name = pl.Path(video_path).name
+        # Find all videos with ROIs in the storage that are not the current video
+        videos_with_rois = [
+            video_name
+            for video_name in roi_storage.keys()
+            if (len(roi_storage[video_name]["shapes"]) > 0)
+            and (video_name != current_video_name)
+        ]
+        # Create the options for the dropdown
+        options = [{"label": v, "value": v} for v in videos_with_rois]
+        # If there are other videos with ROIs
+        if len(options) == 0:
+            # Display a message in the dropdown
+            options = [{"label": "No other videos with defined ROIs.", "value": "none"}]
+        # Set the value to the first video in the list
+        value = options[0]["value"]
+        return options, value
 
     @app.callback(
         [
@@ -309,6 +356,7 @@ def get_callbacks(app: dash.Dash) -> None:
             Input("frame-graph", "relayoutData"),
             Input("load-rois-button", "n_clicks"),
             Input("delete-rois-button", "n_clicks"),
+            Input("copy-rois-button", "n_clicks"),
         ],
         [
             State("video-select", "value"),
@@ -317,18 +365,21 @@ def get_callbacks(app: dash.Dash) -> None:
             State("roi-colors-storage", "data"),
             State("roi-table", "data"),
             State("roi-table", "selected_rows"),
+            State("copy-rois-video-select", "value"),
         ],
     )
     def update_roi_storage(
         graph_relayout: dict,
         load_clicks: int,
         delete_clicks: int,
+        copy_clicks: int,
         video_path: str,
         frame_num: int,
         roi_storage: dict,
         roi_color_mapping: dict,
         roi_table_rows: list,
         roi_table_selected_rows: list,
+        video_to_copy_from: str,
     ) -> tuple[dict, list]:
         """
         Update the ROI storage, when:
@@ -336,6 +387,7 @@ def get_callbacks(app: dash.Dash) -> None:
         - Shapes are edited on the frame graph
         - Shapes are loaded from file
         - Shapes are deleted from the ROI table
+        - Shapes are copied from another video
 
         Parameters
         ----------
@@ -346,8 +398,10 @@ def get_callbacks(app: dash.Dash) -> None:
             Number of times the load ROIs button has been clicked.
         delete_clicks : int
             Number of times the delete ROIs button has been clicked.
+        copy_clicks : int
+            Number of times the copy ROIs button has been clicked.
         video_path : str
-            Path to the video file.
+            Path to the current video file.
         frame_num : int
             Frame number.
         roi_storage : dict
@@ -360,6 +414,8 @@ def get_callbacks(app: dash.Dash) -> None:
             List of dictionaries with ROI table data.
         roi_table_selected_rows : list
             List of indices for the selected rows in the ROI table.
+        video_to_copy_from : str
+            Name of the video to copy ROIs from.
 
         Returns
         -------
@@ -381,8 +437,12 @@ def get_callbacks(app: dash.Dash) -> None:
             if "shapes" in graph_relayout.keys():
                 # this means that whole shapes have been created or deleted
 
-                # Get the shapes from the graph
-                graph_shapes = graph_relayout["shapes"]
+                # Convert all shapes to path shapes
+                graph_shapes = [
+                    utils.convert_shape_to_path(shape)
+                    for shape in graph_relayout["shapes"]
+                ]
+
                 # Get the stored shapes for the video
                 stored_shapes = roi_storage[video_name]["shapes"]
 
@@ -407,9 +467,13 @@ def get_callbacks(app: dash.Dash) -> None:
                 # Add the frame number and the ROI name to the new shapes
                 for shape in new_graph_shapes:
                     shape["drawn_on_frame"] = frame_num
-                    shape["roi_name"] = roi_color_mapping["color2roi"][
-                        shape["line"]["color"]
-                    ]
+                    roi_name = roi_color_mapping["color2roi"][shape["line"]["color"]]
+                    shape["name"] = roi_name
+                    shape["label"] = dict(
+                        text=roi_name,
+                        textposition="top left",
+                        font=dict(color=shape["line"]["color"], size=18),
+                    )
                 # Pass the new shapes to the storage
                 roi_storage[video_name]["shapes"] += new_graph_shapes
 
@@ -449,12 +513,21 @@ def get_callbacks(app: dash.Dash) -> None:
                 ]
                 stored_shapes = roi_storage[video_name]["shapes"]
                 roi_storage[video_name]["shapes"] = [
-                    sh
-                    for sh in stored_shapes
-                    if sh["roi_name"] not in deleted_roi_names
+                    sh for sh in stored_shapes if sh["name"] not in deleted_roi_names
                 ]
                 # Clear the row selection
                 roi_table_selected_rows = []
+
+        # If triggered by the copy ROIs button click
+        # Copy the ROIs from the selected video
+        elif trigger == "copy-rois-button.n_clicks":
+            if copy_clicks > 0 and video_to_copy_from != "none":
+                roi_storage[video_name]["shapes"] = roi_storage[video_to_copy_from][
+                    "shapes"
+                ]
+                # change the "drawn_on_frame" attribute to the current frame
+                for shape in roi_storage[video_name]["shapes"]:
+                    shape["drawn_on_frame"] = frame_num
 
         return roi_storage, roi_table_selected_rows
 
@@ -550,7 +623,7 @@ def get_callbacks(app: dash.Dash) -> None:
             drag_mode = False  # type: ignore
         else:
             next_shape_color = roi_color_mapping["roi2color"][roi_name]
-            drag_mode = "drawclosedpath"  # type: ignore
+            drag_mode = "drawrect"  # type: ignore
 
         current_fig["layout"]["newshape"]["line"]["color"] = next_shape_color
         current_fig["layout"]["dragmode"] = drag_mode
@@ -700,7 +773,7 @@ def get_callbacks(app: dash.Dash) -> None:
             alert_msg = f"Could not find {metadata_path.name}"
             alert_color = "danger"
             return alert_msg, alert_color, True
-        except KeyError:
+        except KeyError:  # if the file has no "ROIs" key, assume no ROIs are saved
             rois_in_file = []
 
         # Get the app's ROI shapes for this video
@@ -717,7 +790,7 @@ def get_callbacks(app: dash.Dash) -> None:
 
         else:
             # Some ROIs exist in the app
-            if rois_in_app == rois_in_file:
+            if utils.lists_contain_same_rois(rois_in_file, rois_in_app):
                 alert_color = "success"
                 if trigger == "roi-storage.data":
                     alert_msg = f"Loaded ROIs from '{metadata_path.name}'"
@@ -831,3 +904,15 @@ def get_callbacks(app: dash.Dash) -> None:
             Whether to enable the delete ROIs button.
         """
         return len(selected_rows) == 0
+
+    @app.callback(
+        Output("copy-rois-button", "disabled"),
+        Input("copy-rois-video-select", "value"),
+    )
+    def disable_copy_rois_button(
+        video_to_copy_from: str,
+    ) -> bool:
+        """If there are no videos to copy ROIs from,
+        disable the 'Copy ROIs from' button
+        """
+        return video_to_copy_from == "none"
