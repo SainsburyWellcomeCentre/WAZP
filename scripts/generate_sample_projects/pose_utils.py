@@ -33,7 +33,7 @@ def load_poses_from_dlc(file_path: Path) -> Optional[pd.DataFrame]:
     return df
 
 
-def save_poses_to_dlc(df: pd.DataFrame, file_path: Path):
+def save_poses_to_dlc(df: pd.DataFrame | pd.Series, file_path: Path):
     """Save pose estimation results to a DeepLabCut (DLC) .h5 file.
     Also saves the poses to a .csv file with the same name.
 
