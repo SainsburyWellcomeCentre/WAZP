@@ -662,8 +662,8 @@ def get_callbacks(app: dash.Dash) -> None:
             # convert all fields in dataframe to strings
             # (otherwise datetime fields are not encoded correctly in the YAML)
             df = df.applymap(str)  # type: ignore[operator]
-            # TODO: remove ignore comment 👆 if we update the linter job to 3.11
-            #       with newer pandas-stubs
+            # TODO: remove mypy ignore comment 👆 if we update the linter job to
+            #       3.11 with newer pandas-stubs version
 
             # check if columns in spreadsheet match metadata file:
             # if not, add missing columns
